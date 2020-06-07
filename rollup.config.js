@@ -15,12 +15,12 @@ const config = (mode) => ({
   input: './src/lib/index.ts',
   output: [
     {
-      file: `dist/index${mode === 'production' ? '' : '.dev'}.cjs.js`,
+      file: `dist/statex${mode === 'production' ? '' : '.dev'}.cjs.js`,
       format: 'cjs',
       exports: 'named',
     },
     {
-      file: `dist/index${mode === 'production' ? '' : '.dev'}.esm.js`,
+      file: `dist/statex${mode === 'production' ? '' : '.dev'}.esm.js`,
       format: 'esm',
     },
   ],

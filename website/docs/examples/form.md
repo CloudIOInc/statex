@@ -5,6 +5,10 @@ title: Form
 
 This section assumes you have installed StateX and React. See the [Getting Started](../introduction/getting-started) page for how to get started with StateX and React from scratch.
 
+In this example, we'll cover atoms, selectors, and the hooks exposed by the StateX API. We'll also cover some advanced options used with atoms.
+
+> Try entering your first name and watch all other fields, last name, full name, full name count (async), full JSON view auto populate with what you enter and scoll below for the code walkthrough on how this form is built. Click [Demo](#demo) to scroll the below demo in to full view.
+
 ### Demo
 
 import App from '../../src/components/FormApp';

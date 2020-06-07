@@ -12,7 +12,7 @@ import { useStateXValue } from '@cloudio/statex';
 import styles from './styles.module.css';
 import Accordion from './Accordion';
 
-function Playground({ children, theme, open = false, ...props }) {
+function Playground({ code, theme, open = false, ...props }) {
   const state = useStateXValue([], {});
   const [expanded, setExpanded] = React.useState(open);
 
@@ -21,18 +21,17 @@ function Playground({ children, theme, open = false, ...props }) {
   }, []);
   return (
     <LiveProvider
-      code={children.replace(/\n$/, '')}
+      code={code.replace(/\n$/, '')}
       theme={theme}
       {...props}
-      transformCode={transformCode}
-    >
+      noInline={true}
+      transformCode={transformCode}>
       <div
         className={classnames(
           styles.playgroundHeader,
           styles.playgroundEditorHeader,
         )}
-        onClick={() => setExpanded((e) => !e)}
-      >
+        onClick={() => setExpanded((e) => !e)}>
         StateX Editor{' '}
         {!expanded ? (
           <span style={{ float: 'right' }}>Click to edit this demo</span>
@@ -45,8 +44,7 @@ function Playground({ children, theme, open = false, ...props }) {
         className={classnames(
           styles.playgroundHeader,
           styles.playgroundPreviewHeader,
-        )}
-      >
+        )}>
         State
       </div>
       <div className={styles.playgroundPreview}>
@@ -56,8 +54,7 @@ function Playground({ children, theme, open = false, ...props }) {
         className={classnames(
           styles.playgroundHeader,
           styles.playgroundPreviewHeader,
-        )}
-      >
+        )}>
         Result
       </div>
       <div className={styles.playgroundPreview}>

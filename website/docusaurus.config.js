@@ -1,13 +1,11 @@
-const path = require('path');
-
 module.exports = {
   title: 'StateX',
   tagline: 'StateX - A React state management library',
   url: 'https://cloudioinc.github.io/',
   baseUrl: '/statex/',
   favicon: 'img/favicon.ico',
-  organizationName: 'CloudIOInc', // Usually your GitHub org/user name.
-  projectName: 'statex', // Usually your repo name.
+  organizationName: 'CloudIOInc',
+  projectName: 'statex',
   themeConfig: {
     navbar: {
       title: 'StateX',
@@ -88,7 +86,6 @@ module.exports = {
       copyright: `Copyright © ${new Date().getFullYear()} CloudIO, Inc.`,
     },
   },
-  themes: ['@cloudio/live'],
   presets: [
     [
       '@docusaurus/preset-classic',
@@ -106,5 +103,6 @@ module.exports = {
       },
     ],
   ],
-  plugins: [path.resolve(__dirname, './webpackConfigPlugin')],
+  themes: [require.resolve('@docusaurus/theme-live-codeblock')],
+  plugins: [require.resolve('my-loaders')],
 };

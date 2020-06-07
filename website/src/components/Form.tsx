@@ -1,10 +1,9 @@
-import React, { Suspense, useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import {
   Path,
   atom,
   useStateXValueSetter,
   selector,
-  useStateX,
   useStateXValue,
   useStateXForTextInput,
 } from '@cloudio/statex';
