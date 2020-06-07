@@ -1,6 +1,6 @@
 {
   "name": "@cloudio/statex",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "StateX - A React state management library",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -9,6 +9,7 @@
     "dist/*"
   ],
   "repository": "https://github.com/CloudIOInc/statex.git",
+  "private": false,
   "keywords": [
     "react",
     "statex"
@@ -22,22 +23,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   },
-  "dependencies": {
-    "@material-ui/core": "^4.10.1",
-    "@popmotion/popcorn": "^0.4.4",
-    "@tailwindcss/ui": "^0.3.0",
-    "array-move": "^2.2.2",
-    "autoprefixer": "^9.8.0",
-    "classnames": "^2.2.6",
-    "debounce": "^1.2.0",
-    "framer-motion": "^1.11.0",
-    "prism-react-renderer": "^1.1.1",
-    "react": "^16.13.0",
-    "react-dom": "^16.13.0",
-    "react-live": "^2.2.2",
-    "tailwindcss": "^1.4.6",
-    "uuid": "^8.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@babel/cli": "^7.10.1",
     "@babel/core": "^7.10.2",

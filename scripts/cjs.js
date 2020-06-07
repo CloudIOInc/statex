@@ -1,6 +1,6 @@
 // @ts-nocheck
 if (process.env.NODE_ENV === 'production') {
-  module.exports = require('./cloudio-statex.cjs.js');
+  module.exports = require('./index.cjs.js');
 } else {
-  module.exports = require('./cloudio-statex.dev.cjs.js');
+  module.exports = require('./index.dev.cjs.js');
 }
