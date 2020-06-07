@@ -1,0 +1,35 @@
+.App {
+  position: relative;
+}
+
+.canvas-container {
+  width: 400px;
+  height: 400px;
+  margin-right: 2px;
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.pixel {
+  width: 4px;
+  min-width: 4px;
+  height: 4px;
+  min-height: 4px;
+}
+.toolbar,
+.pixel-stats {
+  display: block;
+  padding-bottom: 12px;
+}
+.pixel-stats-full {
+  color: #000;
+  background-color: #f37725;
+}
+.pixel-stats-empty {
+  color: #f37725;
+  background-color: #000;
+}
+.pixel-stats .pixel-stats-empty,
+.pixel-stats .pixel-stats-full {
+  padding: 12px;
+}
