@@ -1,6 +1,6 @@
 {
   "name": "@cloudio/statex",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "StateX - A React state management library",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -88,7 +88,8 @@
   },
   "scripts": {
     "start": "react-app-rewired start",
-    "build": "yarn emit-types && yarn build:rollup",
+    "clean": "rm -rf dist",
+    "build": "yarn clean && yarn emit-types && yarn build:rollup",
     "build:examples": "react-app-rewired build",
     "build:rollup": "rollup -c --compact && node scripts/postbuild.js",
     "emit-types": "mkdir -p dist/types && yarn run tsc src/lib/index.ts --lib DOM,ES2015 --declaration --declarationDir dist/types --emitDeclarationOnly --jsx react --esModuleInterop true",
