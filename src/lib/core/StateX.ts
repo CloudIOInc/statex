@@ -16,7 +16,7 @@ import type {
   PathOrStateX,
 } from './StateXTypes';
 import { isResolvable, Resolvable, isSelectorNode } from './StateXTypes';
-import { getIn, removeIn } from './ImmutableUtils';
+import { getIn } from './ImmutableUtils';
 import { Node } from './Trie';
 import {
   deepFreeze,
@@ -197,7 +197,7 @@ function _removeIn<T>(store: StateX, path: Path): T {
   const oldValue = _getIn<T>(store, node);
   node.data.lastKnownValue = oldValue;
   store.removingState(node);
-  store.setState(removeIn(store.getState(), path));
+  store.trackAndRemove(node);
   if (node.parent) {
     store.addToPending(node.parent.path, 'remove-child');
   }

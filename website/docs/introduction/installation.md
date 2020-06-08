@@ -13,3 +13,7 @@ Or if you're using <a href="https://classic.yarnpkg.com/en/docs/install/" target
 ```shell
 yarn add @cloudio/statex
 ```
+
+##### TodoMVC App built with create-react-app & StateX
+
+Checkout https://github.com/CloudIOInc/statex-todomvc

@@ -80,9 +80,9 @@ function TodoListFilters() {
     <>
       Filter:
       <select value={filter} onChange={updateFilter}>
-        <option value='Show All'>All</option>
-        <option value='Show Completed'>Completed</option>
-        <option value='Show Uncompleted'>Uncompleted</option>
+        <option value="Show All">All</option>
+        <option value="Show Completed">Completed</option>
+        <option value="Show Uncompleted">Uncompleted</option>
       </select>
     </>
   );
@@ -156,10 +156,10 @@ To summarize, we've created a todo list app that meets all of our requirements:
 
 ```jsx live
 const initialTodos = [
-  { id: 1, text: 'Path' },
-  { id: 2, text: 'StateX' },
-  { id: 3, text: 'Selector' },
-  { id: 4, text: 'Hooks' },
+  { id: 100, text: 'Learn Javascript', isComplete: true },
+  { id: 101, text: 'Learn React', isComplete: true },
+  { id: 102, text: "Use CloudIO's StateX" },
+  { id: 103, text: 'Launch Product' },
 ];
 
 const todoList = atom({
@@ -187,7 +187,7 @@ const todoFilteredIds = selector({
         list = list.filter((item) => !item.isComplete);
         break;
     }
-    return list.map((todo) => all.indexOf(todo));
+    return list.map((todo) => ({ id: todo.id, index: all.indexOf(todo) }));
   },
 });
 
@@ -250,8 +250,8 @@ function TodoList() {
 
   return (
     <>
-      {filteredIds.map((id) => (
-        <TodoItem id={id} key={id} />
+      {filteredIds.map((entry) => (
+        <TodoItem index={entry.index} key={entry.id} />
       ))}
     </>
   );
@@ -278,24 +278,24 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type='text' value={inputValue} onChange={onChange} />
+      <input type="text" value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
 }
 
-function TodoItem({ id }) {
-  const text = useStateXForTextInput(['todo', 'list', ':id', 'text'], '', {
-    params: { id },
+function TodoItem({ index }) {
+  const text = useStateXForTextInput(['todo', 'list', ':index', 'text'], '', {
+    params: { index },
   });
   const isComplete = useStateXForCheckbox(
-    ['todo', 'list', ':id', 'isComplete'],
+    ['todo', 'list', ':index', 'isComplete'],
     false,
-    { params: { id } },
+    { params: { index } },
   );
 
-  const deleteItem = useStateXValueRemover(['todo', 'list', ':id'], {
-    params: { id },
+  const deleteItem = useStateXValueRemover(['todo', 'list', ':index'], {
+    params: { index },
   });
 
   return (
@@ -314,9 +314,9 @@ function TodoListFilters() {
     <>
       Filter:
       <select {...filter}>
-        <option value='Show All'>All</option>
-        <option value='Show Completed'>Completed</option>
-        <option value='Show Uncompleted'>Uncompleted</option>
+        <option value="Show All">All</option>
+        <option value="Show Completed">Completed</option>
+        <option value="Show Uncompleted">Uncompleted</option>
       </select>
     </>
   );
@@ -342,7 +342,7 @@ function TodoListStats() {
   );
 }
 
-let id = initialTodos.length + 1;
+let id = 104;
 function getId() {
   return id++;
 }

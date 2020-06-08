@@ -3,7 +3,7 @@ import { NodeData, StateXHolder, Path } from './StateXTypes';
 import Trie, { Node } from './Trie';
 import { Collection } from './ImmutableTypes';
 import { inform } from './StateX';
-import { setIn, setMutate, getIn } from './ImmutableUtils';
+import { setIn, setMutate, getIn, removeIn } from './ImmutableUtils';
 import { SetStateAction } from 'react';
 
 function notInAContext(): any {
@@ -197,6 +197,15 @@ export class StateX {
     }
     setMutate(true);
     this.setState(setIn(this.getState(), node.path, value));
+    setMutate(false);
+  }
+
+  trackAndRemove<T>(node: Node<NodeData<T>>) {
+    if (node.parent) {
+      this.mutatedNodes.add(node.parent);
+    }
+    setMutate(true);
+    this.setState(removeIn(this.getState(), node.path));
     setMutate(false);
   }
 
