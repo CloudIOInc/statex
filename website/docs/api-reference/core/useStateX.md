@@ -19,7 +19,7 @@ function useStateX<T>(
 
 ```jsx title="useStateX(atom, options)"
 function useStateX<T>(
-  atom: StateXClass<T>,
+  atom: Atom<T>,
   options?: StateXOptions<T>,
 ): [Readonly<T>, Dispatch<T>];
 ```
@@ -28,7 +28,7 @@ function useStateX<T>(
 
 ```jsx title="useStateX(selector, options)"
 function useStateX<T>(
-  atom: SelectorClass<T>,
+  atom: Selector<T>,
   options?: StateXOptions<T>,
 ): [Readonly<T>, Dispatch<T>];
 ```

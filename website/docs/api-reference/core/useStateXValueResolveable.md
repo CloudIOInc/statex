@@ -16,9 +16,18 @@ Unlike useStateXValue(), this hook will not throw a Promise when reading from a 
 
 ```jsx title="useStateXValueResolveable(selector, options)"
 function useStateXValueResolveable<T>(
-  selector: SelectorClass<T>,
-  options?: SelectorOptions<T>,
-): [Resolvable<Readonly<T>>, Dispatch<T>];
+  selector: Selector<T>,
+  options?: StateXOptions<T>,
+): Resolvable<Readonly<T>>
+```
+
+For writable selectors
+
+```jsx title="useStateXResolveable(selector, options)"
+function useStateXResolveable<T>(
+  selector: Selector<T>,
+  options?: StateXOptions<T>,
+): [Resolvable<Readonly<T>>, Dispatch<T>]
 ```
 
 ## SelectorOptions

@@ -15,6 +15,9 @@ module.exports = {
   organizationName: 'CloudIOInc',
   projectName: 'statex',
   themeConfig: {
+    googleAnalytics: {
+      trackingID: 'UA-46294606-4',
+    },
     navbar: {
       title: 'StateX',
       logo: {

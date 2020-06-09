@@ -3,7 +3,7 @@ title: selector(options)
 sidebar_label: selector()
 ---
 
-Returns writeable or read-only StateX state, depending on the options passed to the function.
+Returns writeable or read-only StateX derived/calculated state at a given [path](path), depending on the options passed to the function.
 
 Selectors represent **derived state**. You can think of derived state as the output of passing state to a pure function that modifies the given state in some way.
 

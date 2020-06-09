@@ -3,9 +3,7 @@ title: atom(options)
 sidebar_label: atom()
 ---
 
-Returns writeable StateX state.
-
----
+Returns writeable StateX state at a given [path](path)
 
 - `options`
 
