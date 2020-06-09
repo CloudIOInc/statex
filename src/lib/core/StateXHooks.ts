@@ -51,16 +51,22 @@ import { emptyFunction, applyParamsToPath } from './StateXUtils';
 import { useStateXStore, StateXProvider } from './StateXContext';
 import { isPath, Collection } from './ImmutableTypes';
 import { Node } from './Trie';
+import { setIn } from './ImmutableUtils';
 
 function atom<T>(props: StateXProps<T>): Atom<T> {
   return new Atom(props);
 }
 
-function useStateXValueGetterWithPath() {
+function useStateXValueGetter() {
   const store = useStateXStore();
   const get = useCallback(
-    <T>(path: Path, props?: Options) => {
-      return getStateXValue<T>(store, path, props);
+    <T>(pathOrAtom: PathOrStateXOrSelector<T>, options?: Options) => {
+      let path = resolveParams(pathOrAtom);
+      path = applyParamsToPath(path, options?.params);
+      const node = getNode<T>(store, path);
+      // register the atom or selector to populate the empty state with default value
+      registerStateX(store, pathOrAtom, node);
+      return getStateXValue<T>(store, node, options);
     },
     [store],
   );
@@ -212,6 +218,7 @@ function useStateXValueResolveableInternal<T>(
   options?: StateXOptions<T>,
 ): Readonly<T> | Resolvable<Readonly<T>> {
   const store = useStateXStore();
+  // register the atom or selector to populate the empty state with default value
   registerStateX(store, pathOrAtom, node);
   if (node.data.defaultValue === undefined) {
     node.data.defaultValue = defaultValue;
@@ -432,13 +439,16 @@ function useRemoveStateX<T>(
   return [value, removeValue];
 }
 
+// internal hook for use with live editor
 function useWithStateX(state: Collection) {
+  const store = useStateXStore();
   const setValue = useStateXValueSetter([]);
   const ref = useRef<Collection>(state);
-  useEffect(() => {
-    setValue(state);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const firstRun = useRef(true);
+  if (firstRun.current) {
+    firstRun.current = false;
+    store.setState(setIn(store.getState(), [], state));
+  }
   useEffect(() => {
     if (JSON.stringify(ref.current) !== JSON.stringify(state)) {
       setValue(state);
@@ -470,7 +480,7 @@ export {
   useStateXCallback,
   useStateXResolveable,
   useStateXValue,
-  useStateXValueGetterWithPath,
+  useStateXValueGetter,
   useStateXValueInternal,
   useStateXValueRemover,
   useStateXValueResolveable,

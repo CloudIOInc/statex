@@ -250,4 +250,17 @@ describe('ImmutableUtils', () => {
     expect(result.length).toEqual(2);
     expect(result[1]).toEqual(3);
   });
+
+  test('getIn []', () => {
+    const collection = { name: 'Steve' };
+    expect(getIn(collection, [], undefined)).toMatchObject({ name: 'Steve' });
+  });
+
+  test('setIn []', () => {
+    const collection = { name: 'Steve' };
+    const updatedCollection = setIn(collection, [], { name: 'Jobs' });
+    expect(getIn(updatedCollection, [], undefined)).toMatchObject({
+      name: 'Jobs',
+    });
+  });
 });

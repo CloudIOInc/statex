@@ -6,7 +6,13 @@
  *
  */
 
-import { useStateXValue, useStateX, atom } from '../StateXHooks';
+import {
+  useStateXValue,
+  useStateX,
+  atom,
+  useWithStateX,
+  useStateXValueGetter,
+} from '../StateXHooks';
 import { renderHook, act } from '@testing-library/react-hooks';
 import {
   useStateXRef,
@@ -224,5 +230,40 @@ describe('StateX', () => {
       result.current.onChange({ target: { value: 'One 1' } });
     });
     expect(result.current.value).toBe('One 1');
+  });
+
+  test('useStateXValueGetter path', () => {
+    const { result } = renderHook(
+      () => {
+        useWithStateX({ name: 'Steve' });
+        const get = useStateXValueGetter();
+        return get(['name']);
+      },
+      { wrapper },
+    );
+    expect(result.current).toBe('Steve');
+  });
+
+  test('useStateXValueGetter atom', () => {
+    const { result } = renderHook(
+      () => {
+        const name = atom({ path: ['name'], defaultValue: 'Jobs' });
+        const get = useStateXValueGetter();
+        return get(name);
+      },
+      { wrapper },
+    );
+    expect(result.current).toBe('Jobs');
+  });
+
+  test('useStateXValue []', () => {
+    const { result } = renderHook(
+      () => {
+        useWithStateX({ name: 'Steve' });
+        return useStateXValue([], {});
+      },
+      { wrapper },
+    );
+    expect(result.current).toStrictEqual({ name: 'Steve' });
   });
 });

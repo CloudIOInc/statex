@@ -17,7 +17,7 @@ export {
   useStateXCallback,
   useStateXResolveable,
   useStateXValue,
-  useStateXValueGetterWithPath,
+  useStateXValueGetter,
   useStateXValueRemover,
   useStateXValueResolveable,
   useStateXValueSetter,

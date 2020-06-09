@@ -122,6 +122,9 @@ function getInInternal(
   path: Path,
   pathIndex: number,
 ): unknown {
+  if (path.length === 0 && pathIndex === 0) {
+    return collection;
+  }
   const key = path[pathIndex];
   if (path.length === pathIndex + 1) {
     return get(collection, key);
@@ -131,7 +134,7 @@ function getInInternal(
     return null;
   }
   if (!isObjectCollection(oldNestedValue)) {
-    console.log(collection, path, pathIndex);
+    console.error(collection, path, pathIndex);
     throw Error(
       `Invalid path ${JSON.stringify(
         path,

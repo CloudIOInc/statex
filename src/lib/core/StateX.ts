@@ -284,12 +284,10 @@ function removeStateXValue<T>(
 
 function getResolvableStateXValue<T>(
   store: StateX,
-  pathWithParams: Path,
+  node: Node<NodeData<T>>,
   options?: Options,
 ): Readonly<T> | Resolvable<Readonly<T>> {
-  const { mutableRefObject, params } = options || emptyObject;
-  const path = applyParamsToPath(pathWithParams, params);
-  const node = getNode<T>(store, path);
+  const { mutableRefObject } = options || emptyObject;
   if (isSelectorNode(node)) {
     return node.data.selector.getValue(store, node, options);
   } else {
@@ -302,10 +300,10 @@ function getResolvableStateXValue<T>(
 
 function getStateXValue<T>(
   store: StateX,
-  path: Path,
+  node: Node<NodeData<T>>,
   props?: Options,
 ): Readonly<T> {
-  const value = getResolvableStateXValue<T>(store, path, props);
+  const value = getResolvableStateXValue<T>(store, node, props);
   if (isResolvable(value)) {
     return value.resolve();
   }
@@ -324,13 +322,14 @@ function registerStateX<T>(
     if (val === undefined) {
       store.trackAndMutate(node, pathOrAtom.defaultValue);
     }
-  } else if (pathOrAtom instanceof Selector) {
-    if (node.data.selector !== pathOrAtom) {
-      node.data.selector = pathOrAtom;
-      if (isSelectorNode(node)) {
-        // re-initialize selector to cleanup existing subscriptions
-        node.data.initialized = false;
-      }
+  } else if (
+    pathOrAtom instanceof Selector &&
+    node.data.selector !== pathOrAtom
+  ) {
+    node.data.selector = pathOrAtom;
+    if (isSelectorNode(node)) {
+      // re-initialize selector to cleanup existing subscriptions
+      node.data.initialized = false;
     }
   }
 }
@@ -349,12 +348,13 @@ function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
       path = pathOrAtom;
     }
     const node = getNode<V>(store, path);
+    // register the atom or selector to populate the empty state with default value
     registerStateX(store, pathOrAtom, node);
     // collect all the nodes being accessed
     if (nodes) {
       nodes.add(getNode(store, path));
     }
-    const value = getStateXValue<V>(store, path, options);
+    const value = getStateXValue<V>(store, node, options);
 
     if (isResolvable(value)) {
       return value.resolve();
@@ -378,6 +378,7 @@ function makeSet(store: StateX) {
       path = pathOrAtom;
     }
     const node = getNode<V>(store, path);
+    // register the atom or selector to populate the empty state with default value
     registerStateX(store, pathOrAtom, node);
     return setStateXValue<V>(store, node, value, options);
   };
