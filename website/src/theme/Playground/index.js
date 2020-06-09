@@ -8,12 +8,11 @@
 import * as React from 'react';
 import { LiveProvider, LiveEditor, LiveError, LivePreview } from 'react-live';
 import clsx from 'clsx';
-import { useStateXValue } from '@cloudio/statex';
 import styles from './styles.module.css';
 import Accordion from './Accordion';
+import LiveStateX from './LiveStateX';
 
 function Playground({ children, theme, open = false, ...props }) {
-  const state = useStateXValue([], {});
   const [expanded, setExpanded] = React.useState(open);
 
   const transformCode = React.useCallback((code) => {
@@ -37,16 +36,7 @@ function Playground({ children, theme, open = false, ...props }) {
       <Accordion expanded={expanded}>
         <LiveEditor className={styles.playgroundEditor} />
       </Accordion>
-      <div
-        className={clsx(
-          styles.playgroundHeader,
-          styles.playgroundPreviewHeader,
-        )}>
-        State
-      </div>
-      <div className={styles.playgroundPreview}>
-        {JSON.stringify(state, null, '  ')}
-      </div>
+      <LiveStateX />
       <div
         className={clsx(
           styles.playgroundHeader,

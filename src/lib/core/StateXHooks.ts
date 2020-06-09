@@ -384,7 +384,7 @@ function selector<T>(props: SelectorProps<T>): Selector<T> {
 function useStateXValueRemover<T>(
   pathOrAtom: Path | Atom<T>,
   options?: Options,
-): Dispatch<T> {
+): () => Readonly<T> {
   let path: Path;
   if (pathOrAtom instanceof Atom) {
     path = pathOrAtom.path;
@@ -406,19 +406,19 @@ function useStateXValueRemover<T>(
 function useRemoveStateX<T>(
   atom: Atom<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [Readonly<T>, () => Readonly<T>];
 
 function useRemoveStateX<T>(
-  atom: Path,
+  path: Path,
   defaultValue: T,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [Readonly<T>, () => Readonly<T>];
 
 function useRemoveStateX<T>(
   pathOrAtom: Path | Atom<T>,
   defaultOrOptions?: T | StateXOptions<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>] {
+): [Readonly<T>, () => Readonly<T>] {
   let defaultValue: T;
   if (pathOrAtom instanceof Atom) {
     defaultValue = pathOrAtom.defaultValue;

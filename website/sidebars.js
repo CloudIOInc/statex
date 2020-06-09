@@ -24,6 +24,7 @@ module.exports = {
       'api-reference/core/useStateX',
       'api-reference/core/useStateXValue',
       'api-reference/core/useStateXValueSetter',
+      'api-reference/core/useStateXValueGetter',
       'api-reference/core/useRemoveStateX',
       'api-reference/core/useStateXCallback',
       'api-reference/core/useStateXValueResolveable',

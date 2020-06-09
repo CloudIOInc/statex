@@ -4,9 +4,29 @@ title: useRemoveStateX()
 
 Returns a function that will delete the value of the given state.
 
-- `state`: a [`path`](path) or [`atom`](atom)
+```jsx title="useRemoveStateX(atom)"
+function useRemoveStateX<T>(
+  atom: Atom<T>,
+  options?: StateXOptions<T>,
+): [Readonly<T>, () => Readonly<T>];
+```
+
+```jsx title="useRemoveStateX(path)"
+function useRemoveStateX<T>(
+  path: Path,
+  defaultValue: T,
+  options?: StateXOptions<T>,
+): [Readonly<T>, () => Readonly<T>];
+```
 
 > Use `useStateXValueRemover()` to just remove the state without reading it's value.
+>
+> ```jsx
+> function useStateXValueRemover<T>(
+>   pathOrAtom: Path | Atom<T>,
+>   options?: Options,
+> ): () => Readonly<T>
+> ```
 
 ### Demo
 

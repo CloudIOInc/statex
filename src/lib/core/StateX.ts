@@ -277,7 +277,7 @@ function removeStateXValue<T>(
   store: StateX,
   pathWithParams: Path,
   options?: Options,
-): T {
+): Readonly<T> {
   const path = applyParamsToPath(pathWithParams, options?.params);
   return _removeIn(store, path);
 }
