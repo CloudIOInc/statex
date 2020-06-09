@@ -226,13 +226,13 @@ const todoListStatsState = selector({
 
 const ToDoList = memo(() => {
   return (
-    <div style={{ padding: 40 }}>
+    <>
       <TodoListStats />
       <TodoListFilters />
       <TodoItemCreator />
       <TodoList />
       <JSONPreview />
-    </div>
+    </>
   );
 });
 

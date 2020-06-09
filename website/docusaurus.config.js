@@ -37,6 +37,10 @@ module.exports = {
               label: 'Getting Started',
               to: '/docs/',
             },
+            {
+              label: 'GitHub',
+              href: 'https://github.com/CloudIOInc/statex',
+            },
           ],
         },
         {
@@ -62,10 +66,6 @@ module.exports = {
             {
               label: 'Blog',
               href: 'https://cloudio.io/resources/',
-            },
-            {
-              label: 'GitHub',
-              href: 'https://github.com/CloudIOInc/statex',
             },
           ],
         },

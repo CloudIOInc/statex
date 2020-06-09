@@ -108,12 +108,19 @@ return <><FontButton/><Text/></>;
 
 ## Selectors
 
-A **selector** is a pure function that accepts atoms or other selectors as input. When these upstream atoms or selectors are updated, the selector function will be re-evaluated. Components can subscribe to selectors just like atoms, and will then be re-rendered when the selectors change.
+A **selector** is a pure function that accepts atoms or other selectors as input. 
+When these upstream atoms or selectors are updated, the selector function will be re-evaluated. 
+Components can subscribe to selectors just like atoms, and will then be re-rendered when the selectors change.
 
-Selectors are used to calculate derived data that is based on state. This lets us avoid redundant state, usually obviating the need for reducers to keep state in sync and valid. Instead, a minimal set of state is stored in atoms, while everything else is efficiently computed as a function of that minimal state. Since selectors keep track of what components need them and what state they depend on, they make this functional approach more efficient.
+Selectors are used to calculate derived data that is based on state. This lets us avoid redundant 
+state, usually obviating the need for reducers to keep state in sync and valid. Instead, a minimal 
+set of state is stored in atoms, while everything else is efficiently computed as a function of 
+that minimal state. Since selectors keep track of what components need them and what state they 
+depend on, they make this functional approach more efficient.
 
-From the point of view of components, selectors and atoms have the same interface and can therefore be substituted for one another.
-
+From the point of view of components, selectors and atoms have the same interface and can 
+therefore be substituted for one another.
+ 
 Selectors are defined using the `selector` function:
 
 ```javascript
@@ -128,11 +135,22 @@ const fontSizeLabelStateX = selector({
 });
 ```
 
-The `get` property is the function that is to be computed. It can access the value of any path, atoms and other selectors using the `get` argument passed to it. Whenever it accesses another path, atom or selector, a dependency relationship is created such that updating the other atom or selector will cause this one to be recomputed.
+The `get` property is the function that is to be computed. It can access 
+the value of any path, atoms and other selectors using the `get` argument 
+passed to it. Whenever it accesses another path, atom or selector, a 
+dependency relationship is created such that updating the other atom or 
+selector will cause this one to be recomputed.
 
-In this `['fontSizeLabelStateX']` example, the selector has one dependency: the `['fontSizeStateX']` atom. Conceptually, the `['fontSizeLabelStateX']` selector behaves like a pure function that takes a `['fontSizeStateX']` as input and returns a formatted font size label as output.
+In this `['fontSizeLabelStateX']` example, the selector has one dependency: 
+the `['fontSizeStateX']` atom. Conceptually, the `['fontSizeLabelStateX']` 
+selector behaves like a pure function that takes a `['fontSizeStateX']` as 
+input and returns a formatted font size label as output.
 
-Selectors can be read using `useStateXValue()`, which takes a, path, atom or selector as an argument and returns the corresponding value. We don't use the `useStateX()` as the `fontSizeLabelStateX` selector is not writeable (see the [selector API reference](/docs/api-reference/core/selector) for more information on writeable selectors):
+Selectors can be read using `useStateXValue()`, which takes a, path, atom 
+or selector as an argument and returns the corresponding value. We don't 
+use the `useStateX()` as the `fontSizeLabelStateX` selector is not 
+writeable (see the [selector API reference](../api-reference/core/selector) 
+for more information on writeable selectors):
 
 ```jsx
 function FontButton() {

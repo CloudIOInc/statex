@@ -43,12 +43,12 @@ Returns writeable StateX state.
 
 The following hooks can be used to interact with atoms:
 
-- [`useStateX()`](useStateX): use this hook when you intend on both reading and writing to the atom. This hook subscribes the component to the atom.
-- [`useStateXValue()`](useStateXValue): use this hook when you intend on only reading the atom. This hook subscribes the component to the atom.
-- [`useStateXValueSetter()`](useStateXValueSetter): use this hook when you intend on only writing to the atom.
-- [`useRemoveStateX()`](useRemoveStateX): use this hook to remove an atom from the global state.
+- [useStateX()](useStateX): use this hook when you intend on both reading and writing to the atom. This hook subscribes the component to the atom.
+- [useStateXValue()](useStateXValue): use this hook when you intend on only reading the atom. This hook subscribes the component to the atom.
+- [useStateXValueSetter()](useStateXValueSetter): use this hook when you intend on only writing to the atom.
+- [useRemoveStateX()](useRemoveStateX): use this hook to remove an atom from the global state.
 
-For rare cases where you need to read an atom value without subscribing to the component, see [`useStateXValueGetterWithPath()`](useStateXValueGetterWithPath).
+For rare cases where you need to read an atom value without subscribing to the component, see [useStateXValueGetter()](useStateXValueGetter).
 
 ### Example
 

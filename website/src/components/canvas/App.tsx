@@ -11,7 +11,7 @@ import Canvas from './Canvas';
 import { StateXProvider } from '@cloudio/statex';
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
 import Settings from './Settings';
-import { theme } from '../Theme';
+import useTheme from '../Theme';
 import { ThemeProvider } from '@material-ui/core';
 
 const style: React.CSSProperties = {
@@ -22,6 +22,7 @@ const style: React.CSSProperties = {
 };
 
 export default function App() {
+  const theme = useTheme();
   return ExecutionEnvironment.canUseDOM ? (
     <StateXProvider>
       <ThemeProvider theme={theme}>

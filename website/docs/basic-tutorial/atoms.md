@@ -18,13 +18,13 @@ We give our atom a unique `path` and set the `defaultValue` to an empty array. T
 ```jsx
 const ToDoList = memo(() => {
   return (
-    <div style={{ padding: 40 }}>
+    <>
       {/* <TodoListStats /> */}
       {/* <TodoListFilters /> */}
       <TodoItemCreator />
       <TodoList />
       <JSONPreview />
-    </div>
+    </>
   );
 });
 ```
@@ -57,7 +57,7 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type='text' value={inputValue} onChange={onChange} />
+      <input type="text" value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
@@ -105,10 +105,10 @@ And with that we've got a fully functional todo list! In the next section we'll 
 
 ```jsx live
 const initialTodos = [
-  { id: 1, text: 'Path' },
-  { id: 2, text: 'StateX' },
-  { id: 3, text: 'Selector' },
-  { id: 4, text: 'Hooks' },
+  { id: 100, text: 'Learn Javascript', isComplete: true },
+  { id: 101, text: 'Learn React', isComplete: true },
+  { id: 102, text: "Use CloudIO's StateX" },
+  { id: 103, text: 'Launch Product' },
 ];
 
 const todoList = atom({
@@ -118,13 +118,13 @@ const todoList = atom({
 
 function ToDoList() {
   return (
-    <div style={{ padding: 40 }}>
+    <>
       {/* <TodoListStats />
       <TodoListFilters /> */}
       <TodoItemCreator />
       <TodoList />
       {/* <JSONPreview /> */}
-    </div>
+    </>
   );
 }
 
@@ -161,7 +161,7 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type='text' value={inputValue} onChange={onChange} />
+      <input type="text" value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
@@ -190,7 +190,7 @@ function TodoItem({ index }) {
   );
 }
 
-let id = initialTodos.length + 1;
+let id = 104;
 function getId() {
   return id++;
 }

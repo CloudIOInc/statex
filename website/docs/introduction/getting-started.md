@@ -6,7 +6,7 @@ sidebar_label: Getting Started
 
 ## Create React App
 
-StateX is a state management library for React, so you need to have React installed and running to use StateX. The easiest and recommended way for bootstrapping a React application is to use [Create React App](https://github.com/facebook/create-react-app#creating-an-app):
+StateX is a state management library for React, so you need to have React installed and running to use StateX. The easiest and recommended way for bootstrapping a React application is to use <a href="https://github.com/facebook/create-react-app#creating-an-app" target="_blank">Create React App</a>
 
 ```shell
 npx create-react-app my-statex
@@ -14,7 +14,7 @@ npx create-react-app my-statex
 
 > `npx` is a package runner tool that comes with npm 5.2+ and higher.
 
-For more ways to install Create React App, see the [official documentation](https://github.com/facebook/create-react-app#creating-an-app).
+For more ways to install Create React App, see the <a href="https://github.com/facebook/create-react-app#creating-an-app" target="_blank">official documentation</a>.
 
 ## Installation
 
@@ -32,7 +32,7 @@ yarn add @cloudio/statex
 
 ## Provider
 
-Components that use atom state need `StateXProvider` to appear somewhere in the parent tree. A good place to put this is in your root component:
+Components that use atom state need **StateXProvider** to appear somewhere in the parent tree. A good place to put this is in your root component:
 
 ```jsx
 import React from 'react';
@@ -121,11 +121,7 @@ We can use also use just the path, without having to define an atom, to read or 
 function JSONPayload() {
   const json = useStateXValue(['mystate'], {});
 
-  return (
-    <>
-      <pre>{JSON.stringify(json, null, '  ')}</pre>
-    </>
-  );
+  return <pre>{JSON.stringify(json, null, '  ')}</pre>;
 }
 ```
 
