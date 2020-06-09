@@ -1,6 +1,14 @@
+/**
+ * Copyright (c) CloudIO, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
 module.exports = {
   title: 'StateX',
-  tagline: 'StateX - A React state management library',
+  tagline: 'A state management library for React',
   url: 'https://cloudioinc.github.io/',
   baseUrl: '/statex/',
   favicon: 'img/favicon.ico',

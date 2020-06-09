@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) CloudIO, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
 import React, { Suspense } from 'react';
 import { useStateX, useStateXValue } from '@cloudio/statex';
 import { activeMasterAtom, detailsSelector, masterSelector } from './state';

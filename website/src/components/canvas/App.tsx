@@ -9,6 +9,7 @@
 import React from 'react';
 import Canvas from './Canvas';
 import { StateXProvider } from '@cloudio/statex';
+// @ts-ignore
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
 import Settings from './Settings';
 import useTheme from '../Theme';

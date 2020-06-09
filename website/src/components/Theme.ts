@@ -1,5 +1,14 @@
+/**
+ * Copyright (c) CloudIO, Inc. and its affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
 import { createMuiTheme } from '@material-ui/core/styles';
 import { useMemo } from 'react';
+// @ts-ignore
 import useThemeContext from '@theme/hooks/useThemeContext';
 
 export default function useTheme() {
