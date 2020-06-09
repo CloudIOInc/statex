@@ -52,7 +52,7 @@ import { useStateXStore, StateXProvider } from './StateXContext';
 import { isPath, Collection } from './ImmutableTypes';
 import { Node } from './Trie';
 
-function atom<T>(props: StateXProps<T>): Readonly<Atom<T>> {
+function atom<T>(props: StateXProps<T>): Atom<T> {
   return new Atom(props);
 }
 
@@ -228,7 +228,12 @@ function useStateXValueResolveableInternal<T>(
   );
   let currentValue: T | Resolvable<T>;
   if (pathOrAtom instanceof Selector) {
-    currentValue = selectorValue;
+    if (node !== holderRef.current.node) {
+      // must be due to dynamic path change... discard existing selectorValue
+      currentValue = defaultValue;
+    } else {
+      currentValue = selectorValue;
+    }
   } else {
     currentValue =
       _getIn<T>(store, node, undefined, !!options?.mutableRefObject) ??
