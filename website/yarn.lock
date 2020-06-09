@@ -975,10 +975,12 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@cloudio/statex@^0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.6.tgz#1ac8f6cf5aa64a2c0f4d6c728fb06a682e95b1a1"
-  integrity sha512-URXThx1aHpKPXtwI7/WY4ed8twnft1/3B+qh0ySbnZ0rp3snkRjXKDLFy4lS/QH2rxthi4yT4THR/CgH+p574w==
+"@cloudio/statex@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.7.tgz#19c742d7ad74942f3acb51035bc2068f08459f68"
+  integrity sha512-M5ePSKgrFKy6Hc9izfXrKTF2YalRoF9vZDbwZC3rcWREs9qCAexenvdwXkb+/c4rDGA5z9ofKXB7TyF5gW2EEg==
+  dependencies:
+    clsx "^1.1.1"
 
 "@csstools/convert-colors@^1.4.0":
   version "1.4.0"
@@ -1159,16 +1161,16 @@
     react-router-dom "^5.1.2"
     react-toggle "^4.1.1"
 
-"@docusaurus/theme-live-codeblock@^2.0.0-alpha.39":
-  version "2.0.0-alpha.39"
-  resolved "https://registry.yarnpkg.com/@docusaurus/theme-live-codeblock/-/theme-live-codeblock-2.0.0-alpha.39.tgz#4ffdd5fc8271840641a091dd2adcc9e2c2a423a1"
-  integrity sha512-Z0Eru2QhAuZOSuHuygzjCv2pryIIxI7XC568KG5rtFn11ichtDaLwJkmo14KDPdlcpeF3g4ObTkCaHxOVhaeUA==
+"@docusaurus/theme-live-codeblock@^2.0.0-alpha.56":
+  version "2.0.0-alpha.56"
+  resolved "https://registry.yarnpkg.com/@docusaurus/theme-live-codeblock/-/theme-live-codeblock-2.0.0-alpha.56.tgz#92a558842689048babf68467308af2c9bad3da46"
+  integrity sha512-pWwNBLHGNubrFgNLBcDMomM8MnaHY+yj4012QpqnFHC9cv2W4TTXQoTK7qt7hHso1HdHReGF8hCIswfkJkq6Vg==
   dependencies:
     "@philpl/buble" "^0.19.7"
     classnames "^2.2.6"
-    clipboard "^2.0.4"
+    clipboard "^2.0.6"
     parse-numeric-range "^0.0.2"
-    prism-react-renderer "^1.0.2"
+    prism-react-renderer "^1.1.0"
     react-live "^2.2.1"
 
 "@docusaurus/theme-search-algolia@^2.0.0-alpha.56":
@@ -3094,7 +3096,7 @@ cli-width@^2.0.0:
   resolved "https://registry.yarnpkg.com/cli-width/-/cli-width-2.2.1.tgz#b0433d0b4e9c847ef18868a4ef16fd5fc8271c48"
   integrity sha512-GRMWDxpOB6Dgk2E5Uo+3eEBvtOOlimMmpbFiKuLFnQzYDavtLFY3K5ona41jgN/WdRZtG7utuVSVTL4HbZHGkw==
 
-clipboard@^2.0.0, clipboard@^2.0.4, clipboard@^2.0.6:
+clipboard@^2.0.0, clipboard@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/clipboard/-/clipboard-2.0.6.tgz#52921296eec0fdf77ead1749421b21c968647376"
   integrity sha512-g5zbiixBRk/wyKakSwCKd7vQXDjFnAMGHoEyBogG/bw9kTD9GvdAvaoRR1ALcEzt3pVKxZR0pViekPMIS0QyGg==
@@ -3137,7 +3139,7 @@ clone-response@^1.0.2:
   dependencies:
     mimic-response "^1.0.0"
 
-clsx@^1.0.4:
+clsx@^1.0.4, clsx@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/clsx/-/clsx-1.1.1.tgz#98b3134f9abbdf23b2663491ace13c5c03a73188"
   integrity sha512-6/bPho624p3S2pMyvP5kKBPXnI3ufHLObBFCfgx+LkeR5lg2XYy2hqZqUf45ypD8COn2bhgGJSUE+l5dhNBieA==
@@ -9346,7 +9348,7 @@ pretty-time@^1.1.0:
   resolved "https://registry.yarnpkg.com/pretty-time/-/pretty-time-1.1.0.tgz#ffb7429afabb8535c346a34e41873adf3d74dd0e"
   integrity sha512-28iF6xPQrP8Oa6uxE6a1biz+lWeTOAPKggvjB8HAs6nVMKZwf5bG++632Dx614hIWgUPkgivRfG+a8uAXGTIbA==
 
-prism-react-renderer@^1.0.1, prism-react-renderer@^1.0.2, prism-react-renderer@^1.1.0, prism-react-renderer@^1.1.1:
+prism-react-renderer@^1.0.1, prism-react-renderer@^1.1.0, prism-react-renderer@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/prism-react-renderer/-/prism-react-renderer-1.1.1.tgz#1c1be61b1eb9446a146ca7a50b7bcf36f2a70a44"
   integrity sha512-MgMhSdHuHymNRqD6KM3eGS0PNqgK9q4QF5P0yoQQvpB6jNjeSAi3jcSAz0Sua/t9fa4xDOMar9HJbLa08gl9ug==

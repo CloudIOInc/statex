@@ -7,12 +7,12 @@
 
 import * as React from 'react';
 import { LiveProvider, LiveEditor, LiveError, LivePreview } from 'react-live';
-import classnames from 'classnames';
+import clsx from 'clsx';
 import { useStateXValue } from '@cloudio/statex';
 import styles from './styles.module.css';
 import Accordion from './Accordion';
 
-function Playground({ code, theme, open = false, ...props }) {
+function Playground({ children, theme, open = false, ...props }) {
   const state = useStateXValue([], {});
   const [expanded, setExpanded] = React.useState(open);
 
@@ -21,18 +21,15 @@ function Playground({ code, theme, open = false, ...props }) {
   }, []);
   return (
     <LiveProvider
-      code={code.replace(/\n$/, '')}
+      code={children.replace(/\n$/, '')}
       theme={theme}
       {...props}
       noInline={true}
       transformCode={transformCode}>
       <div
-        className={classnames(
-          styles.playgroundHeader,
-          styles.playgroundEditorHeader,
-        )}
+        className={clsx(styles.playgroundHeader, styles.playgroundEditorHeader)}
         onClick={() => setExpanded((e) => !e)}>
-        StateX Editor{' '}
+        StateX Editor
         {!expanded ? (
           <span style={{ float: 'right' }}>Click to edit this demo</span>
         ) : null}
@@ -41,7 +38,7 @@ function Playground({ code, theme, open = false, ...props }) {
         <LiveEditor className={styles.playgroundEditor} />
       </Accordion>
       <div
-        className={classnames(
+        className={clsx(
           styles.playgroundHeader,
           styles.playgroundPreviewHeader,
         )}>
@@ -51,7 +48,7 @@ function Playground({ code, theme, open = false, ...props }) {
         {JSON.stringify(state, null, '  ')}
       </div>
       <div
-        className={classnames(
+        className={clsx(
           styles.playgroundHeader,
           styles.playgroundPreviewHeader,
         )}>

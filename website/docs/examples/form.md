@@ -11,9 +11,11 @@ In this example, we'll cover atoms, selectors, and the hooks exposed by the Stat
 
 ### Demo
 
-import App from '../../src/components/FormApp';
+import App from '../../src/components/form/App';
 
 <App />
+
+[View this code on github](https://github.com/CloudIOInc/statex/blob/master/website/src/components/form/App.tsx)
 
 ## Code Walkthrough
 

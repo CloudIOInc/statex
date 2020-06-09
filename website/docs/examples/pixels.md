@@ -12,3 +12,5 @@ Click on `Check to mark all` to call setValue on all 20K atoms to mark all cells
 import App from '../../src/components/pixels/App';
 
 <App />
+
+[View this code on github](https://github.com/CloudIOInc/statex/blob/master/website/src/components/pixels/App.tsx)

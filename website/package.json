@@ -14,13 +14,14 @@
     "ncu": "./node_modules/npm-check-updates/bin/ncu"
   },
   "dependencies": {
-    "@cloudio/statex": "^0.0.6",
+    "@cloudio/statex": "^0.0.7",
     "@docusaurus/core": "^2.0.0-alpha.56",
     "@docusaurus/preset-classic": "^2.0.0-alpha.56",
-    "@docusaurus/theme-live-codeblock": "^2.0.0-alpha.39",
+    "@docusaurus/theme-live-codeblock": "^2.0.0-alpha.56",
     "@material-ui/core": "^4.10.1",
     "classnames": "^2.2.6",
     "clipboard": "^2.0.6",
+    "clsx": "^1.1.1",
     "debounce": "^1.2.0",
     "framer-motion": "^1.11.0",
     "my-loaders": "file:./plugins/my-loaders",

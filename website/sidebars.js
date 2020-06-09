@@ -10,7 +10,12 @@ module.exports = {
       'basic-tutorial/atoms',
       'basic-tutorial/selectors',
     ],
-    Examples: ['examples/form', 'examples/performance'],
+    Examples: [
+      'examples/form',
+      'examples/performance',
+      'examples/canvas',
+      'examples/master-detail',
+    ],
     'API Reference': [
       'api-reference/core/StateXProvider',
       'api-reference/core/path',
