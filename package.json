@@ -1,6 +1,6 @@
 {
   "name": "@cloudio/statex",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "StateX - A React state management library",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -88,7 +88,7 @@
   },
   "scripts": {
     "start": "react-app-rewired start",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist && rm -rf website/build && rm -rf website/.docusaurus",
     "build": "yarn clean && yarn emit-types && yarn build:rollup",
     "build:examples": "react-app-rewired build",
     "build:rollup": "rollup -c --compact && node scripts/postbuild.js",
