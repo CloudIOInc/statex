@@ -27,7 +27,9 @@ function isPromise<T>(object: any): object is Promise<T> {
   if (object instanceof Promise) {
     return true;
   }
-  return typeof object === 'object' && typeof object.then === 'function';
+  return (
+    object && typeof object === 'object' && typeof object.then === 'function'
+  );
 }
 
 function isError(object: any): object is Error {
