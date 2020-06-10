@@ -10,7 +10,7 @@ import React, { useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from './Box';
 import DragBox from './DragBox';
-import { useStateXRef, useStateX, useStateXValueGetter } from '@cloudio/statex';
+import { useStateXRef, useStateX, useStateXGetter } from '@cloudio/statex';
 import { v4 as uuid } from 'uuid';
 import { useStateXValue } from '@cloudio/statex';
 import { boxSizeAtom } from './Settings';
@@ -56,7 +56,7 @@ export default function Canvas() {
 
   const classes = useStyles();
   const canvasRef = useStateXRef<HTMLDivElement>(['ui', 'canvas']);
-  const getStateXValue = useStateXValueGetter();
+  const getStateXValue = useStateXGetter();
   const [items, setItems] = useStateX<Record<string, Item>>(
     ['root', 'items'],
     {},

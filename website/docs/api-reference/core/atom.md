@@ -46,7 +46,7 @@ The following hooks can be used to interact with atoms:
 - [useStateXValueSetter()](useStateXValueSetter): use this hook when you intend on only writing to the atom.
 - [useRemoveStateX()](useRemoveStateX): use this hook to remove an atom from the global state.
 
-For rare cases where you need to read an atom value without subscribing to the component, see [useStateXValueGetter()](useStateXValueGetter).
+For rare cases where you need to read an atom value without subscribing to the component, see [useStateXGetter()](useStateXGetter).
 
 ### Example
 

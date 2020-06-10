@@ -76,9 +76,13 @@ export class StateX {
 
   afterSelectorReads() {
     if (this.activeNodes.size) {
-      const log = ['Derived nodes during render...'];
-      this.activeNodes.forEach((count, node) => log.push(node.path.join('.')));
-      this.debug(log.join(', '), 'render');
+      if (process.env.NODE_ENV === 'development') {
+        const log = ['Derived nodes during render...'];
+        this.activeNodes.forEach((count, node) =>
+          log.push(node.path.join('.')),
+        );
+        this.debug(log.join(', '), 'render');
+      }
       // clear all active read nodes
       this.activeNodes.clear();
     }
@@ -96,9 +100,13 @@ export class StateX {
 
   afterStateUpdates() {
     if (this.activeNodes.size) {
-      const log = ['Changed Nodes during update...'];
-      this.activeNodes.forEach((count, node) => log.push(node.path.join('.')));
-      this.debug(log.join(', '), 'event');
+      if (process.env.NODE_ENV === 'development') {
+        const log = ['Changed Nodes during update...'];
+        this.activeNodes.forEach((count, node) =>
+          log.push(node.path.join('.')),
+        );
+        this.debug(log.join(', '), 'event');
+      }
       // clear all active nodes
       this.activeNodes.clear();
     }

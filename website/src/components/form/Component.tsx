@@ -9,7 +9,7 @@
 import React, { useState, Suspense } from 'react';
 import {
   Path,
-  useStateXValueSetter,
+  useStateXSetter,
   useStateXValue,
   useStateXForTextInput,
 } from '@cloudio/statex';
@@ -68,12 +68,11 @@ function TextInput({ path, label, autoFocus }: Props) {
 }
 
 function Clear() {
-  const setFirstName = useStateXValueSetter(firstNameAtom);
-  const setLastName = useStateXValueSetter(lastNamePath);
+  const set = useStateXSetter();
 
   function clear() {
-    setFirstName('');
-    setLastName('');
+    set(firstNameAtom, '');
+    set(lastNamePath, '');
   }
 
   return (

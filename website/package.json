@@ -11,10 +11,10 @@
     "lint": "eslint --cache \"**/*.js\" && stylelint \"**/*.css\"",
     "prettier": "prettier --config .prettierrc --write \"**/*.{js,md}\"",
     "prettier:diff": "prettier --config .prettierrc --list-different \"**/*.{js,md}\"",
-    "ncu": "./node_modules/npm-check-updates/bin/ncu"
+    "ncu": "./node_modules/npm-check-updates/bin/ncu.js"
   },
   "dependencies": {
-    "@cloudio/statex": "^0.0.9",
+    "@cloudio/statex": "^0.0.10",
     "@docusaurus/core": "^2.0.0-alpha.56",
     "@docusaurus/preset-classic": "^2.0.0-alpha.56",
     "@docusaurus/theme-live-codeblock": "^2.0.0-alpha.56",
@@ -42,12 +42,12 @@
     "eslint-config-airbnb": "^18.1.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-header": "^3.0.0",
-    "eslint-plugin-import": "^2.21.1",
+    "eslint-plugin-import": "^2.21.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react": "^7.20.0",
     "eslint-plugin-react-hooks": "^4.0.4",
     "lodash.clonedeep": "^4.5.0",
-    "npm-check-updates": "^6.0.1",
+    "npm-check-updates": "^7.0.0",
     "prettier": "^2.0.5",
     "stylelint": "^13.6.0"
   },

@@ -14,6 +14,16 @@ Or if you're using <a href="https://classic.yarnpkg.com/en/docs/install/" target
 yarn add @cloudio/statex
 ```
 
+### Create React App Tempates
+
+```shell
+yarn create react-app my-app --template statex-typescript
+```
+
+```shell
+yarn create react-app my-statex-app --template statex
+```
+
 ##### TodoMVC App built with create-react-app & StateX
 
 Checkout https://github.com/CloudIOInc/statex-todomvc

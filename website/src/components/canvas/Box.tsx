@@ -8,7 +8,7 @@
 
 import React, { useCallback, memo, MutableRefObject } from 'react';
 import {
-  useStateXValueSetter,
+  useStateXSetter,
   useStateXRefValue,
   useStateX,
   useStateXValue,
@@ -100,7 +100,7 @@ const Box = memo(({ item: initialItem }: Props) => {
   if (!item) {
     throw Error('Missing item!');
   }
-  const setDragItem = useStateXValueSetter<Item>(['root', 'dragItem']);
+  const set = useStateXSetter();
 
   const moveItem = useCallback(
     (id: string, point: Point) => {
@@ -109,11 +109,11 @@ const Box = memo(({ item: initialItem }: Props) => {
           update(canvasRef, item, point, boxSize),
         );
         if (newItem) {
-          setDragItem(newItem);
+          set(['root', 'dragItem'], newItem);
         }
       }
     },
-    [boxSize, canvasRef, setDragItem, setItem],
+    [boxSize, canvasRef, set, setItem],
   );
 
   const onDragStart = useCallback(
@@ -124,11 +124,11 @@ const Box = memo(({ item: initialItem }: Props) => {
           dragging: true,
         }));
         if (item) {
-          setDragItem(item);
+          set(['root', 'dragItem'], item);
         }
       }
     },
-    [boxSize, canvasRef, setDragItem, setItem],
+    [boxSize, canvasRef, set, setItem],
   );
 
   const onDragEnd = useCallback(
@@ -138,10 +138,10 @@ const Box = memo(({ item: initialItem }: Props) => {
           ...update(canvasRef, item, point, boxSize),
           dragging: false,
         }));
-        item && setDragItem(item);
+        item && set(['root', 'dragItem'], item);
       }
     },
-    [boxSize, canvasRef, setDragItem, setItem],
+    [boxSize, canvasRef, set, setItem],
   );
 
   return (

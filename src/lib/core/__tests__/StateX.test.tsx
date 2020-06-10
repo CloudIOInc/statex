@@ -11,7 +11,8 @@ import {
   useStateX,
   atom,
   useWithStateX,
-  useStateXValueGetter,
+  useStateXGetter,
+  useStateXCallback,
 } from '../StateXHooks';
 import { renderHook, act } from '@testing-library/react-hooks';
 import {
@@ -232,11 +233,11 @@ describe('StateX', () => {
     expect(result.current.value).toBe('One 1');
   });
 
-  test('useStateXValueGetter path', () => {
+  test('useStateXGetter path', () => {
     const { result } = renderHook(
       () => {
         useWithStateX({ name: 'Steve' });
-        const get = useStateXValueGetter();
+        const get = useStateXGetter();
         return get(['name']);
       },
       { wrapper },
@@ -244,11 +245,11 @@ describe('StateX', () => {
     expect(result.current).toBe('Steve');
   });
 
-  test('useStateXValueGetter atom', () => {
+  test('useStateXGetter atom', () => {
     const { result } = renderHook(
       () => {
         const name = atom({ path: ['name'], defaultValue: 'Jobs' });
-        const get = useStateXValueGetter();
+        const get = useStateXGetter();
         return get(name);
       },
       { wrapper },
@@ -265,5 +266,25 @@ describe('StateX', () => {
       { wrapper },
     );
     expect(result.current).toStrictEqual({ name: 'Steve' });
+  });
+
+  test('useStateXCallback', () => {
+    const a = atom({ path: ['a'], defaultValue: {} });
+    const { result } = renderHook(
+      () =>
+        useStateXCallback(({ get, set }) => {
+          set(a, { x: 'y' });
+          return [get(a), get(a)];
+        }, []),
+      {
+        wrapper,
+      },
+    );
+    act(() => {
+      const values = result.current();
+      expect(values[0] === values[1]).toBe(true);
+    });
+    // const values = result.current();
+    // expect(values[0]).toBe(values[1]);
   });
 });

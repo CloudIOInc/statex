@@ -88,7 +88,7 @@
   },
   "scripts": {
     "start": "react-app-rewired start",
-    "clean": "rm -rf dist && rm -rf website/build && rm -rf website/.docusaurus",
+    "clean": "rm -rf dist",
     "build": "yarn clean && yarn emit-types && yarn build:rollup",
     "build:examples": "react-app-rewired build",
     "build:rollup": "rollup -c --compact && node scripts/postbuild.js",

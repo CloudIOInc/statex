@@ -14,6 +14,7 @@ import type {
   Options,
   PathOrStateXOrSelector,
   PathOrStateX,
+  Key,
 } from './StateXTypes';
 import { isResolvable, Resolvable, isSelectorNode } from './StateXTypes';
 import { getIn } from './ImmutableUtils';
@@ -334,19 +335,33 @@ function registerStateX<T>(
   }
 }
 
+function resolvePath<T>(
+  pathOrAtom: PathOrStateXOrSelector<T>,
+  params?: Record<string, Key>,
+): Path {
+  let path: Path;
+  if (pathOrAtom instanceof Atom) {
+    path = pathOrAtom.path;
+  } else if (pathOrAtom instanceof Selector) {
+    path = pathOrAtom.pathWithParams;
+  } else if (Array.isArray(pathOrAtom)) {
+    path = pathOrAtom;
+  } else {
+    throw Error(
+      `Invalid state ${JSON.stringify(
+        pathOrAtom,
+      )}. Must be path or atom or selector.`,
+    );
+  }
+  return applyParamsToPath(path, params);
+}
+
 function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
   return <V>(
     pathOrAtom: PathOrStateXOrSelector<V>,
     options?: Options,
   ): Readonly<V> => {
-    let path: Path;
-    if (pathOrAtom instanceof Selector) {
-      path = applyParamsToPath(pathOrAtom.pathWithParams, options?.params);
-    } else if (pathOrAtom instanceof Atom) {
-      path = applyParamsToPath(pathOrAtom.path, options?.params);
-    } else {
-      path = pathOrAtom;
-    }
+    const path = resolvePath(pathOrAtom, options?.params);
     const node = getNode<V>(store, path);
     // register the atom or selector to populate the empty state with default value
     registerStateX(store, pathOrAtom, node);
@@ -354,12 +369,7 @@ function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
     if (nodes) {
       nodes.add(getNode(store, path));
     }
-    const value = getStateXValue<V>(store, node, options);
-
-    if (isResolvable(value)) {
-      return value.resolve();
-    }
-    return value;
+    return getStateXValue<V>(store, node, options);
   };
 }
 
@@ -369,14 +379,7 @@ function makeSet(store: StateX) {
     value: SetStateAction<V>,
     options?: Options,
   ): Readonly<V> => {
-    let path: Path;
-    if (pathOrAtom instanceof Selector) {
-      path = applyParamsToPath(pathOrAtom.pathWithParams, options?.params);
-    } else if (pathOrAtom instanceof Atom) {
-      path = applyParamsToPath(pathOrAtom.path, options?.params);
-    } else {
-      path = pathOrAtom;
-    }
+    const path = resolvePath(pathOrAtom, options?.params);
     const node = getNode<V>(store, path);
     // register the atom or selector to populate the empty state with default value
     registerStateX(store, pathOrAtom, node);
@@ -385,8 +388,6 @@ function makeSet(store: StateX) {
 }
 
 export {
-  makeGet,
-  makeSet,
   _getIn,
   enterStateX,
   getNode,
@@ -394,7 +395,10 @@ export {
   hasStateXValue,
   inform,
   isResolvable,
+  makeGet,
+  makeSet,
   registerStateX,
   removeStateXValue,
+  resolvePath,
   setStateXValue,
 };

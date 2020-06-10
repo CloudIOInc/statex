@@ -7,47 +7,48 @@
  */
 
 import {
+  DependencyList,
   SetStateAction,
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
-  DependencyList,
 } from 'react';
 import {
   Dispatch,
+  NodeData,
+  Options,
   Path,
+  PathOrStateXOrSelector,
   SelectorProps,
   StateXHolder,
   StateXOptions,
   StateXProps,
-  Options,
-  PathOrStateXOrSelector,
   isSelectorNode,
-  NodeData,
 } from './StateXTypes';
 
 import Atom from './Atom';
 import Selector from './Selector';
 import {
-  isResolvable,
   Resolvable,
-  StateXSetter,
   StateXGetter,
+  StateXSetter,
+  isResolvable,
 } from './StateXTypes';
 import {
   _getIn,
   enterStateX,
   getNode,
-  removeStateXValue,
-  setStateXValue,
-  getStateXValue,
-  registerStateX,
   makeGet,
   makeSet,
+  registerStateX,
+  removeStateXValue,
+  resolvePath,
+  setStateXValue,
 } from './StateX';
-import { emptyFunction, applyParamsToPath } from './StateXUtils';
+import { emptyFunction } from './StateXUtils';
 import { useStateXStore, StateXProvider } from './StateXContext';
 import { isPath, Collection } from './ImmutableTypes';
 import { Node } from './Trie';
@@ -57,31 +58,31 @@ function atom<T>(props: StateXProps<T>): Atom<T> {
   return new Atom(props);
 }
 
-function useStateXValueGetter() {
+function useStateXSetter() {
   const store = useStateXStore();
-  const get = useCallback(
-    <T>(pathOrAtom: PathOrStateXOrSelector<T>, options?: Options) => {
-      let path = resolveParams(pathOrAtom);
-      path = applyParamsToPath(path, options?.params);
-      const node = getNode<T>(store, path);
-      // register the atom or selector to populate the empty state with default value
-      registerStateX(store, pathOrAtom, node);
-      return getStateXValue<T>(store, node, options);
-    },
-    [store],
-  );
-  return get;
+  return useMemo(() => makeSet(store), [store]);
 }
 
-function useStateXCallback<T>(
-  fn: (props: { set: StateXSetter; get: StateXGetter }) => T,
-  deps?: DependencyList,
-) {
+function useStateXGetter() {
+  const store = useStateXStore();
+  return useMemo(() => makeGet(store), [store]);
+}
+
+function useStateXValueGetter() {
+  return useStateXGetter();
+}
+
+function useStateXCallback<P extends ReadonlyArray<unknown>, R>(
+  fn: (props: { set: StateXSetter; get: StateXGetter }, ...args: P) => R,
+  deps: DependencyList,
+): (...args: P) => R {
+  const fnRef = useLatest(fn);
   const store = useStateXStore();
   return useCallback(
-    () => fn({ get: makeGet(store), set: makeSet(store) }),
-    // @ts-ignore
-    [fn, store],
+    (...args: P) =>
+      fnRef.current({ get: makeGet(store), set: makeSet(store) }, ...args),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [...deps, fnRef, store],
   );
 }
 
@@ -89,15 +90,7 @@ function useStateXValueSetter<T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
   options?: Options,
 ): Dispatch<T> {
-  let path: Path;
-  if (pathOrAtom instanceof Atom) {
-    path = pathOrAtom.path;
-  } else if (pathOrAtom instanceof Selector) {
-    path = pathOrAtom.pathWithParams;
-  } else {
-    path = pathOrAtom;
-  }
-  path = applyParamsToPath(path, options?.params);
+  const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
   const node = getNode(store, path);
   const optionsRef = useLatest(options);
@@ -164,8 +157,7 @@ function useStateXValueInternal<T>(
   defaultValue: T,
   options?: StateXOptions<T>,
 ): Readonly<T> {
-  let path = resolveParams(pathOrAtom);
-  path = applyParamsToPath(path, options?.params);
+  const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
   const node = getNode<T>(store, path);
   let value = useStateXValueResolveableInternal(
@@ -184,8 +176,7 @@ function useStateXValueResolveable<T>(
   selector: Selector<T>,
   options?: StateXOptions<T>,
 ): Resolvable<Readonly<T>> {
-  let path = resolveParams(selector);
-  path = applyParamsToPath(path, options?.params);
+  const path = resolvePath(selector, options?.params);
   const store = useStateXStore();
   const node = getNode<T>(store, path);
   const value = useStateXValueResolveableInternal(
@@ -311,18 +302,6 @@ function useStateXValueResolveableInternal<T>(
   return currentValue;
 }
 
-function resolveParams<T>(pathOrAtom: PathOrStateXOrSelector<T>): Path {
-  let path: Path;
-  if (pathOrAtom instanceof Atom) {
-    path = pathOrAtom.path;
-  } else if (pathOrAtom instanceof Selector) {
-    path = pathOrAtom.pathWithParams;
-  } else {
-    path = pathOrAtom;
-  }
-  return path;
-}
-
 function useStateX<T>(
   atom: Atom<T>,
   options?: StateXOptions<T>,
@@ -385,13 +364,7 @@ function useStateXValueRemover<T>(
   pathOrAtom: Path | Atom<T>,
   options?: Options,
 ): () => Readonly<T> {
-  let path: Path;
-  if (pathOrAtom instanceof Atom) {
-    path = pathOrAtom.path;
-  } else {
-    path = pathOrAtom;
-  }
-  path = applyParamsToPath(path, options?.params);
+  const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
   const node = getNode(store, path);
   const optionsRef = useLatest(options);
@@ -478,7 +451,9 @@ export {
   useRemoveStateX,
   useStateX,
   useStateXCallback,
+  useStateXGetter,
   useStateXResolveable,
+  useStateXSetter,
   useStateXValue,
   useStateXValueGetter,
   useStateXValueInternal,

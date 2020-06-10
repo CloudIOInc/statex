@@ -8,13 +8,25 @@ Some motivations for using this hook may include:
 
 - Asynchronously read StateX state without subscribing a React component to re-render if the atom or selector is updated.
 - Defering expensive lookups to an async action that you don't want to do at render-time.
-- Dynamically updating an atom or selector where we may not know at render-time which atom or selector we will want to update so we can't use `useStateXValueSetter()`.
+- Dynamically updating an atom or selector where we may not know at render-time which atom or selector we will want to update.
 
 ```jsx
-function useStateXCallback<T>(
-  fn: (props: { set: StateXSetter, get: StateXGetter }) => T,
-  deps: DependencyList = [],
-): () => T
+function useStateXCallback<P extends ReadonlyArray<unknown>, R>(
+  fn: (props: { set: StateXSetter; get: StateXGetter }, ...args: P) => R,
+  deps: DependencyList,
+): (...args: P) => R;
+```
+
+### Example
+
+```javascript
+const callback = useStateXCallback(({ get }, param1, param2) => {
+  set(atom, 1);
+  const value = get(atom);
+  console.log(value + param1 + param2); // 3
+}, []);
+
+callback(1, 1);
 ```
 
 - **`fn`** - The user callback function with access to set & set to read and/or write to global state
@@ -33,7 +45,7 @@ function CartInfoDebug() {
     const numItemsInCart = get(itemsInCart);
 
     console.log('Items in cart: ', numItemsInCart);
-  });
+  }, []);
 
   return (
     <div>
