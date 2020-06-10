@@ -92,17 +92,12 @@ function useStateXValueSetter<T>(
 ): Dispatch<T> {
   const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
-  const node = getNode(store, path);
+  const node = getNode<T>(store, path);
   const optionsRef = useLatest(options);
 
   const setValue = useCallback(
     (value: SetStateAction<T>) => {
-      try {
-        return setStateXValue(store, node, value, optionsRef.current) as T;
-      } catch (error) {
-        console.error(error);
-        return undefined;
-      }
+      return setStateXValue(store, node, value, optionsRef.current);
     },
     [store, node, optionsRef],
   );
@@ -222,7 +217,7 @@ function useStateXValueResolveableInternal<T>(
   });
 
   const [selectorValue, setSelectorValue] = useState<T | Resolvable<T>>(
-    defaultValue,
+    Resolvable.withValue<T>(node, defaultValue, true),
   );
   let currentValue: T | Resolvable<T>;
   if (pathOrAtom instanceof Selector) {
@@ -366,11 +361,11 @@ function useStateXValueRemover<T>(
 ): () => Readonly<T> {
   const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
-  const node = getNode(store, path);
+  const node = getNode<T>(store, path);
   const optionsRef = useLatest(options);
 
   const removeValue = useCallback(() => {
-    return removeStateXValue(store, node.path, optionsRef.current) as T;
+    return removeStateXValue<T>(store, node.path, optionsRef.current);
   }, [node, optionsRef, store]);
 
   return removeValue;

@@ -130,7 +130,7 @@ export interface UIStateXOptions<T> extends StateXOptions<T> {
   debounce?: number;
 }
 
-export type Dispatch<T> = (value: SetStateAction<T>) => T | undefined;
+export type Dispatch<T> = (value: SetStateAction<T>) => T;
 
 export type StateXGetter = <T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
@@ -149,12 +149,15 @@ export type Select<T> = (props: {
   params?: Record<string, Key>;
 }) => T | Promise<T>;
 
-export type Write<T> = (props: {
-  get: StateXGetter;
-  set: StateXSetter;
-  params?: Record<string, Key>;
-  value: T;
-}) => T;
+export type Write<T> = (
+  props: {
+    get: StateXGetter;
+    set: StateXSetter;
+    params?: Record<string, Key>;
+    value: T;
+  },
+  value: T,
+) => T;
 
 export class Resolvable<T> {
   status: 'pending' | 'resolved' | 'error';
@@ -164,15 +167,25 @@ export class Resolvable<T> {
   cancelled: boolean = false;
   selectorNode: Node<NodeData<T>>;
   self: boolean;
+  readonly isDefault: boolean;
 
-  constructor(selectorNode: Node<NodeData<T>>, self: boolean) {
+  constructor(
+    selectorNode: Node<NodeData<T>>,
+    self: boolean,
+    isDefault = false,
+  ) {
     this.selectorNode = selectorNode;
     this.status = 'pending';
     this.self = self;
+    this.isDefault = isDefault;
   }
 
   clone = () => {
-    const resolvable = new Resolvable(this.selectorNode, this.self);
+    const resolvable = new Resolvable(
+      this.selectorNode,
+      this.self,
+      this.isDefault,
+    );
     resolvable.value = this.value;
     resolvable.status = this.status;
     resolvable.promise = this.promise;
@@ -181,8 +194,12 @@ export class Resolvable<T> {
     return resolvable;
   };
 
-  static withValue<T>(selectorNode: Node<NodeData<T>>, value: T) {
-    const resolvable = new Resolvable(selectorNode, true);
+  static withValue<T>(
+    selectorNode: Node<NodeData<T>>,
+    value: T,
+    isDefault = false,
+  ) {
+    const resolvable = new Resolvable(selectorNode, true, isDefault);
     resolvable.value = value;
     resolvable.status = 'resolved';
     return resolvable;

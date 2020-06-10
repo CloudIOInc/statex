@@ -215,19 +215,24 @@ function _setIn<T>(
   store.activateNode(node, 'update', value);
   let newValue: T;
   let returnValue: T;
+  let oldValue;
   if (isSelectorNode(node)) {
-    returnValue = node.data.selector.setValue(store, node, value as T, options);
+    oldValue = node.data.selectorValue ?? node.data.selector.defaultValue;
   } else {
-    const oldValue = _getIn<T>(store, node);
-    if (isSetStateActionValue(value)) {
-      newValue = value;
-    } else {
-      newValue = value(oldValue);
-    }
-    if (newValue === oldValue) {
-      // do nothing
-      return oldValue;
-    }
+    oldValue = _getIn<T>(store, node);
+  }
+  if (isSetStateActionValue(value)) {
+    newValue = value;
+  } else {
+    newValue = value(oldValue);
+  }
+  if (newValue === oldValue) {
+    // do nothing
+    return oldValue;
+  }
+  if (isSelectorNode(node)) {
+    returnValue = node.data.selector.setValue(store, node, newValue, options);
+  } else {
     if (typeof node.data.atom?.updater === 'function') {
       store.beforeAtomUpdater(node);
       newValue = node.data.atom.updater({

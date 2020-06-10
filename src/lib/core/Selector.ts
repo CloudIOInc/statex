@@ -187,12 +187,15 @@ export default class Selector<T> implements SelectorInterface<T> {
   ): T => {
     try {
       store.beforeSelectorSet(selectorNode);
-      return this._set({
-        set: makeSet(store),
-        get: makeGet(store),
-        params: options?.params,
+      return this._set(
+        {
+          set: makeSet(store),
+          get: makeGet(store),
+          params: options?.params,
+          value,
+        },
         value,
-      });
+      );
     } catch (error) {
       store.catch(error);
       throw error;
