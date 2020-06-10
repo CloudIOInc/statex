@@ -975,12 +975,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@cloudio/statex@^0.0.10":
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.10.tgz#df7c0a153f6df505019e5de536c93669d8de11a4"
-  integrity sha512-QgYvmnu14ueyXNBixqbw9mroSIKliKmuaNSJEq1wZbYRhzGwvTD7sOSqgJkLEgJK9dPipEieGZC1EpYs3Nx6vg==
-  dependencies:
-    clsx "^1.1.1"
+"@cloudio/statex@^0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.12.tgz#3c6c55e2e62ee3dcd55445f83ffb60fde36364c5"
+  integrity sha512-SXNrA7pyb1Znca9TkMafhev2DXKgAsDRoVxKHrwvv7BeZ0q7ZibMfvaq12CiUQ+qMnqngg6h1DAKQ+1BXI09PQ==
 
 "@csstools/convert-colors@^1.4.0":
   version "1.4.0"
@@ -7878,10 +7876,10 @@ npm-bundled@^1.1.1:
   dependencies:
     npm-normalize-package-bin "^1.0.1"
 
-npm-check-updates@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/npm-check-updates/-/npm-check-updates-7.0.0.tgz#326609863fc81d455860f212c82ab992fe2c2d49"
-  integrity sha512-Fk/jcMMmRBgL++YBVpXd+6AiYjvv3T8HjwHMQslQyS+8L0hq0oxclCxyCMR6bSXb2X+pzcAhV8GbZCQ+C836YA==
+npm-check-updates@^7.0.1:
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/npm-check-updates/-/npm-check-updates-7.0.1.tgz#ba85756f4e8c34261d9a0a17b0a951c9c2279b50"
+  integrity sha512-z/i1nhxW1OJ2a8wZtm92PS+4vCZ5Y5d86pLDPJScWf8G3vTYJlxd11UqUymnaZWK2nYPMmgxnneAKnFGODDxjw==
   dependencies:
     chalk "^4.1.0"
     cint "^8.2.1"
