@@ -23,6 +23,7 @@ module.exports = {
       'examples/performance',
       'examples/canvas',
       'examples/master-detail',
+      'examples/todomvc',
     ],
     'API Reference': [
       'api-reference/core/StateXProvider',
