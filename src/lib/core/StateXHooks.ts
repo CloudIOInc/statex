@@ -220,22 +220,52 @@ function useStateXValueResolveableInternal<T>(
     Resolvable.withValue<T>(node, defaultValue, true),
   );
   let currentValue: T | Resolvable<T>;
+  let usedDefaultValue = false;
   if (pathOrAtom instanceof Selector) {
     if (node !== holderRef.current.node) {
       // must be due to dynamic path change... discard existing selectorValue
       currentValue = defaultValue;
+      usedDefaultValue = true;
     } else {
       currentValue = selectorValue;
     }
   } else {
-    currentValue =
-      _getIn<T>(store, node, undefined, !!options?.mutableRefObject) ??
-      defaultValue;
+    currentValue = _getIn<T>(
+      store,
+      node,
+      undefined,
+      !!options?.mutableRefObject,
+    );
+    if (currentValue === undefined && defaultValue !== undefined) {
+      currentValue = defaultValue;
+      // prevent calling onChange callback for default values
+      node.data.lastKnownValue = defaultValue;
+      store.trackAndMutate(node, defaultValue);
+      usedDefaultValue = true;
+      store.addToPendingWithoutSchedule(node.path, 'default');
+    }
   }
 
   const ref = useRef({ defaultValue, options, currentValue });
 
-  const [, setValueInternal] = useState<T | Resolvable<T>>(currentValue);
+  const [value, setValueInternal] = useState<T | Resolvable<T>>(currentValue);
+
+  useEffect(() => {
+    if (usedDefaultValue) {
+      if (isSelectorNode(node)) {
+        if (
+          isResolvable(selectorValue) &&
+          selectorValue.isDefault &&
+          selectorValue.value !== defaultValue
+        ) {
+          setSelectorValue(Resolvable.withValue<T>(node, defaultValue, true));
+        }
+      } else if (value !== defaultValue) {
+        setValueInternal(defaultValue);
+      }
+      store.addToPending(node.path, 'update');
+    }
+  }, [defaultValue, value, node, selectorValue, store, usedDefaultValue]);
 
   const setValue = useCallback(
     (value: T) => {
@@ -275,12 +305,15 @@ function useStateXValueResolveableInternal<T>(
         !!options?.mutableRefObject,
       );
       if (currentValue === undefined) {
-        if (defaultValue !== undefined && defaultValue !== null) {
+        // this should never happen as we are calling store.trackAndMutate
+        // above during render for updating the store with default value
+        if (defaultValue !== undefined) {
           setValue(defaultValue);
           if (!node.data.selector) {
-            setStateXValue(store, node, defaultValue, {
-              mutableRefObject: !!options?.mutableRefObject,
-            });
+            node.data.lastKnownValue = defaultValue;
+            // prevent calling onChange callback for default values
+            store.trackAndMutate(node, defaultValue);
+            store.addToPending(node.path, 'update');
           }
         }
       } else {
@@ -415,6 +448,7 @@ function useWithStateX(state: Collection) {
   const firstRun = useRef(true);
   if (firstRun.current) {
     firstRun.current = false;
+    store.trie().reset();
     store.setState(setIn(store.getState(), [], state));
   }
   useEffect(() => {
@@ -423,7 +457,6 @@ function useWithStateX(state: Collection) {
       ref.current = state;
     }
   }, [setValue, state]);
-  return null;
 }
 
 function useDebug() {

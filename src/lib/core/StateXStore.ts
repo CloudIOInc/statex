@@ -87,6 +87,11 @@ export class StateX {
       this.activeNodes.clear();
     }
     this.lastLogItem = undefined;
+    if (this.mutatedNodes.size) {
+      // new default values got set during this render
+      this.processTrackedMutates();
+      inform(this);
+    }
     setMutateStateX(true);
   }
 
@@ -164,8 +169,12 @@ export class StateX {
     }
   }
 
-  addToPending(path: Path, action: string) {
+  addToPendingWithoutSchedule(path: Path, action: string) {
     this.pending.push(path);
+  }
+
+  addToPending(path: Path, action: string) {
+    this.addToPendingWithoutSchedule(path, action);
     this.updateSchedule();
     this.postUpdateSchedule();
   }

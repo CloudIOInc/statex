@@ -14,13 +14,14 @@ import {
   useStateXGetter,
   useStateXCallback,
 } from '../StateXHooks';
+import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import {
   useStateXRef,
   useStateXRefValue,
   useStateXForTextInput,
 } from '../StateXUIHooks';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useRef, memo } from 'react';
 import { StateXProvider } from '../StateXContext';
 
 let wrapper: React.FunctionComponent<{}>;
@@ -286,5 +287,28 @@ describe('StateX', () => {
     });
     // const values = result.current();
     // expect(values[0]).toBe(values[1]);
+  });
+
+  test('default value order', () => {
+    const Child = memo(function Child() {
+      const ref = useRef(0);
+      ref.current += 1;
+      const value = useStateXValue(['parent', 'x'], 0);
+      return (
+        <>
+          x{ref.current}={value}
+        </>
+      );
+    });
+    function Parent() {
+      const [, setValue] = useStateX(['parent'], { x: 10, y: 10 });
+      useEffect(() => {
+        setValue({ x: 20, y: 20 });
+      }, [setValue]);
+      return <Child />;
+    }
+
+    const { getByText } = render(<Parent />, { wrapper });
+    expect(!!getByText('x2=20')).toBe(true);
   });
 });

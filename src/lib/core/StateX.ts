@@ -83,15 +83,38 @@ function enterStateX<T>(
   };
 }
 
+function _addParentNodes(
+  store: StateX,
+  node: Node<NodeData<any>>,
+  nodes: Set<Node<NodeData<any>>>,
+) {
+  const parentNodes = store.trie().getAllParentNodes(node.path);
+  const length = parentNodes.length;
+  let parentNode: Node<NodeData<any>>;
+  for (let j = 0; j < length; j++) {
+    parentNode = parentNodes[j];
+    if (!nodes.has(parentNode)) {
+      nodes.add(parentNode);
+    } else {
+      // parents already exists
+      break;
+    }
+  }
+}
+
 function getDirtyNodes(store: StateX) {
   const nodes = new Set<Node<NodeData<any>>>();
-  let length: number;
   let node: Node<NodeData<any>>;
-  let parentNode: Node<NodeData<any>>;
-  let j: number;
   store.getPendingPaths().forEach((path) => {
     node = store.trie().getNode(path);
     if (!isNodeDirty(store, node)) {
+      if (
+        node.parent &&
+        !nodes.has(node.parent) &&
+        isNodeDirty(store, node.parent)
+      ) {
+        _addParentNodes(store, node, nodes);
+      }
       return;
     }
     nodes.add(node);
@@ -99,17 +122,7 @@ function getDirtyNodes(store: StateX) {
       .trie()
       .getAllChildNodes(path, (node) => isNodeDirty(store, node));
     dirtyChildren.forEach(nodes.add, nodes);
-    const parentNodes = store.trie().getAllParentNodes(path);
-    length = parentNodes.length;
-    for (j = 0; j < length; j++) {
-      parentNode = parentNodes[j];
-      if (!nodes.has(parentNode)) {
-        nodes.add(parentNode);
-      } else {
-        // parents already exists
-        break;
-      }
-    }
+    _addParentNodes(store, node, nodes);
   });
   return nodes;
 }
@@ -125,6 +138,7 @@ function inform<T>(store: StateX) {
     // nodes.forEach((n) => store.debug(n.path.join('.'), 'inform'));
   }
   let total = 0;
+  const informedNodes: Node<NodeData<any>>[] = [];
   nodes.forEach((node) => {
     if (!isSelectorNode(node)) {
       const value = _getIn<T>(store, node);
@@ -152,6 +166,7 @@ function inform<T>(store: StateX) {
               if (resolvable || shouldUpdate) {
                 total++;
                 holder.setter(resolvable ? resolvable : value);
+                informedNodes.push(holder.node);
               }
               if (!resolvable) {
                 // Do we need to call onChange
@@ -184,7 +199,12 @@ function inform<T>(store: StateX) {
     }
   });
   if (process.env.NODE_ENV === 'development') {
-    store.debug('Triggered re-render for ' + total + ' components...');
+    store.debug(
+      'Triggered re-render for ' +
+        total +
+        ' components... ' +
+        informedNodes.map((node) => node.path.join('.')).join(', '),
+    );
   }
 }
 
@@ -327,6 +347,7 @@ function registerStateX<T>(
     const val = getIn(store.getState(), node.path, undefined);
     if (val === undefined) {
       store.trackAndMutate(node, pathOrAtom.defaultValue);
+      store.addToPendingWithoutSchedule(node.path, 'default');
     }
   } else if (
     pathOrAtom instanceof Selector &&

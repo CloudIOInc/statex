@@ -25,6 +25,10 @@ export default class Trie<T> {
     this.root = this._createNode('_ROOT_');
   }
 
+  reset = () => {
+    this.root = this._createNode('_ROOT_');
+  };
+
   private _createNode = (key: Key, parent?: Node<T>): Node<T> => {
     const node: Node<T> = {
       children: {},

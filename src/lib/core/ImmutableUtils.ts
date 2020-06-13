@@ -84,7 +84,7 @@ function update<C>(
       return arraySet(
         collection,
         key,
-        updater(collection.length > key ? collection[key] : null),
+        updater(collection.length > key ? collection[key] : undefined),
       );
     } else {
       throw Error(`Invalid key ${String(key)}. Must be of type number.`);
@@ -114,7 +114,7 @@ function get(collection: any, key: Key): any {
   if (isObjectCollection(collection)) {
     return collection[key];
   }
-  return null;
+  return undefined;
 }
 
 function getInInternal(
@@ -131,7 +131,7 @@ function getInInternal(
   }
   const oldNestedValue = get(collection, key);
   if (isNull(oldNestedValue)) {
-    return null;
+    return undefined;
   }
   if (!isObjectCollection(oldNestedValue)) {
     console.error(collection, path, pathIndex);
@@ -146,7 +146,7 @@ function getInInternal(
 
 function getIn(collection: any, path: Path, defaultValue: any): any {
   const value = getInInternal(collection, path, 0);
-  if (isNull(value)) {
+  if (value === undefined) {
     return defaultValue;
   }
   return value;
@@ -204,7 +204,7 @@ function insert<C>(
       const right = collection.slice(key);
       return ([...left, updater(collection[key]), ...right] as unknown) as C;
     } else if (key === collection.length) {
-      return ([...collection, updater(null)] as unknown) as C;
+      return ([...collection, updater(undefined)] as unknown) as C;
     }
     throw Error(`Index out of bound! Index ${key}. Size ${collection.length}.`);
   }
@@ -331,7 +331,7 @@ function removeInInternal<C>(collection: C, path: Path, pathIndex: number): C {
   }
   const oldNestedValue = get(collection, key);
   let nestedValue: Collection;
-  if (oldNestedValue === null || oldNestedValue === undefined) {
+  if (isNull(oldNestedValue)) {
     return collection;
   } else {
     nestedValue = toCollection(
