@@ -40,8 +40,10 @@ import { StateXProvider } from '@cloudio/statex';
 
 function App() {
   return (
+    // highlight-next-line
     <StateXProvider>
       <CharacterCounter />
+      // highlight-next-line
     </StateXProvider>
   );
 }
