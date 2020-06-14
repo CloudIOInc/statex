@@ -275,6 +275,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     selectorNode.data.previousNodes.forEach((node) => {
       // must be conditionally avoided... no need to watch the atom anymore
       selectorNode.data.unregisterMap.get(node)?.();
+      selectorNode.data.unregisterMap.delete(node);
     });
     selectorNode.data.previousNodes = nodes;
 

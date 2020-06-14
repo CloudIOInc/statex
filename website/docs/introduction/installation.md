@@ -4,25 +4,56 @@ title: Installation
 
 The StateX package lives in <a href="https://www.npmjs.com/get-npm" target="_blank">npm</a>. To install the latest stable version, run the following command:
 
-```shell
-npm install @cloudio/statex
-```
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-Or if you're using <a href="https://classic.yarnpkg.com/en/docs/install/" target="_blank">yarn</a>:
+<Tabs
+defaultValue="yarn"
+values={[
+{ label: 'Yarn', value: 'yarn', },
+{ label: 'NPM', value: 'npm', },
+]
+}>
+<TabItem value="yarn">
 
-```shell
+```bash {1}
 yarn add @cloudio/statex
 ```
 
+</TabItem>
+<TabItem value="npm">
+
+```bash {1}
+npm install --save @cloudio/statex
+```
+
+</TabItem>
+</Tabs>
+
 ### Create React App Tempates
 
-```shell
+<Tabs
+defaultValue="Typescript"
+values={[
+{ label: 'Typescript', value: 'Typescript', },
+{ label: 'Javascript', value: 'Javascript', },
+]
+}>
+<TabItem value="Typescript">
+
+```bash {1}
 yarn create react-app my-app --template statex-typescript
 ```
 
-```shell
-yarn create react-app my-statex-app --template statex
+</TabItem>
+<TabItem value="Javascript">
+
+```bash {1}
+yarn create react-app my-app --template statex
 ```
+
+</TabItem>
+</Tabs>
 
 ##### TodoMVC App built with create-react-app & StateX
 

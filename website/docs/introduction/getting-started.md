@@ -20,30 +20,42 @@ For more ways to install Create React App, see the <a href="https://github.com/f
 
 The StateX package lives in <a href="https://www.npmjs.com/get-npm" target="_blank">npm</a>. To install the latest stable version, run the following command:
 
-```shell
-npm install @cloudio/statex
-```
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-Or if you're using <a href="https://classic.yarnpkg.com/en/docs/install/" target="_blank">yarn</a>:
+<Tabs
+defaultValue="yarn"
+values={[
+{ label: 'Yarn', value: 'yarn', },
+{ label: 'NPM', value: 'npm', },
+]
+}>
+<TabItem value="yarn">
 
-```shell
+```bash {1}
 yarn add @cloudio/statex
 ```
+
+</TabItem>
+<TabItem value="npm">
+```bash {1}
+npm install --save @cloudio/statex
+```
+</TabItem>
+</Tabs>
 
 ## Provider
 
 Components that use atom state need **StateXProvider** to appear somewhere in the parent tree. A good place to put this is in your root component:
 
-```jsx
+```jsx {6,8}
 import React from 'react';
 import { StateXProvider } from '@cloudio/statex';
 
 function App() {
   return (
-    // highlight-next-line
     <StateXProvider>
       <CharacterCounter />
-      // highlight-next-line
     </StateXProvider>
   );
 }

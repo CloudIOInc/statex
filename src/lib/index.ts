@@ -10,6 +10,8 @@ export * from './core/StateXTypes';
 export {
   StateXProvider,
   atom,
+  Atom,
+  Selector,
   selector,
   useDebug,
   useRemoveStateX,

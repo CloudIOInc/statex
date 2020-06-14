@@ -473,7 +473,9 @@ function useDebug() {
 export {
   StateXProvider,
   atom,
+  Atom,
   selector,
+  Selector,
   useDebug,
   useLatest,
   useRemoveStateX,
