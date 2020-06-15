@@ -12,6 +12,7 @@ export {
   Atom,
   Selector,
   StateXProvider,
+  action,
   atom,
   selector,
   useDebug,
