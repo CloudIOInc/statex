@@ -57,7 +57,7 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type="text" value={inputValue} onChange={onChange} />
+      <input type='text' value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
@@ -72,27 +72,35 @@ function getId() {
 
 Notice we use the **updater** form of the setter function so that we can create a new todo list based on the old todo list.
 
-The `TodoItem` component will display the value of the todo item while allowing you to change its text and delete the item. We use `useStateX()` to read `todoListAtom` and to get a setter function that we use to update the item text, mark it as completed, and delete it:
+The `TodoItem` component will display the value of the todo item while allowing you to change its text and delete the item. We use `useStateX()` to read `todoListAtom` and to get a setter function that we use to update the item text, mark it as completed, and delete it. Note the use of placehoder in the path for index (":index") which is dynamically set to the id of the todo item on component initialization.
 
 ```jsx
 function TodoItem({ id }: { id: number }) {
-  const text = useStateXForTextInput(['todo', 'list', ':id', 'text'], '', {
-    params: { id },
+  const [text, setText] = useStateX(['todo', 'list', ':index', 'text'], '', {
+    params: { index },
   });
-  const isComplete = useStateXForCheckbox(
-    ['todo', 'list', ':id', 'isComplete'],
+  const [isComplete, setIsComplete] = useStateX(
+    ['todo', 'list', ':index', 'isComplete'],
     false,
-    { params: { id } },
+    { params: { index } },
   );
 
-  const deleteItem = useStateXValueRemover(['todo', 'list', ':id'], {
-    params: { id },
+  const deleteItem = useStateXValueRemover(['todo', 'list', ':index'], {
+    params: { index },
   });
 
   return (
     <div>
-      <input {...text} />
-      <input {...isComplete} />
+      <input
+        type='text'
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <input
+        value={isComplete}
+        type='checkbox'
+        onChange={() => setIsComplete(!isComplete)}
+      />
       <button onClick={deleteItem}>X</button>
     </div>
   );
@@ -161,17 +169,17 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type="text" value={inputValue} onChange={onChange} />
+      <input type='text' value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
 }
 
 function TodoItem({ index }) {
-  const text = useStateXForTextInput(['todo', 'list', ':index', 'text'], '', {
+  const [text, setText] = useStateX(['todo', 'list', ':index', 'text'], '', {
     params: { index },
   });
-  const isComplete = useStateXForCheckbox(
+  const [isComplete, setIsComplete] = useStateX(
     ['todo', 'list', ':index', 'isComplete'],
     false,
     { params: { index } },
@@ -183,8 +191,16 @@ function TodoItem({ index }) {
 
   return (
     <div>
-      <input {...text} />
-      <input {...isComplete} />
+      <input
+        type='text'
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <input
+        value={isComplete}
+        type='checkbox'
+        onChange={() => setIsComplete(!isComplete)}
+      />
       <button onClick={deleteItem}>X</button>
     </div>
   );

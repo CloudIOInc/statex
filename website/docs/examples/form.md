@@ -51,14 +51,14 @@ function DynamicField() {
     <div>
       <RadioGroup value={field} onChange={(e, value) => setField(value)} row>
         <FormControlLabel
-          value="firstName"
+          value='firstName'
           control={<Radio />}
-          label="First Name"
+          label='First Name'
         />
         <FormControlLabel
-          value="lastName"
+          value='lastName'
           control={<Radio />}
-          label="Last Name"
+          label='Last Name'
         />
       </RadioGroup>
       // highlight-next-line
@@ -69,20 +69,21 @@ function DynamicField() {
 
 function TextInput({ path, label, autoFocus }: Props) {
   // highlight-next-line
-  const atom = useStateXForTextInput(path, '');
+  const [text, setText] = useStateX(path, '');
 
   return (
     <>
       <TextField
         // highlight-next-line
-        {...atom}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
         autoFocus={autoFocus}
         label={label}
         style={{ margin: 8 }}
         placeholder={label}
         helperText={`@ path [${path.join('.')}]`}
         fullWidth
-        margin="normal"
+        margin='normal'
         InputLabelProps={{
           shrink: true,
         }}
@@ -131,12 +132,11 @@ const fullNameCount = selector({
 });
 
 function FullNameCount() {
-  return (
-    // highlight-next-line
-    <Suspense fallback={<Typography>Loading count...</Typography>}>
-      <FullNameCount />
-    </Suspense>
-  );
+  const count = useStateXValue(fullNameCount);
+  if (count === 0) {
+    return <>...</>;
+  }
+  return <>{count} chars!</>;
 }
 ```
 
@@ -157,7 +157,7 @@ function Clear() {
 
   return (
     <>
-      <Button variant="contained" onClick={clear}>
+      <Button variant='contained' onClick={clear}>
         Clear
       </Button>
     </>
@@ -174,7 +174,7 @@ function ShowState() {
   // highlight-next-line
   const json = useStateXValue(['form'], {});
   return (
-    <Card variant="outlined" color="black">
+    <Card variant='outlined' color='black'>
       <CardContent>
         <pre>{JSON.stringify(json, null, '  ')}</pre>
       </CardContent>
