@@ -80,9 +80,9 @@ function TodoListFilters() {
     <>
       Filter:
       <select value={filter} onChange={updateFilter}>
-        <option value="Show All">All</option>
-        <option value="Show Completed">Completed</option>
-        <option value="Show Uncompleted">Uncompleted</option>
+        <option value='Show All'>All</option>
+        <option value='Show Completed'>Completed</option>
+        <option value='Show Uncompleted'>Uncompleted</option>
       </select>
     </>
   );
@@ -278,17 +278,17 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type="text" value={inputValue} onChange={onChange} />
+      <input type='text' value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
 }
 
 function TodoItem({ index }) {
-  const text = useStateXForTextInput(['todo', 'list', ':index', 'text'], '', {
+  const [text, setText] = useStateX(['todo', 'list', ':index', 'text'], '', {
     params: { index },
   });
-  const isComplete = useStateXForCheckbox(
+  const [isComplete, setIsComplete] = useStateX(
     ['todo', 'list', ':index', 'isComplete'],
     false,
     { params: { index } },
@@ -300,8 +300,16 @@ function TodoItem({ index }) {
 
   return (
     <div>
-      <input {...text} />
-      <input {...isComplete} />
+      <input
+        type='text'
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <input
+        value={isComplete}
+        type='checkbox'
+        onChange={() => setIsComplete(!isComplete)}
+      />
       <button onClick={deleteItem}>X</button>
     </div>
   );
@@ -314,9 +322,9 @@ function TodoListFilters() {
     <>
       Filter:
       <select {...filter}>
-        <option value="Show All">All</option>
-        <option value="Show Completed">Completed</option>
-        <option value="Show Uncompleted">Uncompleted</option>
+        <option value='Show All'>All</option>
+        <option value='Show Completed'>Completed</option>
+        <option value='Show Uncompleted'>Uncompleted</option>
       </select>
     </>
   );
