@@ -17,7 +17,6 @@ import React, {
   useMemo,
 } from 'react';
 import { setMutateStateX } from './StateXUtils';
-import { Collection } from './ImmutableTypes';
 import { StateX } from './StateXStore';
 
 const StateXContext = createContext<MutableRefObject<StateX>>({
@@ -94,7 +93,7 @@ function StateXPostScheduler({
 }
 
 interface Props {
-  initialState?: Collection;
+  initialState?: any;
   children: any;
   handleError?: (error: any) => void;
 }

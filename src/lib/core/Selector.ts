@@ -17,11 +17,16 @@ import {
   Write,
   isResolvable,
 } from './StateXTypes';
-import { Resolvable, StateXSetter, Options } from './StateXTypes';
+import {
+  Resolvable,
+  StateXSetter,
+  Options,
+  StateXRemover,
+} from './StateXTypes';
 import type { Node } from './Trie';
 import type { Path, Key } from './ImmutableTypes';
 import { isPromise, applyParamsToPath } from './StateXUtils';
-import { enterStateX, getNode, makeGet, makeSet } from './StateX';
+import { enterStateX, getNode, makeGet, makeSet, makeRemove } from './StateX';
 import { StateX } from './StateXStore';
 
 function notWritableSelector<T>(): T {
@@ -36,10 +41,7 @@ export default class Selector<T> implements SelectorInterface<T> {
   params = new Map();
   pathWithParams: Path;
   defaultValue: T;
-  shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
-  ) => boolean;
+  shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
 
   constructor({
     path,
@@ -123,17 +125,18 @@ export default class Selector<T> implements SelectorInterface<T> {
     props: {
       get: StateXGetter;
       set: StateXSetter;
+      remove: StateXRemover;
       options?: Options;
     },
   ): T | Resolvable<T> => {
-    const { get, set, options } = props;
+    const { get, set, remove, options } = props;
     const path = applyParamsToPath(this.pathWithParams, options?.params);
     const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
     let value: T | Promise<T>;
     store.activateNode(selectorNode, 'read');
     store.beforeSelectorGet(selectorNode);
     try {
-      value = this._get({ get, set, params: options?.params });
+      value = this._get({ get, set, remove, params: options?.params });
     } catch (errorOrPromise) {
       return this.makeResolvable(
         store,
@@ -191,6 +194,7 @@ export default class Selector<T> implements SelectorInterface<T> {
         {
           set: makeSet(store),
           get: makeGet(store),
+          remove: makeRemove(store),
           params: options?.params,
           value,
         },
@@ -261,6 +265,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     const value = this._evaluate(store, {
       get: makeGet(store, nodes),
       set: makeSet(store),
+      remove: makeRemove(store),
       options,
     });
     nodes.forEach((node) => {

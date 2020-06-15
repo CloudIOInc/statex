@@ -8,14 +8,16 @@
 
 export * from './core/StateXTypes';
 export {
-  StateXProvider,
-  atom,
+  Action,
   Atom,
   Selector,
+  StateXProvider,
+  atom,
   selector,
   useDebug,
   useRemoveStateX,
   useStateX,
+  useStateXAction,
   useStateXCallback,
   useStateXGetter,
   useStateXResolveable,

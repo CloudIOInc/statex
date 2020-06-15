@@ -135,7 +135,7 @@ export function applyParamsToPath(
     }
   });
   const missingParams = path.filter(
-    (key) => typeof key === 'string' && key.indexOf(':') !== -1,
+    (key) => typeof key === 'string' && key.charAt(0) === ':',
   );
   if (missingParams.length) {
     throw Error(

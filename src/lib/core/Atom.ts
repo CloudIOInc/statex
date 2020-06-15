@@ -13,19 +13,16 @@ import { StateXGetter, StateXSetter } from './StateXTypes';
 export default class Atom<T> {
   readonly path: Path;
   readonly defaultValue: T;
-  shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
-  ) => boolean;
+  shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
   updater?: (props: {
     value: T;
-    oldValue: Readonly<T>;
+    oldValue: T;
     get: StateXGetter;
     set: StateXSetter;
   }) => T;
   onChange?: (props: {
-    value: Readonly<T>;
-    oldValue: Readonly<T>;
+    value: T;
+    oldValue: T;
     get: StateXGetter;
     set: StateXSetter;
   }) => void;

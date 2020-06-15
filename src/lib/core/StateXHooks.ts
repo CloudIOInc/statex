@@ -27,6 +27,7 @@ import {
   StateXOptions,
   StateXProps,
   isSelectorNode,
+  ActionFunction,
 } from './StateXTypes';
 
 import Atom from './Atom';
@@ -53,6 +54,7 @@ import { useStateXStore, StateXProvider } from './StateXContext';
 import { isPath, Collection } from './ImmutableTypes';
 import { Node } from './Trie';
 import { setIn } from './ImmutableUtils';
+import Action from './Action';
 
 function atom<T>(props: StateXProps<T>): Atom<T> {
   return new Atom(props);
@@ -105,27 +107,24 @@ function useStateXValueSetter<T>(
   return setValue;
 }
 
-function useStateXValue<T>(
-  atom: Atom<T>,
-  options?: StateXOptions<T>,
-): Readonly<T>;
+function useStateXValue<T>(atom: Atom<T>, options?: StateXOptions<T>): T;
 
 function useStateXValue<T>(
   selector: Selector<T>,
   options?: StateXOptions<T>,
-): Readonly<T>;
+): T;
 
 function useStateXValue<T>(
   pathOrAtom: Path,
   defaultValue: T,
   options?: StateXOptions<T>,
-): Readonly<T>;
+): T;
 
 function useStateXValue<T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
   defaultOrOptions?: T | StateXOptions<T>,
   options?: StateXOptions<T>,
-): Readonly<T> {
+): T {
   let defaultValue: T;
   if (pathOrAtom instanceof Atom) {
     defaultValue = pathOrAtom.defaultValue;
@@ -151,7 +150,7 @@ function useStateXValueInternal<T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
   defaultValue: T,
   options?: StateXOptions<T>,
-): Readonly<T> {
+): T {
   const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
   const node = getNode<T>(store, path);
@@ -170,7 +169,7 @@ function useStateXValueInternal<T>(
 function useStateXValueResolveable<T>(
   selector: Selector<T>,
   options?: StateXOptions<T>,
-): Resolvable<Readonly<T>> {
+): Resolvable<T> {
   const path = resolvePath(selector, options?.params);
   const store = useStateXStore();
   const node = getNode<T>(store, path);
@@ -191,7 +190,7 @@ function useStateXValueResolveable<T>(
 function useStateXResolveable<T>(
   selector: Selector<T>,
   options?: StateXOptions<T>,
-): [Resolvable<Readonly<T>>, Dispatch<T>] {
+): [Resolvable<T>, Dispatch<T>] {
   const value = useStateXValueResolveable(selector, options);
   const setValue = useStateXValueSetter<T>(selector, options);
   return [value, setValue];
@@ -202,7 +201,7 @@ function useStateXValueResolveableInternal<T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
   defaultValue: T,
   options?: StateXOptions<T>,
-): Readonly<T> | Resolvable<Readonly<T>> {
+): T | Resolvable<T> {
   const store = useStateXStore();
   // register the atom or selector to populate the empty state with default value
   registerStateX(store, pathOrAtom, node);
@@ -333,24 +332,24 @@ function useStateXValueResolveableInternal<T>(
 function useStateX<T>(
   atom: Atom<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [T, Dispatch<T>];
 
 function useStateX<T>(
   selector: Selector<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [T, Dispatch<T>];
 
 function useStateX<T>(
   path: Path,
   defaultValue: T,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [T, Dispatch<T>];
 
 function useStateX<T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
   defaultOrOptions?: T | StateXOptions<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>] {
+): [T, Dispatch<T>] {
   let defaultValue: T;
   if (pathOrAtom instanceof Atom) {
     defaultValue = pathOrAtom.defaultValue;
@@ -388,10 +387,19 @@ function selector<T>(props: SelectorProps<T>): Selector<T> {
   return new Selector(props);
 }
 
+function action<T>(fn: ActionFunction<T>): Action<T> {
+  return new Action<T>(fn);
+}
+
+function useStateXAction<T>(action: Action<T>) {
+  const store = useStateXStore();
+  return (value: T) => action.execute(store, value);
+}
+
 function useStateXValueRemover<T>(
   pathOrAtom: Path | Atom<T>,
   options?: Options,
-): () => Readonly<T> {
+): () => T {
   const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
   const node = getNode<T>(store, path);
@@ -407,19 +415,19 @@ function useStateXValueRemover<T>(
 function useRemoveStateX<T>(
   atom: Atom<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, () => Readonly<T>];
+): [T, () => T];
 
 function useRemoveStateX<T>(
   path: Path,
   defaultValue: T,
   options?: StateXOptions<T>,
-): [Readonly<T>, () => Readonly<T>];
+): [T, () => T];
 
 function useRemoveStateX<T>(
   pathOrAtom: Path | Atom<T>,
   defaultOrOptions?: T | StateXOptions<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, () => Readonly<T>] {
+): [T, () => T] {
   let defaultValue: T;
   if (pathOrAtom instanceof Atom) {
     defaultValue = pathOrAtom.defaultValue;
@@ -471,15 +479,18 @@ function useDebug() {
 }
 
 export {
-  StateXProvider,
-  atom,
+  Action,
   Atom,
-  selector,
   Selector,
+  StateXProvider,
+  action,
+  atom,
+  selector,
   useDebug,
   useLatest,
   useRemoveStateX,
   useStateX,
+  useStateXAction,
   useStateXCallback,
   useStateXGetter,
   useStateXResolveable,

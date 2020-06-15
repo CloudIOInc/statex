@@ -96,7 +96,7 @@ export default class Trie<T> {
     }
   };
 
-  getAllParentNodes = (path: Path): Readonly<Node<T>>[] => {
+  getAllParentNodes = (path: Path): Node<T>[] => {
     const nodes: Node<T>[] = [];
     this._collectAllParentNodes(nodes, this.getNode(path));
     return nodes;
@@ -120,7 +120,7 @@ export default class Trie<T> {
   getAllChildNodes = (
     path: Path,
     filter?: (node: Node<T>) => boolean,
-  ): Readonly<Node<T>>[] => {
+  ): Node<T>[] => {
     const nodes: Node<T>[] = [];
     this._collectAllChildNodes(this.getNode(path), nodes, filter);
     return nodes;

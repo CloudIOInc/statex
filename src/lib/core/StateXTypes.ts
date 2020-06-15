@@ -23,28 +23,31 @@ export interface SelectorProps<T> {
   defaultValue: T;
   get: Select<T>;
   set?: Write<T>;
-  shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
-  ) => boolean;
+  shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
 }
+
+export type ActionFunction<T> = (
+  props: {
+    get: StateXGetter;
+    set: StateXSetter;
+    remove: StateXRemover;
+  },
+  value: T,
+) => void;
 
 export interface StateXProps<T> {
   path: Path;
   defaultValue: T;
-  shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
-  ) => boolean;
+  shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
   updater?: (props: {
     value: T;
-    oldValue: Readonly<T>;
+    oldValue: T;
     get: StateXGetter;
     set: StateXSetter;
   }) => T;
   onChange?: (props: {
-    value: Readonly<T>;
-    oldValue: Readonly<T>;
+    value: T;
+    oldValue: T;
     get: StateXGetter;
     set: StateXSetter;
   }) => void;
@@ -52,13 +55,10 @@ export interface StateXProps<T> {
 
 export interface StateXHolder<T> {
   setter: Setter;
-  shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
-  ) => boolean;
+  shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
   onChange?: (props: {
-    value: Readonly<T>;
-    oldValue?: Readonly<T>;
+    value: T;
+    oldValue?: T;
     get: StateXGetter;
     set: StateXSetter;
   }) => void;
@@ -111,13 +111,10 @@ export interface Options {
 }
 
 export interface StateXOptions<T> extends Options {
-  shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
-  ) => boolean;
+  shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
   onChange?: (props: {
-    value: Readonly<T>;
-    oldValue?: Readonly<T>;
+    value: T;
+    oldValue?: T;
     get: StateXGetter;
     set: StateXSetter;
   }) => void;
@@ -135,17 +132,20 @@ export type Dispatch<T> = (value: SetStateAction<T>) => T;
 export type StateXGetter = <T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
   props?: Options,
-) => Readonly<T>;
+) => T;
 
 export type StateXSetter = <V>(
-  path: PathOrStateX<V>,
+  path: PathOrStateXOrSelector<V>,
   value: SetStateAction<V>,
   options?: Options,
-) => Readonly<V>;
+) => V;
+
+export type StateXRemover = <V>(path: PathOrStateX<V>, options?: Options) => V;
 
 export type Select<T> = (props: {
   get: StateXGetter;
   set: StateXSetter;
+  remove: StateXRemover;
   params?: Record<string, Key>;
 }) => T | Promise<T>;
 
@@ -153,6 +153,7 @@ export type Write<T> = (
   props: {
     get: StateXGetter;
     set: StateXSetter;
+    remove: StateXRemover;
     params?: Record<string, Key>;
     value: T;
   },
