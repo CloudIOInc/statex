@@ -16,6 +16,7 @@ import {
   StateXHolder,
   Write,
   isResolvable,
+  StateXRefGetter,
 } from './StateXTypes';
 import {
   Resolvable,
@@ -26,7 +27,14 @@ import {
 import type { Node } from './Trie';
 import type { Path, Key } from './ImmutableTypes';
 import { isPromise, applyParamsToPath } from './StateXUtils';
-import { enterStateX, getNode, makeGet, makeSet, makeRemove } from './StateX';
+import {
+  enterStateX,
+  getNode,
+  makeGet,
+  makeSet,
+  makeRemove,
+  makeGetRef,
+} from './StateX';
 import { StateX } from './StateXStore';
 
 function notWritableSelector<T>(): T {
@@ -126,19 +134,20 @@ export default class Selector<T> implements SelectorInterface<T> {
     store: StateX,
     props: {
       get: StateXGetter;
+      getRef: StateXRefGetter;
       set: StateXSetter;
       remove: StateXRemover;
       options?: Options;
     },
   ): T | Resolvable<T> => {
-    const { get, set, remove, options } = props;
+    const { get, getRef, set, remove, options } = props;
     const path = applyParamsToPath(this.pathWithParams, options?.params);
     const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
     let value: T | Promise<T>;
     store.activateNode(selectorNode, 'read');
     store.beforeSelectorGet(selectorNode);
     try {
-      value = this._get({ get, set, remove, params: options?.params });
+      value = this._get({ get, getRef, set, remove, params: options?.params });
     } catch (errorOrPromise) {
       return this.makeResolvable(
         store,
@@ -197,6 +206,7 @@ export default class Selector<T> implements SelectorInterface<T> {
       return this._set(
         {
           set: makeSet(store),
+          getRef: makeGetRef(store),
           get: makeGet(store),
           remove: makeRemove(store),
           params: options?.params,
@@ -268,6 +278,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     const nodes = new Set<Node<NodeData<any>>>();
     const value = this._evaluate(store, {
       get: makeGet(store, nodes),
+      getRef: makeGetRef(store),
       set: makeSet(store),
       remove: makeRemove(store),
       options,
@@ -325,6 +336,7 @@ export default class Selector<T> implements SelectorInterface<T> {
               value: val,
               oldValue,
               get: makeGet(store),
+              getRef: makeGetRef(store),
               set: makeSet(store),
             });
             store.afterOnChange(holder.node);

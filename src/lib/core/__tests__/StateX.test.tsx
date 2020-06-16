@@ -13,6 +13,8 @@ import {
   useWithStateX,
   useStateXGetter,
   useStateXCallback,
+  action,
+  useStateXAction,
 } from '../StateXHooks';
 import { render, act as ract } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react-hooks';
@@ -321,5 +323,95 @@ describe('StateX', () => {
     });
 
     expect(!!getByText('x2=20')).toBe(true);
+  });
+
+  test('getRef in onChange', () => {
+    const Child = memo(function Child() {
+      const ref = useStateXRef<HTMLInputElement>(['ui', 'ref']);
+      const val = useStateXForTextInput(['ui', 'value'], '');
+
+      return <input ref={ref} {...val} />;
+    });
+    function Parent() {
+      const [, setValue] = useStateX(['ui', 'value'], '', {
+        onChange: ({ set, getRef }) => {
+          const ref = getRef(['ui', 'ref']);
+          // set INPUT
+          set(['ui', 'value'], `onChange has set ${ref?.current?.nodeName}`);
+        },
+      });
+      useEffect(() => {
+        setValue('Test');
+      }, [setValue]);
+      return <Child />;
+    }
+    const { getAllByDisplayValue } = render(<Parent />, { wrapper });
+    ract(() => {
+      jest.runAllTimers();
+    });
+
+    expect(getAllByDisplayValue('onChange has set INPUT').length).toBe(1);
+  });
+
+  test('getRef in updater', () => {
+    const a = atom({
+      path: ['ui', 'value'],
+      defaultValue: '',
+      updater: ({ getRef }) => {
+        const ref = getRef(['ui', 'ref']);
+        // set INPUT
+        return `updater has set ${ref?.current?.nodeName}`;
+      },
+    });
+
+    const Child = memo(function Child() {
+      const ref = useStateXRef<HTMLInputElement>(['ui', 'ref']);
+      const val = useStateXForTextInput(a);
+
+      return <input ref={ref} {...val} />;
+    });
+    function Parent() {
+      const [, setValue] = useStateX(a);
+      useEffect(() => {
+        setValue('Test');
+      }, [setValue]);
+      return <Child />;
+    }
+    const { getAllByDisplayValue } = render(<Parent />, { wrapper });
+    ract(() => {
+      jest.runAllTimers();
+    });
+
+    expect(getAllByDisplayValue('updater has set INPUT').length).toBe(1);
+  });
+
+  test('getRef in action', () => {
+    const a = atom({
+      path: ['ui', 'value'],
+      defaultValue: '',
+    });
+
+    const myAction = action(({ set, getRef }) => {
+      const ref = getRef(['ui', 'ref']);
+      // set INPUT
+      set(a, `myAction has set ${ref?.current?.nodeName}`);
+    });
+
+    function Comp() {
+      const ref = useStateXRef<HTMLInputElement>(['ui', 'ref']);
+      const val = useStateXForTextInput(a);
+      const callMyAction = useStateXAction(myAction);
+      useEffect(() => {
+        callMyAction();
+      }, [callMyAction]);
+      return <input ref={ref} {...val} />;
+    }
+
+    const { getAllByDisplayValue } = render(<Comp />, { wrapper });
+    ract(() => {
+      jest.runAllTimers();
+    });
+
+    expect(getAllByDisplayValue('myAction has set INPUT').length).toBe(1);
   });
 });

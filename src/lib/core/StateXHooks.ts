@@ -11,7 +11,6 @@ import {
   SetStateAction,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -28,6 +27,7 @@ import {
   StateXProps,
   isSelectorNode,
   ActionFunction,
+  StateXRefGetter,
 } from './StateXTypes';
 
 import Atom from './Atom';
@@ -48,6 +48,7 @@ import {
   removeStateXValue,
   resolvePath,
   setStateXValue,
+  makeGetRef,
 } from './StateX';
 import { emptyFunction } from './StateXUtils';
 import { useStateXStore, StateXProvider } from './StateXContext';
@@ -55,6 +56,7 @@ import { isPath, Collection } from './ImmutableTypes';
 import { Node } from './Trie';
 import { setIn } from './ImmutableUtils';
 import Action from './Action';
+import { useLatest } from './StateXUtilHooks';
 
 function atom<T>(props: StateXProps<T>): Atom<T> {
   return new Atom(props);
@@ -70,19 +72,30 @@ function useStateXGetter() {
   return useMemo(() => makeGet(store), [store]);
 }
 
+function useStateXRefGetter() {
+  const store = useStateXStore();
+  return useMemo(() => makeGetRef(store), [store]);
+}
+
 function useStateXValueGetter() {
   return useStateXGetter();
 }
 
 function useStateXCallback<P extends ReadonlyArray<unknown>, R>(
-  fn: (props: { set: StateXSetter; get: StateXGetter }, ...args: P) => R,
+  fn: (
+    props: { set: StateXSetter; get: StateXGetter; getRef: StateXRefGetter },
+    ...args: P
+  ) => R,
   deps: DependencyList,
 ): (...args: P) => R {
   const fnRef = useLatest(fn);
   const store = useStateXStore();
   return useCallback(
     (...args: P) =>
-      fnRef.current({ get: makeGet(store), set: makeSet(store) }, ...args),
+      fnRef.current(
+        { get: makeGet(store), set: makeSet(store), getRef: makeGetRef(store) },
+        ...args,
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [...deps, fnRef, store],
   );
@@ -373,25 +386,15 @@ function useStateX<T>(
   return [value, setValue];
 }
 
-function useLatest<T>(value: T) {
-  const ref = useRef(value);
-
-  useLayoutEffect(() => {
-    ref.current = value;
-  }, [value]);
-
-  return ref;
-}
-
 function selector<T>(props: SelectorProps<T>): Selector<T> {
   return new Selector(props);
 }
 
-function action<T>(fn: ActionFunction<T>): Action<T> {
-  return new Action<T>(fn);
+function action<T = void, R = void>(fn: ActionFunction<T, R>): Action<T, R> {
+  return new Action<T, R>(fn);
 }
 
-function useStateXAction<T>(action: Action<T>) {
+function useStateXAction<T = void, R = void>(action: Action<T, R>) {
   const store = useStateXStore();
   return (value: T) => action.execute(store, value);
 }
@@ -487,12 +490,12 @@ export {
   atom,
   selector,
   useDebug,
-  useLatest,
   useRemoveStateX,
   useStateX,
   useStateXAction,
   useStateXCallback,
   useStateXGetter,
+  useStateXRefGetter,
   useStateXResolveable,
   useStateXSetter,
   useStateXValue,

@@ -80,7 +80,7 @@ function useStateXRefValue<T extends HTMLElement>(
   path: Path,
 ): MutableRefObject<T | null> | undefined {
   const store = useStateXStore();
-  const node = getNode(store, path);
+  const node = getNode<T>(store, path);
   return node.data.ref;
 }
 

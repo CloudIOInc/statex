@@ -8,7 +8,7 @@
 
 import type { Path, Key } from './ImmutableTypes';
 import type { Node } from './Trie';
-import type { SetStateAction } from 'react';
+import type { SetStateAction, MutableRefObject } from 'react';
 import Atom from './Atom';
 import Selector from './Selector';
 import { StateX } from './StateXStore';
@@ -26,14 +26,15 @@ export interface SelectorProps<T> {
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
 }
 
-export type ActionFunction<T> = (
+export type ActionFunction<T, R> = (
   props: {
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
     remove: StateXRemover;
   },
   value: T,
-) => void;
+) => R;
 
 export interface StateXProps<T> {
   path: Path;
@@ -43,12 +44,14 @@ export interface StateXProps<T> {
     value: T;
     oldValue: T;
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
   }) => T;
   onChange?: (props: {
     value: T;
     oldValue: T;
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
   }) => void;
 }
@@ -60,6 +63,7 @@ export interface StateXHolder<T> {
     value: T;
     oldValue?: T;
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
   }) => void;
   holding?: boolean;
@@ -116,6 +120,7 @@ export interface StateXOptions<T> extends Options {
     value: T;
     oldValue?: T;
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
   }) => void;
 }
@@ -140,10 +145,15 @@ export type StateXSetter = <V>(
   options?: Options,
 ) => V;
 
+export type StateXRefGetter = <T extends HTMLElement>(
+  path: Path,
+) => MutableRefObject<T | null> | undefined;
+
 export type StateXRemover = <V>(path: PathOrStateX<V>, options?: Options) => V;
 
 export type Select<T> = (props: {
   get: StateXGetter;
+  getRef: StateXRefGetter;
   set: StateXSetter;
   remove: StateXRemover;
   params?: Record<string, Key>;
@@ -152,6 +162,7 @@ export type Select<T> = (props: {
 export type Write<T> = (
   props: {
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
     remove: StateXRemover;
     params?: Record<string, Key>;

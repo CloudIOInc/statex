@@ -7,22 +7,23 @@
  */
 
 import { ActionFunction } from './StateXTypes';
-import { makeGet, makeSet, makeRemove } from './StateX';
+import { makeGet, makeSet, makeRemove, makeGetRef } from './StateX';
 import { StateX } from './StateXStore';
 
-export default class Action<T> {
-  private readonly fn: ActionFunction<T>;
+export default class Action<T, R> {
+  private readonly fn: ActionFunction<T, R>;
 
-  constructor(fn: ActionFunction<T>) {
+  constructor(fn: ActionFunction<T, R>) {
     this.fn = fn;
   }
 
-  execute = (store: StateX, value: T) => {
+  execute = (store: StateX, value: T): R => {
     try {
-      this.fn(
+      return this.fn(
         {
           set: makeSet(store),
           get: makeGet(store),
+          getRef: makeGetRef(store),
           remove: makeRemove(store),
         },
         value,

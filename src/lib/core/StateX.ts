@@ -6,7 +6,7 @@
  *
  */
 
-import type { SetStateAction } from 'react';
+import type { SetStateAction, MutableRefObject } from 'react';
 import type {
   NodeData,
   Path,
@@ -178,6 +178,7 @@ function inform<T>(store: StateX) {
                     oldValue: lastKnownValue,
                     get: makeGet(store),
                     set: makeSet(store),
+                    getRef: makeGetRef(store),
                   });
                   store.afterOnChange(holder.node);
                 }
@@ -191,6 +192,7 @@ function inform<T>(store: StateX) {
             value,
             oldValue: lastKnownValue,
             get: makeGet(store),
+            getRef: makeGetRef(store),
             set: makeSet(store),
           });
           store.afterAtomOnChange(node);
@@ -259,6 +261,7 @@ function _setIn<T>(
         value: newValue,
         oldValue,
         get: makeGet(store),
+        getRef: makeGetRef(store),
         set: makeSet(store),
       });
       store.afterAtomUpdater(node);
@@ -396,6 +399,15 @@ function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
   };
 }
 
+function makeGetRef(store: StateX) {
+  return <T extends HTMLElement>(
+    path: Path,
+  ): MutableRefObject<T | null> | undefined => {
+    const node = getNode<T>(store, path);
+    return node.data.ref;
+  };
+}
+
 function makeSet(store: StateX) {
   return <V>(
     pathOrAtomOrSelector: PathOrStateXOrSelector<V>,
@@ -429,6 +441,7 @@ export {
   inform,
   isResolvable,
   makeGet,
+  makeGetRef,
   makeRemove,
   makeSet,
   registerStateX,

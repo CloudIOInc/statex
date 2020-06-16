@@ -6,7 +6,7 @@
  *
  */
 
-import type { StateXProps } from './StateXTypes';
+import type { StateXProps, StateXRefGetter } from './StateXTypes';
 import { Path } from './ImmutableTypes';
 import { StateXGetter, StateXSetter } from './StateXTypes';
 
@@ -18,12 +18,14 @@ export default class Atom<T> {
     value: T;
     oldValue: T;
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
   }) => T;
   onChange?: (props: {
     value: T;
     oldValue: T;
     get: StateXGetter;
+    getRef: StateXRefGetter;
     set: StateXSetter;
   }) => void;
 
