@@ -115,8 +115,7 @@ export class StateX {
       // clear all active nodes
       this.activeNodes.clear();
     }
-    this.renderSchedule();
-    this.postRenderSchedule();
+    this._scheduleRead();
     this.processTrackedMutates();
     inform(this);
   }
@@ -151,19 +150,24 @@ export class StateX {
       );
     }
     this.activeNodes.set(node, ++count);
+    this.scheduleForUpdate(node, action);
+  }
+
+  _renderTimeout: NodeJS.Timeout = (0 as unknown) as NodeJS.Timeout;
+  _updateTimeout: NodeJS.Timeout = (0 as unknown) as NodeJS.Timeout;
+
+  scheduleForUpdate(node: Node<NodeData<any>>, action: string) {
     switch (action) {
       case 'read':
-        this.renderSchedule();
-        this.postRenderSchedule();
+        this._scheduleRead();
         break;
       default:
-        this.updateSchedule();
-        this.postUpdateSchedule();
+        this._scheduleUpdate();
         if (this.rendering) {
           const log = `WARNING: Trying to ${action} $${node.path.join(
             '.',
           )} during render!`;
-          this.debug(log, action);
+          console.warn(log, action);
         }
         break;
     }
@@ -173,10 +177,29 @@ export class StateX {
     this.pending.push(path);
   }
 
+  _scheduleRead() {
+    // defer updating state to batch all state updates into a single render
+    this._renderTimeout && clearTimeout(this._renderTimeout);
+    this._renderTimeout = setTimeout(() => {
+      delete this._renderTimeout;
+      this.renderSchedule();
+      this.postRenderSchedule();
+    }, 1);
+  }
+
+  _scheduleUpdate() {
+    // defer updating state to batch all state updates into a single render
+    this._updateTimeout && clearTimeout(this._updateTimeout);
+    this._updateTimeout = setTimeout(() => {
+      delete this._updateTimeout;
+      this.updateSchedule();
+      this.postUpdateSchedule();
+    }, 1);
+  }
+
   addToPending(path: Path, action: string) {
     this.addToPendingWithoutSchedule(path, action);
-    this.updateSchedule();
-    this.postUpdateSchedule();
+    this._scheduleUpdate();
   }
 
   trie() {
