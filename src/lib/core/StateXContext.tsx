@@ -17,7 +17,7 @@ import React, {
   useMemo,
 } from 'react';
 import { setMutateStateX } from './StateXUtils';
-import { StateX } from './StateXStore';
+import { StateX, notInAContext } from './StateXStore';
 
 const StateXContext = createContext<MutableRefObject<StateX>>({
   current: new StateX(),
@@ -65,6 +65,13 @@ function StateXPreScheduler({
     setMutateStateX(false);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      registerPreUpdateScheduler(notInAContext);
+      registerPreRenderScheduler(notInAContext);
+    };
+  }, [registerPreRenderScheduler, registerPreUpdateScheduler]);
+
   return null;
 }
 
@@ -89,6 +96,13 @@ function StateXPostScheduler({
     setMutateStateX(false);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      registerPostUpdateScheduler(notInAContext);
+      registerPostRenderScheduler(notInAContext);
+    };
+  }, [registerPostRenderScheduler, registerPostUpdateScheduler]);
+
   return null;
 }
 
@@ -109,6 +123,9 @@ function StateXProvider({
     [],
   );
   const ref = useRef(stateX);
+  useEffect(() => {
+    return () => stateX.destroy();
+  }, [stateX]);
   return (
     <StateXContext.Provider value={ref}>
       <StateXPreScheduler

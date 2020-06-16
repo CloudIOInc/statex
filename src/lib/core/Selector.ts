@@ -78,6 +78,8 @@ export default class Selector<T> implements SelectorInterface<T> {
       selectorNode.data.resolveable.cancelled = true;
     }
     const resolvable = new Resolvable<T>(selectorNode, self);
+    // remove the previous selectorValue if any
+    delete selectorNode.data.selectorValue;
     if (isPromise(promiseOrError)) {
       resolvable.promise = promiseOrError;
       promiseOrError
@@ -158,6 +160,8 @@ export default class Selector<T> implements SelectorInterface<T> {
       );
     } else {
       selectorNode.data.selectorValue = value;
+      // remove the previous resolveable if any
+      delete selectorNode.data.resolveable;
     }
     return value as T;
   };

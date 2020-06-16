@@ -14,7 +14,7 @@ import { inform } from './StateX';
 import { setIn, setMutate, getIn, removeIn } from './ImmutableUtils';
 import { SetStateAction } from 'react';
 
-function notInAContext(): any {
+export function notInAContext(): any {
   throw new Error(
     'This component must be used inside a <StateXProvider> component.',
   );
@@ -34,7 +34,6 @@ export class StateX {
   }));
   activeNodes = new Map<Node<NodeData<any>>, number>();
   mutatedNodes = new Set<Node<NodeData<any>>>();
-  batching = false;
   pending: Path[] = [];
   state: Collection;
   updateSchedule: () => void = notInAContext;
@@ -184,7 +183,7 @@ export class StateX {
       delete this._renderTimeout;
       this.renderSchedule();
       this.postRenderSchedule();
-    }, 1);
+    }, 0);
   }
 
   _scheduleUpdate() {
@@ -194,7 +193,26 @@ export class StateX {
       delete this._updateTimeout;
       this.updateSchedule();
       this.postUpdateSchedule();
-    }, 1);
+    }, 0);
+  }
+
+  destroy() {
+    this._renderTimeout && clearTimeout(this._renderTimeout);
+    this._updateTimeout && clearTimeout(this._updateTimeout);
+    delete this._renderTimeout;
+    delete this._updateTimeout;
+    this.updateSchedule = notInAContext;
+    this.renderSchedule = notInAContext;
+    this.postUpdateSchedule = notInAContext;
+    this.postRenderSchedule = notInAContext;
+    this._trie.reset();
+    delete this._trie;
+    delete this.state;
+    this.mutatedNodes.clear();
+    delete this.mutatedNodes;
+    this.activeNodes.clear();
+    delete this.activeNodes;
+    delete this.pending;
   }
 
   addToPending(path: Path, action: string) {
@@ -204,15 +222,6 @@ export class StateX {
 
   trie() {
     return this._trie;
-  }
-  startBatch() {
-    this.batching = true;
-  }
-  endBatch() {
-    this.batching = false;
-  }
-  isBatching() {
-    return this.batching;
   }
 
   clearPending() {
