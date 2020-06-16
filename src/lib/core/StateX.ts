@@ -28,6 +28,7 @@ import {
 import { StateX } from './StateXStore';
 import Atom from './Atom';
 import Selector from './Selector';
+import Action from './Action';
 
 function _getIn<T>(
   store: StateX,
@@ -174,11 +175,12 @@ function inform<T>(store: StateX) {
                 if (holder.onChange) {
                   store.beforeOnChange(holder.node);
                   holder.onChange({
-                    value,
-                    oldValue: lastKnownValue,
+                    call: makeCall(store),
                     get: makeGet(store),
-                    set: makeSet(store),
                     getRef: makeGetRef(store),
+                    oldValue: lastKnownValue,
+                    set: makeSet(store),
+                    value,
                   });
                   store.afterOnChange(holder.node);
                 }
@@ -189,11 +191,12 @@ function inform<T>(store: StateX) {
         if (atom?.onChange) {
           store.beforeAtomOnChange(node);
           atom.onChange({
-            value,
-            oldValue: lastKnownValue,
+            call: makeCall(store),
             get: makeGet(store),
             getRef: makeGetRef(store),
+            oldValue: lastKnownValue,
             set: makeSet(store),
+            value,
           });
           store.afterAtomOnChange(node);
         }
@@ -258,11 +261,12 @@ function _setIn<T>(
     if (typeof node.data.atom?.updater === 'function') {
       store.beforeAtomUpdater(node);
       newValue = node.data.atom.updater({
-        value: newValue,
-        oldValue,
+        call: makeCall(store),
         get: makeGet(store),
         getRef: makeGetRef(store),
+        oldValue,
         set: makeSet(store),
+        value: newValue,
       });
       store.afterAtomUpdater(node);
     }
@@ -399,6 +403,12 @@ function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
   };
 }
 
+function makeCall(store: StateX) {
+  return <T = void, R = void>(action: Action<T, R>, value: T): R => {
+    return action.execute(store, value);
+  };
+}
+
 function makeGetRef(store: StateX) {
   return <T extends HTMLElement>(
     path: Path,
@@ -440,6 +450,7 @@ export {
   hasStateXValue,
   inform,
   isResolvable,
+  makeCall,
   makeGet,
   makeGetRef,
   makeRemove,

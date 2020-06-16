@@ -17,6 +17,7 @@ import {
   Write,
   isResolvable,
   StateXRefGetter,
+  StateXActionCaller,
 } from './StateXTypes';
 import {
   Resolvable,
@@ -34,6 +35,7 @@ import {
   makeSet,
   makeRemove,
   makeGetRef,
+  makeCall,
 } from './StateX';
 import { StateX } from './StateXStore';
 
@@ -133,21 +135,29 @@ export default class Selector<T> implements SelectorInterface<T> {
   private _evaluate = (
     store: StateX,
     props: {
+      call: StateXActionCaller;
       get: StateXGetter;
       getRef: StateXRefGetter;
-      set: StateXSetter;
-      remove: StateXRemover;
       options?: Options;
+      remove: StateXRemover;
+      set: StateXSetter;
     },
   ): T | Resolvable<T> => {
-    const { get, getRef, set, remove, options } = props;
+    const { call, get, getRef, set, remove, options } = props;
     const path = applyParamsToPath(this.pathWithParams, options?.params);
     const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
     let value: T | Promise<T>;
     store.activateNode(selectorNode, 'read');
     store.beforeSelectorGet(selectorNode);
     try {
-      value = this._get({ get, getRef, set, remove, params: options?.params });
+      value = this._get({
+        call,
+        get,
+        getRef,
+        params: options?.params,
+        remove,
+        set,
+      });
     } catch (errorOrPromise) {
       return this.makeResolvable(
         store,
@@ -205,11 +215,12 @@ export default class Selector<T> implements SelectorInterface<T> {
       store.beforeSelectorSet(selectorNode);
       return this._set(
         {
-          set: makeSet(store),
-          getRef: makeGetRef(store),
+          call: makeCall(store),
           get: makeGet(store),
-          remove: makeRemove(store),
+          getRef: makeGetRef(store),
           params: options?.params,
+          remove: makeRemove(store),
+          set: makeSet(store),
           value,
         },
         value,
@@ -277,11 +288,12 @@ export default class Selector<T> implements SelectorInterface<T> {
     const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
     const nodes = new Set<Node<NodeData<any>>>();
     const value = this._evaluate(store, {
+      call: makeCall(store),
       get: makeGet(store, nodes),
       getRef: makeGetRef(store),
-      set: makeSet(store),
-      remove: makeRemove(store),
       options,
+      remove: makeRemove(store),
+      set: makeSet(store),
     });
     nodes.forEach((node) => {
       if (!selectorNode.data.previousNodes.has(node)) {
@@ -333,11 +345,12 @@ export default class Selector<T> implements SelectorInterface<T> {
           if (holder.onChange) {
             store.beforeOnChange(holder.node);
             holder.onChange({
-              value: val,
-              oldValue,
+              call: makeCall(store),
               get: makeGet(store),
               getRef: makeGetRef(store),
+              oldValue,
               set: makeSet(store),
+              value: val,
             });
             store.afterOnChange(holder.node);
           }

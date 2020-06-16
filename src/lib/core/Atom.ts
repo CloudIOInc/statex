@@ -8,25 +8,27 @@
 
 import type { StateXProps, StateXRefGetter } from './StateXTypes';
 import { Path } from './ImmutableTypes';
-import { StateXGetter, StateXSetter } from './StateXTypes';
+import { StateXGetter, StateXSetter, StateXActionCaller } from './StateXTypes';
 
 export default class Atom<T> {
   readonly path: Path;
   readonly defaultValue: T;
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
   updater?: (props: {
-    value: T;
-    oldValue: T;
+    call: StateXActionCaller;
     get: StateXGetter;
     getRef: StateXRefGetter;
+    oldValue: T;
     set: StateXSetter;
+    value: T;
   }) => T;
   onChange?: (props: {
-    value: T;
-    oldValue: T;
+    call: StateXActionCaller;
     get: StateXGetter;
     getRef: StateXRefGetter;
+    oldValue: T;
     set: StateXSetter;
+    value: T;
   }) => void;
 
   constructor(props: StateXProps<T>) {

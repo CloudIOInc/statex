@@ -7,7 +7,7 @@
  */
 
 import { ActionFunction } from './StateXTypes';
-import { makeGet, makeSet, makeRemove, makeGetRef } from './StateX';
+import { makeGet, makeSet, makeRemove, makeGetRef, makeCall } from './StateX';
 import { StateX } from './StateXStore';
 
 export default class Action<T, R> {
@@ -24,6 +24,7 @@ export default class Action<T, R> {
           set: makeSet(store),
           get: makeGet(store),
           getRef: makeGetRef(store),
+          call: makeCall(store),
           remove: makeRemove(store),
         },
         value,
