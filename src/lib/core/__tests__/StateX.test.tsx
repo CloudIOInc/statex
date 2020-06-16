@@ -14,7 +14,7 @@ import {
   useStateXGetter,
   useStateXCallback,
 } from '../StateXHooks';
-import { render, fireEvent, waitFor, screen } from '@testing-library/react';
+import { render, act as ract } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import {
   useStateXRef,
@@ -23,6 +23,8 @@ import {
 } from '../StateXUIHooks';
 import React, { ReactNode, useEffect, useRef, memo } from 'react';
 import { StateXProvider } from '../StateXContext';
+
+jest.useFakeTimers();
 
 let wrapper: React.FunctionComponent<{}>;
 describe('StateX', () => {
@@ -75,8 +77,10 @@ describe('StateX', () => {
       },
       { wrapper },
     );
+
     act(() => {
       result.current.setValue(arr);
+      jest.runAllTimers();
     });
 
     expect(result.current.value).toStrictEqual(arr);
@@ -109,6 +113,7 @@ describe('StateX', () => {
     );
     act(() => {
       result.current.setValue('xy');
+      jest.runAllTimers();
     });
     expect(result.current.oc).toMatchObject({ value: 'xy', oldValue: 'ab' });
   });
@@ -119,6 +124,7 @@ describe('StateX', () => {
     });
     act(() => {
       result.current[1]('xy');
+      jest.runAllTimers();
     });
     expect(result.current[0]).toBe('xy');
   });
@@ -152,6 +158,7 @@ describe('StateX', () => {
     );
     act(() => {
       result.current.setRoot({ a: 'x', b: 'y' });
+      jest.runAllTimers();
     });
     expect(result.current.a).toBe('x');
     expect(result.current.b).toBe('y');
@@ -230,6 +237,7 @@ describe('StateX', () => {
     act(() => {
       // @ts-ignore
       result.current.onChange({ target: { value: 'One 1' } });
+      jest.runAllTimers();
     });
     expect(result.current.value).toBe('One 1');
   });
@@ -307,8 +315,11 @@ describe('StateX', () => {
       }, [setValue]);
       return <Child />;
     }
-
     const { getByText } = render(<Parent />, { wrapper });
+    ract(() => {
+      jest.runAllTimers();
+    });
+
     expect(!!getByText('x2=20')).toBe(true);
   });
 });
