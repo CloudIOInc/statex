@@ -57,7 +57,7 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type='text' value={inputValue} onChange={onChange} />
+      <input type="text" value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
@@ -92,13 +92,13 @@ function TodoItem({ id }: { id: number }) {
   return (
     <div>
       <input
-        type='text'
+        type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
       <input
         value={isComplete}
-        type='checkbox'
+        type="checkbox"
         onChange={() => setIsComplete(!isComplete)}
       />
       <button onClick={deleteItem}>X</button>
@@ -169,7 +169,7 @@ function TodoItemCreator() {
 
   return (
     <div>
-      <input type='text' value={inputValue} onChange={onChange} />
+      <input type="text" value={inputValue} onChange={onChange} />
       <button onClick={addItem}>Add</button>
     </div>
   );
@@ -192,14 +192,14 @@ function TodoItem({ index }) {
   return (
     <div>
       <input
-        type='text'
+        type="text"
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
       <input
-        value={isComplete}
-        type='checkbox'
-        onChange={() => setIsComplete(!isComplete)}
+        checked={isComplete}
+        type="checkbox"
+        onChange={(e) => setIsComplete(e.target.checked)}
       />
       <button onClick={deleteItem}>X</button>
     </div>

@@ -22,21 +22,29 @@ Selectors represent **derived state**. You can think of derived state as the out
   - ```tsx title="get: A function that is passed an object as the first parameter containing the following properties:"
     get: StateXGetter;
     set: StateXSetter;
+    call: StateXActionCaller;
+    remove: StateXRemover;
     params?: Record<string, Key>;
     ```
 
     - `get` All atoms/selectors passed to this function will be implicitly added to a list of **dependencies** for the selector. If any of the selector's dependencies change, the selector will re-evaluate.
     - `set` Can be used to set value of other paths/atoms/selectors.
+    - `remove` Can be used to remove value at other paths or atoms.
+    - `call` Can be used to invoke other actions.
     - `params?:` Are the key/value pairs used to evaluate this selector's path with placeholders
 
   - ```tsx title="set?: If this property is set, the selector will return **writeable** state. A function that is passed an object as the first parameter containing the following properties:"
     get: StateXGetter;
     set: StateXSetter;
+    call: StateXActionCaller;
+    remove: StateXRemover;
     params?: Record<string, Key>;
     ```
 
     - `get` a function used to retrieve values from other paths/atoms/selectors. This function will not subscribe the selector to the given atoms/selectors.
     - `set` Can be used to set value of other paths/atoms/selectors.
+    - `remove` Can be used to remove value at other paths or atoms.
+    - `call` Can be used to invoke other actions.
     - `params?:` Are the key/value pairs used to evaluate this selector's path with placeholders
 
 ### Demo

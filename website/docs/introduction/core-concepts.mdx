@@ -206,3 +206,99 @@ function FontButton() {
 
 return <FontButton/>;
 ```
+
+## Actions
+
+An **action** is a reusable pure function that has access to the StateX state 
+and an ability to update the StateX state or invoke other actions. 
+Unlike `selector` actions will not subscribe to any changes to the
+`atoms` or `selectors` it reads.
+
+Actions are used to keep multiple state updates in sync with some common, reusable logic.
+This lets us avoid duplicate code and disconnected state. Since action have full access
+to the state, it can perform state updates asyncronusly as well. With actions, you can
+modularize your business logic outside the component, thereby making the components lite weight.
+
+Actions are defined using the `action` function:
+
+```javascript
+const activateNodeAction = action(({ get, set, call }, id: NodeID) => {
+  set(activeNodeIdAtom, id);
+  set(activeTabAtom, 1);
+});
+```
+
+The function passed to action is to be executed on demand. It can access 
+the value of any path, atoms, selectors using the `get` argument 
+passed to it. It can update the state using the `set` argument and call any
+other action using the `call` argument.
+
+In this `activateNodeAction` example, the action updates two atom states to
+mark a given nodeId as active and also set a specific tab as active.
+
+Actions can be accessed using `useStateXAction()`, which takes the action
+as an argument and returns a callback function that can be invoked on user action.
+
+### Demo
+
+```jsx live
+const activeNodeIdAtom = atom({
+  path: ['active', 'node'],
+  defaultValue: '',
+});
+
+const activeTabAtom = atom({
+  path: ['active', 'tab'],
+  defaultValue: 0,
+});
+
+const activateNodeAction = action(({ get, set, remove, call }, id) => {
+  set(activeNodeIdAtom, id);
+  set(activeTabAtom, 1);
+});
+
+function Tabs() {
+  const [activeTab, setActiveTab] = useStateX(activeTabAtom);
+
+  const style = {borderLeft: '4px solid #ddd', paddingLeft: 8};
+  const activeStyle = {...style, borderLeft: '4px solid blue'};
+
+  return (
+    <>
+      <div onClick={() => setActiveTab(0)} style={activeTab === 0 ? activeStyle : style}>Tab One</div>
+      <div onClick={() => setActiveTab(1)} style={activeTab === 1 ? activeStyle : style}>Tab Two</div>
+    </>
+  );
+}
+
+function Node({id}) {
+  const activeNodeId = useStateXValue(activeNodeIdAtom);
+  const activateNode = useStateXAction(activateNodeAction);
+
+  let style = activeNodeId === id ? {color: 'blue'} : {};
+
+  return (
+      <button style={style} onClick={() => activateNode(id)}>Node {id}</button>
+  );
+}
+
+function Nodes() {
+  const activeNodeId = useStateXValue(activeNodeIdAtom);
+  return (
+    <>
+      <div>Active Node: {activeNodeId || 'None'}</div>
+      <Node id="A" />
+      <Node id="B" />
+    </>
+  );
+}
+
+function App() {
+  return (<>
+    <Tabs />
+    <Nodes />
+  </>);
+}
+
+return <App/>;
+```

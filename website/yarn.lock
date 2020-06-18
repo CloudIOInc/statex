@@ -975,10 +975,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@cloudio/statex@^0.0.18":
-  version "0.0.18"
-  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.18.tgz#471425f9d607a667be8b3215b8622ecde563d92e"
-  integrity sha512-jLMbPGFIlALFIA7I7Ul/z3sqmu4fBhYXJKdzpMQaSqhy338e5BuZt9hKFrolDE+lCE9L7r7dU0XDP+4Sq1kqTA==
+"@cloudio/statex@^0.0.20":
+  version "0.0.20"
+  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.20.tgz#e3b43b2b44ffd20c5a5a76857ce375f99dbd2d21"
+  integrity sha512-7eiBFqui7/jg+KI3Semb86/zTWvSXIq+lVRjA8CxqxdEv6MVzm5sqs/bPv+AomXYfnTzGeLxyXXubDY7H45Yfw==
 
 "@csstools/convert-colors@^1.4.0":
   version "1.4.0"
@@ -5071,10 +5071,10 @@ fragment-cache@^0.2.1:
   dependencies:
     map-cache "^0.2.2"
 
-framer-motion@^1.11.0:
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-1.11.0.tgz#9463a4d8e1be9f25d0f75712a4a835691c028d65"
-  integrity sha512-DkJFWAHIv57L4xu8Ufq9GMs9Ifqpgt5Yi55pc4NQos8TUGomgbLlnwpO1IXK85X5K1dVNKuTZMiqjWZLeOfG/A==
+framer-motion@^1.11.1:
+  version "1.11.1"
+  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-1.11.1.tgz#b031d1556a78854e0989b8c7e96418c6e15aa474"
+  integrity sha512-CP6aYLPSivAWkq9UoSurefHBggxG85IT8ObYyWYkcZppgtjHzpwRzhaA8P0ljMGRqtcpeQAIybiGgPioBPlOSw==
   dependencies:
     "@popmotion/easing" "^1.0.2"
     "@popmotion/popcorn" "^0.4.2"
@@ -11173,16 +11173,16 @@ stylehacks@^4.0.0:
     postcss "^7.0.0"
     postcss-selector-parser "^3.0.0"
 
-stylelint@^13.6.0:
-  version "13.6.0"
-  resolved "https://registry.yarnpkg.com/stylelint/-/stylelint-13.6.0.tgz#3528bc402a71f2af2a3de32fa4e9f1c24e49666d"
-  integrity sha512-55gG2pNjVr183JJM/tlr3KAua6vTVX7Ho/lgKKuCIWszTZ1gmrXjX4Wok53SI8wRYFPbwKAcJGULQ77OJxTcNw==
+stylelint@^13.6.1:
+  version "13.6.1"
+  resolved "https://registry.yarnpkg.com/stylelint/-/stylelint-13.6.1.tgz#cc1d76338116d55e8ff2be94c4a4386c1239b878"
+  integrity sha512-XyvKyNE7eyrqkuZ85Citd/Uv3ljGiuYHC6UiztTR6sWS9rza8j3UeQv/eGcQS9NZz/imiC4GKdk1EVL3wst5vw==
   dependencies:
     "@stylelint/postcss-css-in-js" "^0.37.1"
     "@stylelint/postcss-markdown" "^0.36.1"
     autoprefixer "^9.8.0"
     balanced-match "^1.0.0"
-    chalk "^4.0.0"
+    chalk "^4.1.0"
     cosmiconfig "^6.0.0"
     debug "^4.1.1"
     execall "^2.0.0"
