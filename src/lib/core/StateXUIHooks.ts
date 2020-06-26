@@ -57,10 +57,8 @@ function useStateXOnChangeForNumberInput(
   return [onChange, setValue];
 }
 
-function useStateXRef<T extends HTMLElement>(
-  path: Path,
-): MutableRefObject<T | null> {
-  const newRef = useRef(null);
+function useStateXRef<T>(path: Path, value: T): MutableRefObject<T> {
+  const newRef = useRef<T>(value);
   const store = useStateXStore();
   const node = getNode(store, path);
   if (!node.data.ref) {
@@ -76,9 +74,7 @@ function useStateXRef<T extends HTMLElement>(
   return node.data.ref;
 }
 
-function useStateXRefValue<T extends HTMLElement>(
-  path: Path,
-): MutableRefObject<T | null> | undefined {
+function useStateXRefValue<T>(path: Path): MutableRefObject<T> | undefined {
   const store = useStateXStore();
   const node = getNode<T>(store, path);
   return node.data.ref;

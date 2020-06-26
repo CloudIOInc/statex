@@ -17,10 +17,7 @@ import {
   setIn,
   update,
   updateIn,
-  setMutate,
 } from '../ImmutableUtils';
-
-setMutate(false);
 
 describe('ImmutableUtils', () => {
   test('get', () => {

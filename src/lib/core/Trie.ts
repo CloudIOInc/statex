@@ -96,6 +96,18 @@ export default class Trie<T> {
     }
   };
 
+  isChildNode = (path: Path, node: Node<T>): boolean => {
+    const pathNode = this.getNode(path);
+    let parent = node.parent;
+    while (parent) {
+      if (parent === pathNode) {
+        return true;
+      }
+      parent = parent.parent;
+    }
+    return false;
+  };
+
   getAllParentNodes = (path: Path): Node<T>[] => {
     const nodes: Node<T>[] = [];
     this._collectAllParentNodes(nodes, this.getNode(path));

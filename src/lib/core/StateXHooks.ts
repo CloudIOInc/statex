@@ -28,6 +28,7 @@ import {
   isSelectorNode,
   ActionFunction,
   StateXRefGetter,
+  StateChangeListenerProps,
 } from './StateXTypes';
 
 import Atom from './Atom';
@@ -49,14 +50,16 @@ import {
   resolvePath,
   setStateXValue,
   makeGetRef,
+  updateState,
 } from './StateX';
 import { emptyFunction } from './StateXUtils';
 import { useStateXStore, StateXProvider } from './StateXContext';
 import { isPath, Collection } from './ImmutableTypes';
 import { Node } from './Trie';
-import { setIn } from './ImmutableUtils';
+import { setIn, getIn } from './ImmutableUtils';
 import Action from './Action';
 import { useLatest } from './StateXUtilHooks';
+import ReactDOM from 'react-dom';
 
 function atom<T>(props: StateXProps<T>): Atom<T> {
   return new Atom(props);
@@ -252,7 +255,7 @@ function useStateXValueResolveableInternal<T>(
       currentValue = defaultValue;
       // prevent calling onChange callback for default values
       node.data.lastKnownValue = defaultValue;
-      store.trackAndMutate(node, defaultValue);
+      store.trackAndUpdate(node, defaultValue);
       usedDefaultValue = true;
       store.addToPendingWithoutSchedule(node.path, 'default');
     }
@@ -275,7 +278,7 @@ function useStateXValueResolveableInternal<T>(
       } else if (value !== defaultValue) {
         setValueInternal(defaultValue);
       }
-      store.addToPending(node.path, 'update');
+      store.addToPendingWithoutSchedule(node.path, 'default');
     }
   }, [defaultValue, value, node, selectorValue, store, usedDefaultValue]);
 
@@ -324,7 +327,7 @@ function useStateXValueResolveableInternal<T>(
           if (!node.data.selector) {
             node.data.lastKnownValue = defaultValue;
             // prevent calling onChange callback for default values
-            store.trackAndMutate(node, defaultValue);
+            store.trackAndUpdate(node, defaultValue);
             store.addToPending(node.path, 'update');
           }
         }
@@ -390,11 +393,11 @@ function selector<T>(props: SelectorProps<T>): Selector<T> {
   return new Selector(props);
 }
 
-function action<T = void, R = void>(fn: ActionFunction<T, R>): Action<T, R> {
-  return new Action<T, R>(fn);
+function action<T = void>(fn: ActionFunction<T>): Action<T> {
+  return new Action<T>(fn);
 }
 
-function useStateXAction<T = void, R = void>(action: Action<T, R>) {
+function useStateXAction<T = void>(action: Action<T>) {
   const store = useStateXStore();
   return (value: T) => action.execute(store, value);
 }
@@ -470,6 +473,47 @@ function useWithStateX(state: Collection) {
   }, [setValue, state]);
 }
 
+function useStateXSnapshot(
+  path: Path = [],
+  callback: (props: StateChangeListenerProps) => void,
+): void {
+  const store = useStateXStore();
+  const node = getNode(store, path);
+  const ref = useRef(callback);
+  ref.current = callback;
+  useEffect(() => {
+    const { path } = node;
+    function listener(props: StateChangeListenerProps) {
+      let { state, oldState, updatedNodes, removedNodes } = props;
+      oldState = getIn(oldState, path, undefined);
+      state = getIn(state, path, undefined);
+      if (state !== oldState) {
+        updatedNodes = updatedNodes.filter((node) =>
+          store.trie().isChildNode(path, node),
+        );
+        removedNodes = removedNodes.filter((node) =>
+          store.trie().isChildNode(path, node),
+        );
+        ref.current({ state, oldState, updatedNodes, removedNodes });
+      }
+    }
+    return store.addStateChangeListener(listener);
+  }, [node, store]);
+}
+
+function useStateXSnapshotSetter() {
+  const store = useStateXStore();
+  const setSnapshot = useCallback(
+    (state: Collection, path: Path = []) => {
+      ReactDOM.unstable_batchedUpdates(() => {
+        updateState(store, state, path);
+      });
+    },
+    [store],
+  );
+  return setSnapshot;
+}
+
 function useDebug() {
   const store = useStateXStore();
   const debug = useCallback(
@@ -498,6 +542,8 @@ export {
   useStateXRefGetter,
   useStateXResolveable,
   useStateXSetter,
+  useStateXSnapshot,
+  useStateXSnapshotSetter,
   useStateXValue,
   useStateXValueGetter,
   useStateXValueInternal,

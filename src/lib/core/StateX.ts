@@ -29,20 +29,21 @@ import { StateX } from './StateXStore';
 import Atom from './Atom';
 import Selector from './Selector';
 import Action from './Action';
+import { Collection } from './ImmutableTypes';
 
 function _getIn<T>(
   store: StateX,
   node: Node<NodeData<any>>,
-  value?: T,
+  defaultValue?: T,
   mutableRefObject = true,
 ): T {
   if (node.path.length === 0) {
     return (store.getState() as unknown) as T;
   }
 
-  const val = getIn(store.getState(), node.path, value) as T | undefined;
+  const val = getIn(store.getState(), node.path, defaultValue) as T | undefined;
   if (val === undefined) {
-    return value as T;
+    return defaultValue as T;
   }
   if (process.env.NODE_ENV === 'development') {
     return !mutableRefObject && val && typeof val === 'object'
@@ -54,7 +55,7 @@ function _getIn<T>(
 }
 
 function isNodeDirty<T>(store: StateX, node: Node<NodeData<T>>) {
-  const value = _getIn(store, node);
+  const value = getIn(store.getState(), node.path, undefined);
   return node.data.lastKnownValue !== value;
 }
 
@@ -119,18 +120,39 @@ function getDirtyNodes(store: StateX) {
       return;
     }
     nodes.add(node);
-    const dirtyChildren = store
-      .trie()
-      .getAllChildNodes(path, (node) => isNodeDirty(store, node));
-    dirtyChildren.forEach(nodes.add, nodes);
+    collectDirtyChildNodes(store, path, nodes);
     _addParentNodes(store, node, nodes);
   });
   return nodes;
 }
 
+function collectDirtyChildNodes(
+  store: StateX,
+  path: Path = [],
+  nodes: Set<Node<NodeData<any>>>,
+) {
+  const dirtyChildren = store
+    .trie()
+    .getAllChildNodes(path, (node) => isNodeDirty(store, node));
+  dirtyChildren.forEach(nodes.add, nodes);
+  return nodes;
+}
+
+function updateState(store: StateX, state: Collection, path: Path) {
+  store.updateState(state, path);
+  const nodes = new Set<Node<NodeData<any>>>();
+  nodes.add(getNode<NodeData<any>>(store, path));
+  collectDirtyChildNodes(store, path, nodes);
+  informNodes(store, nodes);
+}
+
 function inform<T>(store: StateX) {
   const nodes = getDirtyNodes(store);
   store.clearPending();
+  informNodes(store, nodes);
+}
+
+function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
   if (nodes.size === 0) {
     return;
   }
@@ -237,7 +259,6 @@ function _setIn<T>(
   value: SetStateAction<T>,
   options?: Options,
 ): T {
-  store.activateNode(node, 'update', value);
   let newValue: T;
   let returnValue: T;
   let oldValue;
@@ -255,6 +276,7 @@ function _setIn<T>(
     // do nothing
     return oldValue;
   }
+  store.activateNode(node, 'update', value);
   if (isSelectorNode(node)) {
     returnValue = node.data.selector.setValue(store, node, newValue, options);
   } else {
@@ -287,7 +309,7 @@ function _setIn<T>(
       }
     }
     store.updatingState(node);
-    store.trackAndMutate(node, newValue);
+    store.trackAndUpdate(node, newValue);
     store.addToPending(node.path, 'update');
   }
   return returnValue;
@@ -353,7 +375,7 @@ function registerStateX<T>(
     node.data.defaultValue = pathOrAtom.defaultValue;
     const val = getIn(store.getState(), node.path, undefined);
     if (val === undefined) {
-      store.trackAndMutate(node, pathOrAtom.defaultValue);
+      store.trackAndUpdate(node, pathOrAtom.defaultValue);
       store.addToPendingWithoutSchedule(node.path, 'default');
     }
   } else if (
@@ -404,15 +426,13 @@ function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
 }
 
 function makeCall(store: StateX) {
-  return <T = void, R = void>(action: Action<T, R>, value: T): R => {
-    return action.execute(store, value);
+  return <T = void>(action: Action<T>, value: T): void => {
+    action.execute(store, value);
   };
 }
 
 function makeGetRef(store: StateX) {
-  return <T extends HTMLElement>(
-    path: Path,
-  ): MutableRefObject<T | null> | undefined => {
+  return <T>(path: Path): MutableRefObject<T> | undefined => {
     const node = getNode<T>(store, path);
     return node.data.ref;
   };
@@ -459,4 +479,5 @@ export {
   removeStateXValue,
   resolvePath,
   setStateXValue,
+  updateState,
 };

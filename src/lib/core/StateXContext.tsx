@@ -16,8 +16,8 @@ import React, {
   useLayoutEffect,
   useMemo,
 } from 'react';
-import { setMutateStateX } from './StateXUtils';
 import { StateX, notInAContext } from './StateXStore';
+import { SchedulerFn } from './StateXTypes';
 
 const StateXContext = createContext<MutableRefObject<StateX>>({
   current: new StateX(),
@@ -33,13 +33,18 @@ function defaultErrorHandler(error: any) {
 }
 
 interface StateXPreSchedulerProps {
-  registerPreUpdateScheduler: (fn: () => void) => void;
-  registerPreRenderScheduler: (fn: () => void) => void;
+  registerPreUpdateScheduler: (fn: SchedulerFn) => void;
+  registerPreRenderScheduler: (fn: SchedulerFn) => void;
 }
+
 interface StateXPostSchedulerProps {
-  registerPostUpdateScheduler: (fn: () => void) => void;
-  registerPostRenderScheduler: (fn: () => void) => void;
+  registerPostRenderScheduler: (fn: SchedulerFn) => void;
+  registerPostListenerScheduler: (fn: SchedulerFn) => void;
+  registerPostUpdateRenderSchedule: (fn: SchedulerFn) => void;
 }
+
+const initialArray: [] = [];
+
 function StateXPreScheduler({
   registerPreUpdateScheduler,
   registerPreRenderScheduler,
@@ -47,23 +52,22 @@ function StateXPreScheduler({
   const store = useStateXStore();
   store.renderingStarted();
 
-  const [update, setUpdate] = useState([]);
-  registerPreUpdateScheduler(() => setUpdate([]));
+  const [update, setUpdate] = useState(initialArray);
+  registerPreUpdateScheduler(setUpdate);
 
-  const [render, setRender] = useState([]);
-  registerPreRenderScheduler(() => setRender([]));
+  const [render, setRender] = useState(initialArray);
+  registerPreRenderScheduler(setRender);
 
   useLayoutEffect(() => {
+    // mark rendering complete during both render & update
     store.renderingCompleted();
-  }, [render, store, update]);
+  }, [update, render, store]);
 
   useEffect(() => {
-    store.afterStateUpdates();
+    if (initialArray !== update) {
+      store.afterStateUpdates();
+    }
   }, [store, update]);
-
-  useEffect(() => {
-    setMutateStateX(false);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -76,16 +80,20 @@ function StateXPreScheduler({
 }
 
 function StateXPostScheduler({
-  registerPostUpdateScheduler,
   registerPostRenderScheduler,
+  registerPostListenerScheduler,
+  registerPostUpdateRenderSchedule,
 }: StateXPostSchedulerProps) {
   const store = useStateXStore();
 
-  const [, setUpdate] = useState([]);
-  registerPostUpdateScheduler(() => setUpdate([]));
+  const [render, setRender] = useState(initialArray);
+  registerPostRenderScheduler(setRender);
 
-  const [render, setRender] = useState([]);
-  registerPostRenderScheduler(() => setRender([]));
+  const [listenerAdded, setListenerAdded] = useState(initialArray);
+  registerPostListenerScheduler(setListenerAdded);
+
+  const [updateRender, setUpdateRender] = useState(initialArray);
+  registerPostUpdateRenderSchedule(setUpdateRender);
 
   useLayoutEffect(() => {
     // dom events can fire after useLayoutEffect & before useEffect
@@ -93,15 +101,37 @@ function StateXPostScheduler({
   }, [render, store]);
 
   useEffect(() => {
-    setMutateStateX(false);
-  }, []);
+    if (initialArray !== updateRender) {
+      if (store.getPendingPaths().length) {
+        // store changed due to default values
+        store.afterStateUpdates();
+      } else {
+        store.informStateChange();
+      }
+    }
+  }, [updateRender, store]);
+
+  useEffect(() => {
+    store.started();
+  }, [store]);
+
+  useEffect(() => {
+    if (initialArray !== listenerAdded) {
+      store.informStateChange();
+    }
+  }, [listenerAdded, store]);
 
   useEffect(() => {
     return () => {
-      registerPostUpdateScheduler(notInAContext);
+      registerPostListenerScheduler(notInAContext);
       registerPostRenderScheduler(notInAContext);
+      registerPostUpdateRenderSchedule(notInAContext);
     };
-  }, [registerPostRenderScheduler, registerPostUpdateScheduler]);
+  }, [
+    registerPostListenerScheduler,
+    registerPostRenderScheduler,
+    registerPostUpdateRenderSchedule,
+  ]);
 
   return null;
 }
@@ -134,8 +164,13 @@ function StateXProvider({
       />
       {children}
       <StateXPostScheduler
-        registerPostUpdateScheduler={ref.current.registerPostUpdateScheduler}
         registerPostRenderScheduler={ref.current.registerPostRenderScheduler}
+        registerPostListenerScheduler={
+          ref.current.registerPostListenerScheduler
+        }
+        registerPostUpdateRenderSchedule={
+          ref.current.registerPostUpdateRenderSchedule
+        }
       />
     </StateXContext.Provider>
   );
