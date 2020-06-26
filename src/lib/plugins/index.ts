@@ -6,8 +6,6 @@
  *
  */
 
-export * from './core/StateXTypes';
-export * from './core/StateXHooks';
-export * from './core/StateXUIHooks';
-export * from './core/StateXUtilHooks';
-export * from './plugins';
+import useStateXUndo from './undo-history/useStateXUndo';
+
+export { useStateXUndo };

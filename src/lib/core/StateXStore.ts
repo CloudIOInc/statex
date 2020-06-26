@@ -6,12 +6,18 @@
  *
  */
 
-import { deepFreeze, setMutateStateX, emptyFunction } from './StateXUtils';
-import { NodeData, StateXHolder, Path } from './StateXTypes';
+import { deepFreeze, emptyFunction } from './StateXUtils';
+import {
+  NodeData,
+  StateXHolder,
+  Path,
+  StateChangeListener,
+  SchedulerFn,
+} from './StateXTypes';
 import Trie, { Node } from './Trie';
 import { Collection } from './ImmutableTypes';
 import { inform } from './StateX';
-import { setIn, setMutate, getIn, removeIn } from './ImmutableUtils';
+import { setIn, removeIn } from './ImmutableUtils';
 import { SetStateAction } from 'react';
 
 export function notInAContext(): any {
@@ -33,17 +39,22 @@ export class StateX {
     defaultValue: undefined,
   }));
   activeNodes = new Map<Node<NodeData<any>>, number>();
-  mutatedNodes = new Set<Node<NodeData<any>>>();
+  updatedNodes: Node<NodeData<any>>[] = [];
+  removedNodes: Node<NodeData<any>>[] = [];
+  _lastUpdatedNode?: Node<NodeData<any>>;
   pending: Path[] = [];
   state: Collection;
-  updateSchedule: () => void = notInAContext;
-  renderSchedule: () => void = notInAContext;
-  postUpdateSchedule: () => void = notInAContext;
-  postRenderSchedule: () => void = notInAContext;
+  _lastKnownState?: Collection;
+  updateSchedule: SchedulerFn = notInAContext;
+  renderSchedule: SchedulerFn = notInAContext;
+  postUpdateRenderSchedule: SchedulerFn = notInAContext;
+  postRenderSchedule: SchedulerFn = notInAContext;
+  postListenerSchedule: SchedulerFn = notInAContext;
   id = 0;
   lastLogItem: Log | undefined;
   rendering = false;
   handleError: (error: any) => void;
+  stateChangeListeners = new Set<StateChangeListener>();
 
   constructor(
     initialState: Collection = {},
@@ -51,6 +62,50 @@ export class StateX {
   ) {
     this.state = deepFreeze(initialState);
     this.handleError = handleError;
+  }
+
+  addStateChangeListener(stateChangeListener: StateChangeListener) {
+    this.stateChangeListeners.add(stateChangeListener);
+    this.postListenerSchedule([]);
+    return () => {
+      this.stateChangeListeners.delete(stateChangeListener);
+    };
+  }
+
+  informStateChange(): boolean {
+    if (
+      this._lastKnownState === this.state ||
+      this.stateChangeListeners.size === 0
+    ) {
+      return false;
+    }
+    if (process.env.NODE_ENV === 'development') {
+      const log = ['State changed...'];
+      const log2: string[] = [];
+      if (this.updatedNodes.length) {
+        log.push('updates:');
+        this.updatedNodes.forEach((node) => log2.push(node.path.join('.')));
+        log.push(log2.join(', '));
+      }
+      if (this.removedNodes.length) {
+        log.push('deletes:');
+        this.removedNodes.forEach((node) => log2.push(node.path.join('.')));
+        log.push(log2.join(', '));
+      }
+      this.debug(log.join(' '), 'state');
+    }
+    this.stateChangeListeners.forEach((listener) =>
+      listener({
+        state: this.state,
+        oldState: this._lastKnownState,
+        updatedNodes: this.updatedNodes,
+        removedNodes: this.removedNodes,
+      }),
+    );
+    this._lastKnownState = this.state;
+    this.updatedNodes = [];
+    this.removedNodes = [];
+    return true;
   }
 
   catch(error: any) {
@@ -74,6 +129,9 @@ export class StateX {
   removingState(node: Node<NodeData<any>>) {}
 
   afterSelectorReads() {
+    if (process.env.NODE_ENV === 'development') {
+      this.debug('afterSelectorReads', 'render');
+    }
     if (this.activeNodes.size) {
       if (process.env.NODE_ENV === 'development') {
         const log = ['Derived nodes during render...'];
@@ -86,12 +144,10 @@ export class StateX {
       this.activeNodes.clear();
     }
     this.lastLogItem = undefined;
-    if (this.mutatedNodes.size) {
+    if (this.updatedNodes.length || this.removedNodes.length) {
       // new default values got set during this render
-      this.processTrackedMutates();
       inform(this);
     }
-    setMutateStateX(true);
   }
 
   renderingStarted() {
@@ -102,7 +158,15 @@ export class StateX {
     this.rendering = false;
   }
 
+  started() {
+    // initial state
+    this.informStateChange();
+  }
+
   afterStateUpdates() {
+    if (process.env.NODE_ENV === 'development') {
+      this.debug('afterStateUpdates', 'update');
+    }
     if (this.activeNodes.size) {
       if (process.env.NODE_ENV === 'development') {
         const log = ['Changed Nodes during update...'];
@@ -114,9 +178,10 @@ export class StateX {
       // clear all active nodes
       this.activeNodes.clear();
     }
-    this._scheduleRead();
-    this.processTrackedMutates();
-    inform(this);
+    if (this.getPendingPaths().length) {
+      inform(this);
+    }
+    this.postUpdateRenderSchedule([]);
   }
 
   debug(log: string, action?: string, data?: any) {
@@ -177,23 +242,12 @@ export class StateX {
   }
 
   _scheduleRead() {
-    // defer updating state to batch all state updates into a single render
-    this._renderTimeout && clearTimeout(this._renderTimeout);
-    this._renderTimeout = setTimeout(() => {
-      delete this._renderTimeout;
-      this.renderSchedule();
-      this.postRenderSchedule();
-    }, 0);
+    this.renderSchedule([]);
+    this.postRenderSchedule([]);
   }
 
   _scheduleUpdate() {
-    // defer updating state to batch all state updates into a single render
-    this._updateTimeout && clearTimeout(this._updateTimeout);
-    this._updateTimeout = setTimeout(() => {
-      delete this._updateTimeout;
-      this.updateSchedule();
-      this.postUpdateSchedule();
-    }, 0);
+    this.updateSchedule([]);
   }
 
   destroy() {
@@ -203,13 +257,11 @@ export class StateX {
     delete this._updateTimeout;
     this.updateSchedule = notInAContext;
     this.renderSchedule = notInAContext;
-    this.postUpdateSchedule = notInAContext;
     this.postRenderSchedule = notInAContext;
+    this.postUpdateRenderSchedule = notInAContext;
     this._trie.reset();
     delete this._trie;
     delete this.state;
-    this.mutatedNodes.clear();
-    delete this.mutatedNodes;
     this.activeNodes.clear();
     delete this.activeNodes;
     delete this.pending;
@@ -236,49 +288,38 @@ export class StateX {
   setState(newState: Collection) {
     this.state = newState;
   }
-  registerPreUpdateScheduler = (fn: () => void) => {
+  registerPreUpdateScheduler = (fn: SchedulerFn) => {
     this.updateSchedule = fn;
   };
-  registerPreRenderScheduler = (fn: () => void) => {
+  registerPreRenderScheduler = (fn: SchedulerFn) => {
     this.renderSchedule = fn;
   };
-  registerPostUpdateScheduler = (fn: () => void) => {
-    this.postUpdateSchedule = fn;
-  };
-  registerPostRenderScheduler = (fn: () => void) => {
+  registerPostRenderScheduler = (fn: SchedulerFn) => {
     this.postRenderSchedule = fn;
   };
-  trackAndMutate<T>(node: Node<NodeData<T>>, value: SetStateAction<T>) {
-    if (node.parent) {
-      this.mutatedNodes.add(node.parent);
-    }
-    setMutate(true);
+  registerPostListenerScheduler = (fn: SchedulerFn) => {
+    this.postListenerSchedule = fn;
+  };
+  registerPostUpdateRenderSchedule = (fn: (v: []) => void) => {
+    this.postUpdateRenderSchedule = fn;
+  };
+
+  trackAndUpdate<T>(node: Node<NodeData<T>>, value: SetStateAction<T>) {
     this.setState(setIn(this.getState(), node.path, value));
-    setMutate(false);
+    if (this.updatedNodes.indexOf(node) === -1) {
+      this.updatedNodes.push(node);
+    }
+  }
+
+  updateState(state: Collection, path: Path) {
+    this.setState(setIn(this.getState(), path, state));
+    this.postUpdateRenderSchedule([]);
   }
 
   trackAndRemove<T>(node: Node<NodeData<T>>) {
-    if (node.parent) {
-      this.mutatedNodes.add(node.parent);
-    }
-    setMutate(true);
     this.setState(removeIn(this.getState(), node.path));
-    setMutate(false);
-  }
-
-  processTrackedMutates() {
-    setMutate(false);
-    this.mutatedNodes.forEach((node) => {
-      let object = getIn(this.getState(), node.path, undefined);
-      if (object && typeof object === 'object') {
-        if (Array.isArray(object)) {
-          object = [...object];
-        } else {
-          object = { ...object };
-        }
-        this.setState(setIn(this.getState(), node.path, object));
-      }
-    });
-    this.mutatedNodes.clear();
+    if (this.removedNodes.indexOf(node) === -1) {
+      this.removedNodes.push(node);
+    }
   }
 }

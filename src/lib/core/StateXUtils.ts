@@ -8,7 +8,6 @@
 
 import { isNull, Path, Key } from './ImmutableTypes';
 import { Resolvable } from './StateXTypes';
-import { setMutate } from './ImmutableUtils';
 
 function isNode(object: any): boolean {
   if (typeof window === 'undefined') {
@@ -51,21 +50,7 @@ export function isReactElement(object: any) {
   return false;
 }
 
-let _freeze = false;
-
-function setFreeze(m: boolean) {
-  _freeze = m;
-}
-
-export function setMutateStateX(mutate: boolean) {
-  setFreeze(!mutate);
-  setMutate(mutate);
-}
-
 export function shouldFreeze(object: any) {
-  if (!_freeze) {
-    return false;
-  }
   if (isNull(object) || typeof object !== 'object') {
     return false;
   }

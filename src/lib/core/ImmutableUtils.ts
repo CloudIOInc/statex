@@ -18,12 +18,6 @@ import {
   isNull,
 } from './ImmutableTypes';
 
-let _mutate = true;
-
-function setMutate(m: boolean) {
-  _mutate = m;
-}
-
 function shallowCopy<C>(collection: C): C {
   if (Array.isArray(collection)) {
     return ([...collection] as unknown) as C;
@@ -44,10 +38,6 @@ function arraySet<T extends ArrayCollection>(
   // if (key > collection.length) {
   //   throw Error(`Index out of bound! Index ${key}. Size ${collection.length}.`);
   // }
-  if (_mutate && !Object.isFrozen(collection)) {
-    collection[key] = value;
-    return collection;
-  }
   if (key === collection.length) {
     return [...collection, value] as T;
   } else {
@@ -64,11 +54,6 @@ function objectSet<T extends ObjectCollection>(
 ): T {
   // @ts-ignore
   if (collection[key] === value) {
-    return collection;
-  }
-  if (_mutate && !Object.isFrozen(collection)) {
-    // @ts-ignore
-    collection[key] = value;
     return collection;
   }
   return { ...collection, [key]: value };
@@ -364,6 +349,5 @@ export {
   set,
   setIn,
   update,
-  setMutate,
   updateIn,
 };

@@ -6,7 +6,7 @@
  *
  */
 
-import type { Path, Key } from './ImmutableTypes';
+import type { Path, Key, Collection } from './ImmutableTypes';
 import type { Node } from './Trie';
 import type { SetStateAction, MutableRefObject } from 'react';
 import Atom from './Atom';
@@ -14,6 +14,8 @@ import Selector from './Selector';
 import { StateX } from './StateXStore';
 import React from 'react';
 import Action from './Action';
+
+export type { Node } from './Trie';
 
 export type { Path, Key } from './ImmutableTypes';
 
@@ -27,7 +29,7 @@ export interface SelectorProps<T> {
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
 }
 
-export type ActionFunction<T, R> = (
+export type ActionFunction<T> = (
   props: {
     call: StateXActionCaller;
     get: StateXGetter;
@@ -36,7 +38,7 @@ export type ActionFunction<T, R> = (
     set: StateXSetter;
   },
   value: T,
-) => R;
+) => void;
 
 export interface StateXProps<T> {
   path: Path;
@@ -145,10 +147,10 @@ export type StateXGetter = <T>(
   props?: Options,
 ) => T;
 
-export type StateXActionCaller = <T = void, R = void>(
-  action: Action<T, R>,
+export type StateXActionCaller = <T = void>(
+  action: Action<T>,
   value: T,
-) => R;
+) => void;
 
 export type StateXSetter = <V>(
   path: PathOrStateXOrSelector<V>,
@@ -156,9 +158,9 @@ export type StateXSetter = <V>(
   options?: Options,
 ) => V;
 
-export type StateXRefGetter = <T extends HTMLElement>(
+export type StateXRefGetter = <T>(
   path: Path,
-) => MutableRefObject<T | null> | undefined;
+) => MutableRefObject<T> | undefined;
 
 export type StateXRemover = <V>(path: PathOrStateX<V>, options?: Options) => V;
 
@@ -279,3 +281,14 @@ export interface SelectorInterface<T> {
 export type PathOrStateX<T> = Path | Atom<T>;
 
 export type PathOrStateXOrSelector<T> = Path | Atom<T> | Selector<T>;
+
+export interface StateChangeListenerProps {
+  state?: Collection;
+  oldState?: Collection;
+  updatedNodes: Node<NodeData<any>>[];
+  removedNodes: Node<NodeData<any>>[];
+}
+
+export type StateChangeListener = (props: StateChangeListenerProps) => void;
+
+export type SchedulerFn = (value: []) => void;
