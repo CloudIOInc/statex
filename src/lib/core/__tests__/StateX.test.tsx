@@ -197,7 +197,7 @@ describe('StateX', () => {
   test('useStateXRef', () => {
     const { result } = renderHook(
       () => {
-        const ref = useStateXRef(['ui', 'canvas']);
+        const ref = useStateXRef(['ui', 'canvas'], null);
         const ref2 = useStateXRefValue(['ui', 'canvas']);
         return { ref, ref2 };
       },
@@ -327,7 +327,7 @@ describe('StateX', () => {
 
   test('getRef in onChange', () => {
     const Child = memo(function Child() {
-      const ref = useStateXRef<HTMLInputElement>(['ui', 'ref']);
+      const ref = useStateXRef<HTMLInputElement | null>(['ui', 'ref'], null);
       const val = useStateXForTextInput(['ui', 'value'], '');
 
       return <input ref={ref} {...val} />;
@@ -335,7 +335,7 @@ describe('StateX', () => {
     function Parent() {
       const [, setValue] = useStateX(['ui', 'value'], '', {
         onChange: ({ set, getRef }) => {
-          const ref = getRef(['ui', 'ref']);
+          const ref = getRef<HTMLInputElement | null>(['ui', 'ref']);
           // set INPUT
           set(['ui', 'value'], `onChange has set ${ref?.current?.nodeName}`);
         },
@@ -358,14 +358,14 @@ describe('StateX', () => {
       path: ['ui', 'value'],
       defaultValue: '',
       updater: ({ getRef }) => {
-        const ref = getRef(['ui', 'ref']);
+        const ref = getRef<HTMLInputElement | null>(['ui', 'ref']);
         // set INPUT
         return `updater has set ${ref?.current?.nodeName}`;
       },
     });
 
     const Child = memo(function Child() {
-      const ref = useStateXRef<HTMLInputElement>(['ui', 'ref']);
+      const ref = useStateXRef<HTMLInputElement | null>(['ui', 'ref'], null);
       const val = useStateXForTextInput(a);
 
       return <input ref={ref} {...val} />;
@@ -392,13 +392,13 @@ describe('StateX', () => {
     });
 
     const myAction = action(({ set, getRef }) => {
-      const ref = getRef(['ui', 'ref']);
+      const ref = getRef<HTMLInputElement | null>(['ui', 'ref']);
       // set INPUT
       set(a, `myAction has set ${ref?.current?.nodeName}`);
     });
 
     function Comp() {
-      const ref = useStateXRef<HTMLInputElement>(['ui', 'ref']);
+      const ref = useStateXRef<HTMLInputElement | null>(['ui', 'ref'], null);
       const val = useStateXForTextInput(a);
       const callMyAction = useStateXAction(myAction);
       useEffect(() => {
