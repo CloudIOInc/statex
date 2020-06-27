@@ -6,7 +6,7 @@
  *
  */
 
-import type { Path, Key, Collection } from './ImmutableTypes';
+import type { Path, Key } from './ImmutableTypes';
 import type { Node } from './Trie';
 import type { SetStateAction, MutableRefObject } from 'react';
 import Atom from './Atom';
@@ -282,13 +282,26 @@ export type PathOrStateX<T> = Path | Atom<T>;
 
 export type PathOrStateXOrSelector<T> = Path | Atom<T> | Selector<T>;
 
-export interface StateChangeListenerProps {
-  state?: Collection;
-  oldState?: Collection;
-  updatedNodes: Node<NodeData<any>>[];
-  removedNodes: Node<NodeData<any>>[];
+export interface StateChangeListenerPropsInternal<T> {
+  state: T;
+  oldState?: T;
+  updatedNodes: Node<NodeData<T>>[];
+  removedNodes: Node<NodeData<T>>[];
 }
 
-export type StateChangeListener = (props: StateChangeListenerProps) => void;
+export type StateChangeListenerInternal = (
+  props: StateChangeListenerPropsInternal<any>,
+) => void;
+
+export interface StateChangeListenerProps<T> {
+  state: T;
+  oldState?: T;
+  updatedPaths: Path[];
+  removedPaths: Path[];
+}
+
+export type StateChangeListener = (
+  props: StateChangeListenerProps<any>,
+) => void;
 
 export type SchedulerFn = (value: []) => void;

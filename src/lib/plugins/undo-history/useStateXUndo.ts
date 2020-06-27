@@ -6,29 +6,19 @@
  *
  */
 
-import {
-  useStateXSnapshot,
-  useStateXSnapshotSetter,
-  Path,
-  StateChangeListenerProps,
-  Node,
-  NodeData,
-} from '../..';
+import { useStateXSnapshotSetter, Path, StateChangeListenerProps } from '../..';
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
-import { Collection } from '../../core/ImmutableTypes';
 import { getNode } from '../../core/StateX';
 import UndoRedo from './UndoRedo';
 import { useStateXStore } from '../../core/StateXContext';
+import { useStateXSnapshotCallback } from '../../core/StateXHooks';
 
-function sameNodes(
-  newNodes: Node<NodeData<any>>[],
-  oldNodes: Node<NodeData<any>>[],
-): boolean {
-  if (oldNodes.length !== newNodes.length) {
+function samePaths(newPaths: Path[], oldPaths: Path[]): boolean {
+  if (oldPaths.length !== newPaths.length) {
     return false;
   }
-  for (let i = 0; i < oldNodes.length; i++) {
-    if (oldNodes[i] !== newNodes[i]) {
+  for (let i = 0; i < oldPaths.length; i++) {
+    if (oldPaths[i] !== newPaths[i]) {
       return false;
     }
   }
@@ -42,13 +32,15 @@ export default function useStateXUndo(
 ) {
   const store = useStateXStore();
   const node = getNode(store, path);
-  const currentRef = useRef<StateChangeListenerProps>({
-    updatedNodes: [],
-    removedNodes: [],
+  const currentRef = useRef<StateChangeListenerProps<unknown>>({
+    state: undefined,
+    updatedPaths: [],
+    removedPaths: [],
   });
-  const ref = useRef<StateChangeListenerProps>({
-    updatedNodes: [],
-    removedNodes: [],
+  const ref = useRef<StateChangeListenerProps<unknown>>({
+    state: undefined,
+    updatedPaths: [],
+    removedPaths: [],
   });
 
   const setSnapshot = useStateXSnapshotSetter();
@@ -61,11 +53,11 @@ export default function useStateXUndo(
 
   const undoRedo = useMemo(
     () =>
-      new UndoRedo<Collection>({
+      new UndoRedo({
         onChange: (hash, state) => {
           ref.current.state = state;
-          ref.current.updatedNodes = [];
-          ref.current.removedNodes = [];
+          ref.current.updatedPaths = [];
+          ref.current.removedPaths = [];
 
           setSnapshot(state, nodeRef.current.path);
           setCanUndo(undoRedo.canUndo(hash));
@@ -109,22 +101,22 @@ export default function useStateXUndo(
     }
   }, [undoRedo]);
 
-  useStateXSnapshot(
+  useStateXSnapshotCallback(
     node.path,
-    ({ state, oldState, updatedNodes, removedNodes }) => {
-      currentRef.current = { state, oldState, updatedNodes, removedNodes };
+    ({ state, oldState, updatedPaths, removedPaths }) => {
+      currentRef.current = { state, oldState, updatedPaths, removedPaths };
       if (state && auto && ref.current.state !== state) {
         if (
-          removedNodes.length === 0 &&
-          sameNodes(updatedNodes, ref.current.updatedNodes)
+          removedPaths.length === 0 &&
+          samePaths(updatedPaths, ref.current.updatedPaths)
         ) {
           // same nodes changed... do not update undo history
           updateToUndo();
         } else {
           addToUndo();
         }
-        ref.current.updatedNodes = updatedNodes;
-        ref.current.removedNodes = removedNodes;
+        ref.current.updatedPaths = updatedPaths;
+        ref.current.removedPaths = removedPaths;
       }
     },
   );

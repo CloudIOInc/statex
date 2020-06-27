@@ -9,10 +9,10 @@
 import { deepFreeze, emptyFunction } from './StateXUtils';
 import {
   NodeData,
-  StateXHolder,
   Path,
-  StateChangeListener,
   SchedulerFn,
+  StateChangeListenerInternal,
+  StateXHolder,
 } from './StateXTypes';
 import Trie, { Node } from './Trie';
 import { Collection } from './ImmutableTypes';
@@ -55,7 +55,7 @@ export class StateX {
   lastLogItem: Log | undefined;
   rendering = false;
   handleError: (error: any) => void;
-  stateChangeListeners = new Set<StateChangeListener>();
+  stateChangeListeners = new Set<StateChangeListenerInternal>();
 
   constructor(
     initialState: Collection = {},
@@ -69,7 +69,7 @@ export class StateX {
     this.handleError = handleError;
   }
 
-  addStateChangeListener(stateChangeListener: StateChangeListener) {
+  addStateChangeListener(stateChangeListener: StateChangeListenerInternal) {
     this.stateChangeListeners.add(stateChangeListener);
     this.postListenerSchedule([]);
     return () => {
@@ -317,7 +317,7 @@ export class StateX {
     }
   }
 
-  updateState(state: Collection, path: Path) {
+  updateState<T>(state: T, path: Path) {
     this.setState(setIn(this.getState(), path, state));
     this.postUpdateRenderSchedule([]);
   }

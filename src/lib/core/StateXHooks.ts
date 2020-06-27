@@ -29,6 +29,7 @@ import {
   ActionFunction,
   StateXRefGetter,
   StateChangeListenerProps,
+  StateChangeListenerPropsInternal,
 } from './StateXTypes';
 
 import Atom from './Atom';
@@ -397,7 +398,7 @@ function action<T = void>(fn: ActionFunction<T>): Action<T> {
   return new Action<T>(fn);
 }
 
-function useStateXAction<T = void>(action: Action<T>) {
+function useStateXAction<T = void>(action: Action<T>): (value: T) => void {
   const store = useStateXStore();
   return (value: T) => action.execute(store, value);
 }
@@ -473,9 +474,9 @@ function useWithStateX(state: Collection) {
   }, [setValue, state]);
 }
 
-function useStateXSnapshot(
+function useStateXSnapshotCallback<T>(
   path: Path = [],
-  callback: (props: StateChangeListenerProps) => void,
+  callback: (props: StateChangeListenerProps<T>) => void,
 ): void {
   const store = useStateXStore();
   const node = getNode(store, path);
@@ -483,7 +484,7 @@ function useStateXSnapshot(
   ref.current = callback;
   useEffect(() => {
     const { path } = node;
-    function listener(props: StateChangeListenerProps) {
+    function listener(props: StateChangeListenerPropsInternal<T>) {
       let { state, oldState, updatedNodes, removedNodes } = props;
       oldState = getIn(oldState, path, undefined);
       state = getIn(state, path, undefined);
@@ -494,7 +495,12 @@ function useStateXSnapshot(
         removedNodes = removedNodes.filter((node) =>
           store.trie().isThisOrChildNode(path, node),
         );
-        ref.current({ state, oldState, updatedNodes, removedNodes });
+        ref.current({
+          state,
+          oldState,
+          updatedPaths: updatedNodes.map((p) => p.path),
+          removedPaths: removedNodes.map((p) => p.path),
+        });
       }
     }
     return store.addStateChangeListener(listener);
@@ -504,7 +510,7 @@ function useStateXSnapshot(
 function useStateXSnapshotSetter() {
   const store = useStateXStore();
   const setSnapshot = useCallback(
-    (state: Collection, path: Path = []) => {
+    <T>(state: T, path: Path = []) => {
       ReactDOM.unstable_batchedUpdates(() => {
         updateState(store, state, path);
       });
@@ -542,7 +548,7 @@ export {
   useStateXRefGetter,
   useStateXResolveable,
   useStateXSetter,
-  useStateXSnapshot,
+  useStateXSnapshotCallback,
   useStateXSnapshotSetter,
   useStateXValue,
   useStateXValueGetter,

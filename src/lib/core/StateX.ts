@@ -29,7 +29,6 @@ import { StateX } from './StateXStore';
 import Atom from './Atom';
 import Selector from './Selector';
 import Action from './Action';
-import { Collection } from './ImmutableTypes';
 
 function _getIn<T>(
   store: StateX,
@@ -138,10 +137,10 @@ function collectDirtyChildNodes(
   return nodes;
 }
 
-function updateState(store: StateX, state: Collection, path: Path) {
+function updateState<T>(store: StateX, state: T, path: Path) {
   store.updateState(state, path);
   const nodes = new Set<Node<NodeData<any>>>();
-  nodes.add(getNode<NodeData<any>>(store, path));
+  nodes.add(getNode(store, path));
   collectDirtyChildNodes(store, path, nodes);
   informNodes(store, nodes);
 }
