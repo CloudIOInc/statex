@@ -45,7 +45,7 @@ function _getIn<T>(
   if (val === undefined) {
     return defaultValue as T;
   }
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV !== 'production') {
     return !mutableRefObject && val && typeof val === 'object'
       ? deepFreeze(val)
       : val;

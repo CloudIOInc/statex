@@ -61,7 +61,11 @@ export class StateX {
     initialState: Collection = {},
     handleError: (error: any) => void = emptyFunction,
   ) {
-    this.state = deepFreeze(initialState);
+    if (process.env.NODE_ENV !== 'production') {
+      this.state = deepFreeze(initialState);
+    } else {
+      this.state = initialState;
+    }
     this.handleError = handleError;
   }
 
