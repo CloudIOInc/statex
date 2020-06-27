@@ -115,5 +115,4 @@ module.exports = {
     ],
   ],
   themes: [require.resolve('@docusaurus/theme-live-codeblock')],
-  plugins: [require.resolve('my-loaders')],
 };
