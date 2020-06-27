@@ -49,6 +49,7 @@ export class StateX {
   renderSchedule: SchedulerFn = notInAContext;
   postUpdateRenderSchedule: SchedulerFn = notInAContext;
   postRenderSchedule: SchedulerFn = notInAContext;
+  postUpdateSchedule: SchedulerFn = notInAContext;
   postListenerSchedule: SchedulerFn = notInAContext;
   id = 0;
   lastLogItem: Log | undefined;
@@ -248,6 +249,7 @@ export class StateX {
 
   _scheduleUpdate() {
     this.updateSchedule([]);
+    this.postUpdateSchedule([]);
   }
 
   destroy() {
@@ -296,6 +298,9 @@ export class StateX {
   };
   registerPostRenderScheduler = (fn: SchedulerFn) => {
     this.postRenderSchedule = fn;
+  };
+  registerPostUpdateScheduler = (fn: SchedulerFn) => {
+    this.postUpdateSchedule = fn;
   };
   registerPostListenerScheduler = (fn: SchedulerFn) => {
     this.postListenerSchedule = fn;
