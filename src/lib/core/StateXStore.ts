@@ -159,10 +159,7 @@ export class StateX {
     this.rendering = false;
   }
 
-  started() {
-    // initial state
-    this.informStateChange();
-  }
+  started() {}
 
   afterStateUpdates() {
     if (process.env.NODE_ENV === 'development') {

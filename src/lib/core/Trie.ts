@@ -96,8 +96,7 @@ export default class Trie<T> {
     }
   };
 
-  isChildNode = (path: Path, node: Node<T>): boolean => {
-    const pathNode = this.getNode(path);
+  _isChildNode = (pathNode: Node<T>, node: Node<T>): boolean => {
     let parent = node.parent;
     while (parent) {
       if (parent === pathNode) {
@@ -106,6 +105,16 @@ export default class Trie<T> {
       parent = parent.parent;
     }
     return false;
+  };
+
+  isThisOrChildNode = (path: Path, node: Node<T>): boolean => {
+    const pathNode = this.getNode(path);
+    return pathNode === node || this._isChildNode(pathNode, node);
+  };
+
+  isChildNode = (path: Path, node: Node<T>): boolean => {
+    const pathNode = this.getNode(path);
+    return this._isChildNode(pathNode, node);
   };
 
   getAllParentNodes = (path: Path): Node<T>[] => {

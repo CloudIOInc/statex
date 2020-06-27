@@ -489,10 +489,10 @@ function useStateXSnapshot(
       state = getIn(state, path, undefined);
       if (state !== oldState) {
         updatedNodes = updatedNodes.filter((node) =>
-          store.trie().isChildNode(path, node),
+          store.trie().isThisOrChildNode(path, node),
         );
         removedNodes = removedNodes.filter((node) =>
-          store.trie().isChildNode(path, node),
+          store.trie().isThisOrChildNode(path, node),
         );
         ref.current({ state, oldState, updatedNodes, removedNodes });
       }
