@@ -17,6 +17,7 @@ module.exports = {
       'basic-tutorial/intro',
       'basic-tutorial/atoms',
       'basic-tutorial/selectors',
+      'basic-tutorial/actions',
     ],
     Examples: [
       'examples/form',
@@ -30,6 +31,7 @@ module.exports = {
       'api-reference/core/path',
       'api-reference/core/atom',
       'api-reference/core/selector',
+      'api-reference/core/action',
       'api-reference/core/useStateX',
       'api-reference/core/useStateXValue',
       'api-reference/core/useStateXValueSetter',
@@ -37,6 +39,9 @@ module.exports = {
       'api-reference/core/useRemoveStateX',
       'api-reference/core/useStateXCallback',
       'api-reference/core/useStateXValueResolveable',
+      'api-reference/core/useStateXAction',
+      'api-reference/core/useStateXSnapshotCallback',
+      'api-reference/core/useStateXSnapshotSetter',
     ],
   },
 };

@@ -36,7 +36,7 @@ They can be created at runtime, too. Atoms can be used in place of React local
 component state. If the same atom is used from multiple components, all those 
 components share the same unit of state.
 
-Atoms are created using the `atom` function:
+Atoms are created using the [atom()](../api-reference/core/atom) function:
 
 ```javascript
 const fontSizeStateX = atom({
@@ -51,7 +51,7 @@ objects can be created with mulitiple segments in the path. It is an
 error for two atoms to have the same path, so make sure they're 
 globally unique. Like React component state, they also have a default value.
 
-To read and write an atom from a component, we use a hook called `useStateX`. 
+To read and write an atom from a component, we use a hook called [useStateX](../api-reference/core/useStateX). 
 It's just like React's `useState`, but now the state can be shared between components:
 
 ```jsx
@@ -121,7 +121,7 @@ depend on, they make this functional approach more efficient.
 From the point of view of components, selectors and atoms have the same interface and can 
 therefore be substituted for one another.
  
-Selectors are defined using the `selector` function:
+Selectors are defined using the [selector()](../api-reference/core/selector) function:
 
 ```javascript
 const fontSizeLabelStateX = selector({
@@ -146,9 +146,9 @@ the `['fontSizeStateX']` atom. Conceptually, the `['fontSizeLabelStateX']`
 selector behaves like a pure function that takes a `['fontSizeStateX']` as 
 input and returns a formatted font size label as output.
 
-Selectors can be read using `useStateXValue()`, which takes a, path, atom 
+Selectors can be read using [useStateXValue()](../api-reference/core/useStateXValue), which takes a, path, atom 
 or selector as an argument and returns the corresponding value. We don't 
-use the `useStateX()` as the `fontSizeLabelStateX` selector is not 
+use the [useStateX()](../api-reference/core/useStateX) as the `fontSizeLabelStateX` selector is not 
 writeable (see the [selector API reference](../api-reference/core/selector) 
 for more information on writeable selectors):
 
@@ -211,7 +211,7 @@ return <FontButton/>;
 
 An **action** is a reusable pure function that has access to the StateX state 
 and an ability to update the StateX state or invoke other actions. 
-Unlike `selector` actions will not subscribe to any changes to the
+Unlike [selector](../api-reference/core/selector), actions will not subscribe to any changes to the
 `atoms` or `selectors` it reads.
 
 Actions are used to keep multiple state updates in sync with some common, reusable logic.
@@ -219,7 +219,7 @@ This lets us avoid duplicate code and disconnected state. Since action have full
 to the state, it can perform state updates asyncronusly as well. With actions, you can
 modularize your business logic outside the component, thereby making the components lite weight.
 
-Actions are defined using the `action` function:
+Actions are defined using the [action()](../api-reference/core/action) function:
 
 ```javascript
 const activateNodeAction = action(({ get, set, call }, id: NodeID) => {
@@ -236,7 +236,7 @@ other action using the `call` argument.
 In this `activateNodeAction` example, the action updates two atom states to
 mark a given nodeId as active and also set a specific tab as active.
 
-Actions can be accessed using `useStateXAction()`, which takes the action
+Actions can be accessed using [useStateXAction()](../api-reference/core/useStateXAction), which takes the action
 as an argument and returns a callback function that can be invoked on user action.
 
 ### Demo

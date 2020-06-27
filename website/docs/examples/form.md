@@ -3,7 +3,7 @@ id: form
 title: Form
 ---
 
-This section assumes you have installed StateX and React. See the [Getting Started](../introduction/getting-started) page for how to get started with StateX and React from scratch.
+This section assumes you have installed StateX and React. See the [Getting Started](..) page for how to get started with StateX and React from scratch.
 
 In this example, we'll cover atoms, selectors, and the hooks exposed by the StateX API. We'll also cover some advanced options used with atoms.
 
@@ -51,14 +51,14 @@ function DynamicField() {
     <div>
       <RadioGroup value={field} onChange={(e, value) => setField(value)} row>
         <FormControlLabel
-          value='firstName'
+          value="firstName"
           control={<Radio />}
-          label='First Name'
+          label="First Name"
         />
         <FormControlLabel
-          value='lastName'
+          value="lastName"
           control={<Radio />}
-          label='Last Name'
+          label="Last Name"
         />
       </RadioGroup>
       // highlight-next-line
@@ -83,7 +83,7 @@ function TextInput({ path, label, autoFocus }: Props) {
         placeholder={label}
         helperText={`@ path [${path.join('.')}]`}
         fullWidth
-        margin='normal'
+        margin="normal"
         InputLabelProps={{
           shrink: true,
         }}
@@ -157,7 +157,7 @@ function Clear() {
 
   return (
     <>
-      <Button variant='contained' onClick={clear}>
+      <Button variant="contained" onClick={clear}>
         Clear
       </Button>
     </>
@@ -174,7 +174,7 @@ function ShowState() {
   // highlight-next-line
   const json = useStateXValue(['form'], {});
   return (
-    <Card variant='outlined' color='black'>
+    <Card variant="outlined" color="black">
       <CardContent>
         <pre>{JSON.stringify(json, null, '  ')}</pre>
       </CardContent>

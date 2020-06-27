@@ -6,28 +6,26 @@
  *
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import Pixel from './Pixel';
-import { useStateXValue } from '@cloudio/statex';
+import { useStateXValue, useStateXGetter } from '@cloudio/statex';
 
-const Canvas = () => {
-  const width = 100;
-  const height = 100;
-  const pixels = [];
-
+function Canvas() {
   const show = useStateXValue(['show'], false);
+  const get = useStateXGetter();
+  const ids = Object.keys(get(['pixel']) || {});
 
   if (!show) {
-    return null;
+    return <div className="canvas-container">Check Show Canvas</div>;
   }
 
-  for (let i = 0; i < width; i++) {
-    for (let j = 0; j < height; j++) {
-      const id = `${i}_${j}`;
-      pixels.push(<Pixel key={id} id={id} />);
-    }
-  }
-  return <div className="canvas-container">{pixels}</div>;
-};
+  return (
+    <div className="canvas-container">
+      {ids.length
+        ? ids.map((id) => <Pixel key={id} id={id} />)
+        : 'Please wait...'}
+    </div>
+  );
+}
 
-export default Canvas;
+export default memo(Canvas);

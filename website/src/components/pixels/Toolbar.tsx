@@ -7,19 +7,32 @@
  */
 
 import React from 'react';
-import { useStateXForCheckbox } from '@cloudio/statex';
+import { useStateXAction, useStateXValue } from '@cloudio/statex';
 import Perf from './Perf';
+import { checkAllAction, genDataAction } from './helpers';
 
 export default function Toolbar() {
-  const show = useStateXForCheckbox(['show'], false);
-  const all = useStateXForCheckbox(['all'], false);
+  const show = useStateXValue(['show'], false);
+  const all = useStateXValue(['all'], false);
+  const checkAll = useStateXAction(checkAllAction);
+  const genData = useStateXAction(genDataAction);
 
   return (
     <div className="toolbar">
-      Check to show canvas <input {...show} />
+      Check to show canvas{' '}
+      <input
+        type="checkbox"
+        checked={show}
+        onChange={(e) => genData(e.target.checked)}
+      />
       <br />
-      Check to mark all <input {...all} />
-      <Perf show={show.checked} all={all.checked} />
+      Check to mark all{' '}
+      <input
+        type="checkbox"
+        checked={all}
+        onChange={(e) => checkAll(e.target.checked)}
+      />
+      <Perf show={show} all={all} />
     </div>
   );
 }

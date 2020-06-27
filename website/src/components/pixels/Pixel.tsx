@@ -7,22 +7,14 @@
  */
 
 import React from 'react';
-import { pixelWithID } from './helpers';
+import { atomWithID } from './helpers';
 import { useStateX, useStateXValue } from '@cloudio/statex';
 
 export default function Pixel({ id }: { id: string }) {
-  const [value, setValue] = useStateX(pixelWithID(id), 0);
-  useStateXValue(['all'], false, {
-    onChange: ({ value }) => {
-      setValue(value ? 1 : 0);
-    },
-  });
-
-  // const [value, setValue] = useState(0);
-  // const [color, setColor] = useRecoilState(pixelColorByID(id))
-
+  const [value, setValue] = useStateX(atomWithID(id));
+  const all = useStateXValue(['all'], false);
   function onMouseEnter() {
-    setValue(1);
+    setValue(all ? 0 : 1);
   }
   const className = value
     ? 'pixel pixel-stats-full'
