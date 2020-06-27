@@ -62,7 +62,7 @@ export function shouldFreeze(object: any) {
     return false;
   }
 
-  if (object instanceof Element || object instanceof Event || isNode(object)) {
+  if (isNode(object)) {
     return false;
   }
 

@@ -13,7 +13,6 @@ import React, {
   useEffect,
   useContext,
   MutableRefObject,
-  useLayoutEffect,
   useMemo,
 } from 'react';
 import { StateX, notInAContext } from './StateXStore';
@@ -39,6 +38,7 @@ interface StateXPreSchedulerProps {
 
 interface StateXPostSchedulerProps {
   registerPostRenderScheduler: (fn: SchedulerFn) => void;
+  registerPostUpdateScheduler: (fn: SchedulerFn) => void;
   registerPostListenerScheduler: (fn: SchedulerFn) => void;
   registerPostUpdateRenderSchedule: (fn: SchedulerFn) => void;
 }
@@ -55,13 +55,8 @@ function StateXPreScheduler({
   const [update, setUpdate] = useState(initialArray);
   registerPreUpdateScheduler(setUpdate);
 
-  const [render, setRender] = useState(initialArray);
+  const [, setRender] = useState(initialArray);
   registerPreRenderScheduler(setRender);
-
-  useLayoutEffect(() => {
-    // mark rendering complete during both render & update
-    store.renderingCompleted();
-  }, [update, render, store]);
 
   useEffect(() => {
     if (initialArray !== update) {
@@ -81,13 +76,18 @@ function StateXPreScheduler({
 
 function StateXPostScheduler({
   registerPostRenderScheduler,
+  registerPostUpdateScheduler,
   registerPostListenerScheduler,
   registerPostUpdateRenderSchedule,
 }: StateXPostSchedulerProps) {
   const store = useStateXStore();
+  store.renderingCompleted();
 
   const [render, setRender] = useState(initialArray);
   registerPostRenderScheduler(setRender);
+
+  const [, setUpdate] = useState(initialArray);
+  registerPostUpdateScheduler(setUpdate);
 
   const [listenerAdded, setListenerAdded] = useState(initialArray);
   registerPostListenerScheduler(setListenerAdded);
@@ -95,7 +95,7 @@ function StateXPostScheduler({
   const [updateRender, setUpdateRender] = useState(initialArray);
   registerPostUpdateRenderSchedule(setUpdateRender);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     // dom events can fire after useLayoutEffect & before useEffect
     store.afterSelectorReads();
   }, [render, store]);
@@ -165,6 +165,7 @@ function StateXProvider({
       {children}
       <StateXPostScheduler
         registerPostRenderScheduler={ref.current.registerPostRenderScheduler}
+        registerPostUpdateScheduler={ref.current.registerPostUpdateScheduler}
         registerPostListenerScheduler={
           ref.current.registerPostListenerScheduler
         }

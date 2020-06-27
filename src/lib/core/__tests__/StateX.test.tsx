@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  *
  */
-
+import '../../test/JestHelper';
 import {
   useStateXValue,
   useStateX,
@@ -23,15 +23,19 @@ import {
   useStateXRefValue,
   useStateXForTextInput,
 } from '../StateXUIHooks';
-import React, { ReactNode, useEffect, useRef, memo } from 'react';
+import React, {
+  ReactNode,
+  useEffect,
+  useRef,
+  memo,
+  useLayoutEffect,
+} from 'react';
 import { StateXProvider } from '../StateXContext';
-
-jest.useFakeTimers();
 
 let wrapper: React.FunctionComponent<{}>;
 describe('StateX', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
     wrapper = ({ children }: { children?: ReactNode }) => {
       return <StateXProvider>{children}</StateXProvider>;
     };
@@ -82,7 +86,6 @@ describe('StateX', () => {
 
     act(() => {
       result.current.setValue(arr);
-      jest.runAllTimers();
     });
 
     expect(result.current.value).toStrictEqual(arr);
@@ -115,7 +118,6 @@ describe('StateX', () => {
     );
     act(() => {
       result.current.setValue('xy');
-      jest.runAllTimers();
     });
     expect(result.current.oc).toMatchObject({ value: 'xy', oldValue: 'ab' });
   });
@@ -126,7 +128,6 @@ describe('StateX', () => {
     });
     act(() => {
       result.current[1]('xy');
-      jest.runAllTimers();
     });
     expect(result.current[0]).toBe('xy');
   });
@@ -160,7 +161,6 @@ describe('StateX', () => {
     );
     act(() => {
       result.current.setRoot({ a: 'x', b: 'y' });
-      jest.runAllTimers();
     });
     expect(result.current.a).toBe('x');
     expect(result.current.b).toBe('y');
@@ -239,7 +239,6 @@ describe('StateX', () => {
     act(() => {
       // @ts-ignore
       result.current.onChange({ target: { value: 'One 1' } });
-      jest.runAllTimers();
     });
     expect(result.current.value).toBe('One 1');
   });
@@ -318,9 +317,7 @@ describe('StateX', () => {
       return <Child />;
     }
     const { getByText } = render(<Parent />, { wrapper });
-    ract(() => {
-      jest.runAllTimers();
-    });
+    ract(() => {});
 
     expect(!!getByText('x2=20')).toBe(true);
   });
@@ -346,9 +343,7 @@ describe('StateX', () => {
       return <Child />;
     }
     const { getAllByDisplayValue } = render(<Parent />, { wrapper });
-    ract(() => {
-      jest.runAllTimers();
-    });
+    ract(() => {});
 
     expect(getAllByDisplayValue('onChange has set INPUT').length).toBe(1);
   });
@@ -378,9 +373,7 @@ describe('StateX', () => {
       return <Child />;
     }
     const { getAllByDisplayValue } = render(<Parent />, { wrapper });
-    ract(() => {
-      jest.runAllTimers();
-    });
+    ract(() => {});
 
     expect(getAllByDisplayValue('updater has set INPUT').length).toBe(1);
   });
@@ -408,10 +401,25 @@ describe('StateX', () => {
     }
 
     const { getAllByDisplayValue } = render(<Comp />, { wrapper });
-    ract(() => {
-      jest.runAllTimers();
-    });
 
     expect(getAllByDisplayValue('myAction has set INPUT').length).toBe(1);
+  });
+
+  test('should not call useLayoutEffect', () => {
+    // to support SSR
+    const { result } = renderHook(
+      () => {
+        const [value, setValue] = useStateX(['test'], '');
+        return { value, setValue };
+      },
+      { wrapper },
+    );
+
+    act(() => {
+      result.current.setValue('testing');
+    });
+
+    expect(result.current.value).toBe('testing');
+    expect(useLayoutEffect).not.toHaveBeenCalled();
   });
 });
