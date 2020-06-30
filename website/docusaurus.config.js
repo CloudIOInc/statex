@@ -18,6 +18,10 @@ module.exports = {
     googleAnalytics: {
       trackingID: 'UA-46294606-4',
     },
+    algolia: {
+      apiKey: '6b2cd755d4ade9ffd58e237a342a4f7c',
+      indexName: 'statex',
+    },
     navbar: {
       title: 'StateX',
       logo: {
