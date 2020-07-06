@@ -14,7 +14,7 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 import {
   Dispatch,
   NodeData,
@@ -30,18 +30,17 @@ import {
   StateXRefGetter,
   StateChangeListenerProps,
   StateChangeListenerPropsInternal,
-} from './StateXTypes';
+} from "./StateXTypes";
 
-import Atom from './Atom';
-import Selector from './Selector';
+import Atom from "./Atom";
+import Selector from "./Selector";
 import {
   Resolvable,
   StateXGetter,
   StateXSetter,
   isResolvable,
-} from './StateXTypes';
+} from "./StateXTypes";
 import {
-  _getIn,
   enterStateX,
   getNode,
   makeGet,
@@ -52,15 +51,17 @@ import {
   setStateXValue,
   makeGetRef,
   updateState,
-} from './StateX';
-import { emptyFunction } from './StateXUtils';
-import { useStateXStore, StateXProvider } from './StateXContext';
-import { isPath, Collection } from './ImmutableTypes';
-import { Node } from './Trie';
-import { setIn, getIn } from './ImmutableUtils';
-import Action from './Action';
-import { useLatest } from './StateXUtilHooks';
-import ReactDOM from 'react-dom';
+  makeRemove,
+  getAndUpdateUndefinedStateWithDefaultValue,
+} from "./StateX";
+import { emptyFunction, pathToString } from "./StateXUtils";
+import { useStateXStore, StateXProvider } from "./StateXContext";
+import { isPath, Collection } from "./ImmutableTypes";
+import { Node } from "./Trie";
+import { setIn, getIn } from "./ImmutableUtils";
+import Action from "./Action";
+import { useLatest } from "./StateXUtilHooks";
+import ReactDOM from "react-dom";
 
 function atom<T>(props: StateXProps<T>): Atom<T> {
   return new Atom(props);
@@ -69,6 +70,11 @@ function atom<T>(props: StateXProps<T>): Atom<T> {
 function useStateXSetter() {
   const store = useStateXStore();
   return useMemo(() => makeSet(store), [store]);
+}
+
+function useStateXRemover() {
+  const store = useStateXStore();
+  return useMemo(() => makeRemove(store), [store]);
 }
 
 function useStateXGetter() {
@@ -152,12 +158,21 @@ function useStateXValue<T>(
   } else if (isPath(pathOrAtom)) {
     if (defaultOrOptions === undefined) {
       defaultOrOptions = (null as unknown) as T;
-      // throw Error(`Missing default value for path [${pathOrAtom.join(', ')}]`);
+      /* istanbul ignore next */
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `Missing default value for path ${
+            pathToString(
+              pathOrAtom,
+            )
+          }. Hence defaulting to null!`,
+        );
+      }
     }
     defaultValue = defaultOrOptions as T;
   } else {
     throw Error(
-      'Invalid atom type value! Must be either an atom, selector or path.',
+      "Invalid state type value! Must be either an atom, selector or path.",
     );
   }
   return useStateXValueInternal(pathOrAtom, defaultValue, options);
@@ -246,20 +261,15 @@ function useStateXValueResolveableInternal<T>(
       currentValue = selectorValue;
     }
   } else {
-    currentValue = _getIn<T>(
+    [
+      currentValue,
+      usedDefaultValue,
+    ] = getAndUpdateUndefinedStateWithDefaultValue<T>(
       store,
       node,
-      undefined,
-      !!options?.mutableRefObject,
+      defaultValue,
+      options,
     );
-    if (currentValue === undefined && defaultValue !== undefined) {
-      currentValue = defaultValue;
-      // prevent calling onChange callback for default values
-      node.data.lastKnownValue = defaultValue;
-      store.trackAndUpdate(node, defaultValue);
-      usedDefaultValue = true;
-      store.addToPendingWithoutSchedule(node.path, 'default');
-    }
   }
 
   const ref = useRef({ defaultValue, options, currentValue });
@@ -269,6 +279,7 @@ function useStateXValueResolveableInternal<T>(
   useEffect(() => {
     if (usedDefaultValue) {
       if (isSelectorNode(node)) {
+        /* istanbul ignore next */
         if (
           isResolvable(selectorValue) &&
           selectorValue.isDefault &&
@@ -279,7 +290,7 @@ function useStateXValueResolveableInternal<T>(
       } else if (value !== defaultValue) {
         setValueInternal(defaultValue);
       }
-      store.addToPendingWithoutSchedule(node.path, 'default');
+      store.addToPendingWithoutSchedule(node.path, "default");
     }
   }, [defaultValue, value, node, selectorValue, store, usedDefaultValue]);
 
@@ -311,37 +322,23 @@ function useStateXValueResolveableInternal<T>(
     if (isSelectorNode(node)) {
       // selector may have side effects...
       // hence make the initial call inside useEffect
-      const currentValue = node.data.selector.getValue(store, node, options);
-      setSelectorValue(currentValue);
+      setSelectorValue(node.data.selector.getValue(store, node, options));
     } else {
-      const currentValue = _getIn<T>(
-        store,
-        node,
-        undefined,
-        !!options?.mutableRefObject,
+      setValue(
+        getAndUpdateUndefinedStateWithDefaultValue<T>(
+          store,
+          node,
+          defaultValue,
+          options,
+        )[0],
       );
-      if (currentValue === undefined) {
-        // this should never happen as we are calling store.trackAndMutate
-        // above during render for updating the store with default value
-        if (defaultValue !== undefined) {
-          setValue(defaultValue);
-          if (!node.data.selector) {
-            node.data.lastKnownValue = defaultValue;
-            // prevent calling onChange callback for default values
-            store.trackAndUpdate(node, defaultValue);
-            store.addToPending(node.path, 'update');
-          }
-        }
-      } else {
-        setValue(currentValue);
-      }
     }
   }, [node, setValue, store]);
 
   useEffect(() => {
     // watch the path
-    return enterStateX(node, holderRef.current);
-  }, [node, holderRef]);
+    return enterStateX(store, node, holderRef.current);
+  }, [store, node, holderRef]);
 
   return currentValue;
 }
@@ -377,12 +374,21 @@ function useStateX<T>(
   } else if (isPath(pathOrAtom)) {
     if (defaultOrOptions === undefined) {
       defaultOrOptions = (null as unknown) as T;
-      // throw Error(`Missing default value for path [${pathOrAtom.join(', ')}]`);
+      /* istanbul ignore next */
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `Missing default value for path ${
+            pathToString(
+              pathOrAtom,
+            )
+          }. Hence defaulting to null!`,
+        );
+      }
     }
     defaultValue = defaultOrOptions as T;
   } else {
     throw Error(
-      'Invalid atom type value! Must be either an atom, selector or path.',
+      "Invalid state type value! Must be either an atom, selector or path.",
     );
   }
   const value = useStateXValueInternal(pathOrAtom, defaultValue, options);
@@ -442,13 +448,20 @@ function useRemoveStateX<T>(
   } else if (isPath(pathOrAtom)) {
     if (defaultOrOptions === undefined) {
       defaultOrOptions = (null as unknown) as T;
-      // throw Error(`Missing default value for path [${pathOrAtom.join(', ')}]`);
+      /* istanbul ignore next */
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `Missing default value for path ${
+            pathToString(
+              pathOrAtom,
+            )
+          }. Hence defaulting to null!`,
+        );
+      }
     }
     defaultValue = defaultOrOptions as T;
   } else {
-    throw Error(
-      'Invalid atom type value! Must be either an atom, selector or path.',
-    );
+    throw Error("Invalid state type value! Must be either an atom or path.");
   }
   const value = useStateXValueInternal(pathOrAtom, defaultValue, options);
   const removeValue = useStateXValueRemover<T>(pathOrAtom, options);
@@ -475,8 +488,8 @@ function useWithStateX(state: Collection) {
 }
 
 function useStateXSnapshotCallback<T>(
-  path: Path = [],
   callback: (props: StateChangeListenerProps<T>) => void,
+  path: Path = [],
 ): void {
   const store = useStateXStore();
   const node = getNode(store, path);
@@ -490,10 +503,10 @@ function useStateXSnapshotCallback<T>(
       state = getIn(state, path, undefined);
       if (state !== oldState) {
         updatedNodes = updatedNodes.filter((node) =>
-          store.trie().isThisOrChildNode(path, node),
+          store.trie().isThisOrChildNode(path, node)
         );
         removedNodes = removedNodes.filter((node) =>
-          store.trie().isThisOrChildNode(path, node),
+          store.trie().isThisOrChildNode(path, node)
         );
         ref.current({
           state,
@@ -509,14 +522,11 @@ function useStateXSnapshotCallback<T>(
 
 function useStateXSnapshotSetter() {
   const store = useStateXStore();
-  const setSnapshot = useCallback(
-    <T>(state: T, path: Path = []) => {
-      ReactDOM.unstable_batchedUpdates(() => {
-        updateState(store, state, path);
-      });
-    },
-    [store],
-  );
+  const setSnapshot = useCallback(<T>(state: T, path: Path = []) => {
+    ReactDOM.unstable_batchedUpdates(() => {
+      updateState(store, state, path);
+    });
+  }, [store]);
   return setSnapshot;
 }
 
@@ -546,6 +556,7 @@ export {
   useStateXCallback,
   useStateXGetter,
   useStateXRefGetter,
+  useStateXRemover,
   useStateXResolveable,
   useStateXSetter,
   useStateXSnapshotCallback,

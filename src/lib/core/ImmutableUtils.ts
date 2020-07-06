@@ -16,7 +16,8 @@ import {
   isArrayCollection,
   isObjectCollection,
   isNull,
-} from './ImmutableTypes';
+  isCollection,
+} from "./ImmutableTypes";
 
 function shallowCopy<C>(collection: C): C {
   if (Array.isArray(collection)) {
@@ -65,7 +66,7 @@ function update<C>(
   updater: (val: unknown) => unknown,
 ): C {
   if (isArrayCollection(collection)) {
-    if (typeof key === 'number') {
+    if (typeof key === "number") {
       return arraySet(
         collection,
         key,
@@ -74,11 +75,16 @@ function update<C>(
     } else {
       throw Error(`Invalid key ${String(key)}. Must be of type number.`);
     }
-  }
-  if (isObjectCollection(collection)) {
+  } else if (isObjectCollection(collection)) {
     return objectSet(collection, key, updater(collection[key]));
+  } else if (isNull(collection)) {
+    throw Error(
+      `Invalid collection passed! Must be an array or plain object. Passed ${collection}!`,
+    );
   }
-  return collection;
+  throw Error(
+    `Invalid collection passed! Must be an array or plain object. Passed ${typeof collection}!`,
+  );
 }
 
 function set<C>(collection: C, key: Key, value: unknown): C {
@@ -87,7 +93,7 @@ function set<C>(collection: C, key: Key, value: unknown): C {
 
 function get(collection: any, key: Key): any {
   if (isArrayCollection(collection)) {
-    if (typeof key === 'number') {
+    if (typeof key === "number") {
       if (collection.length > key) {
         return collection[key];
       }
@@ -95,11 +101,14 @@ function get(collection: any, key: Key): any {
     } else {
       throw Error(`Invalid key ${key}. Must be of type number.`);
     }
-  }
-  if (isObjectCollection(collection)) {
+  } else if (isObjectCollection(collection)) {
     return collection[key];
+  } else if (isNull(collection)) {
+    return undefined;
   }
-  return undefined;
+  throw Error(
+    `Invalid collection passed! Must be an array or plain object. Passed ${typeof collection}!`,
+  );
 }
 
 function getInInternal(
@@ -112,18 +121,23 @@ function getInInternal(
   }
   const key = path[pathIndex];
   if (path.length === pathIndex + 1) {
-    return get(collection, key);
+    try {
+      return get(collection, key);
+    } catch (e) {
+      throw Error(`${e.message} Path: ${JSON.stringify(path)}.`);
+    }
   }
   const oldNestedValue = get(collection, key);
   if (isNull(oldNestedValue)) {
     return undefined;
   }
-  if (!isObjectCollection(oldNestedValue)) {
-    console.error(collection, path, pathIndex);
+  if (!isCollection(oldNestedValue)) {
     throw Error(
-      `Invalid path ${JSON.stringify(
-        path,
-      )} at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}`,
+      `Invalid path ${
+        JSON.stringify(
+          path,
+        )
+      } at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}`,
     );
   }
   return getInInternal(oldNestedValue, path, pathIndex + 1);
@@ -138,17 +152,20 @@ function getIn(collection: any, path: Path, defaultValue: any): any {
 }
 
 function has(collection: any, key: Key): boolean {
-  let value;
   if (isArrayCollection(collection)) {
-    if (typeof key === 'number') {
+    if (typeof key === "number") {
       return collection.hasOwnProperty(key);
     } else {
       throw Error(`Invalid key ${key}. Must be of type number.`);
     }
   } else if (isObjectCollection(collection)) {
     return collection.hasOwnProperty(key);
+  } else if (isNull(collection)) {
+    return false;
   }
-  return value !== null && value !== undefined;
+  throw Error(
+    `Invalid collection passed! Must be an array or plain object. Passed ${typeof collection}!`,
+  );
 }
 
 function hasInInternal(
@@ -156,19 +173,28 @@ function hasInInternal(
   path: Path,
   pathIndex: number,
 ): boolean {
+  if (path.length === 0 && pathIndex === 0) {
+    return !isNull(collection);
+  }
   const key = path[pathIndex];
   if (path.length === pathIndex + 1) {
-    return has(collection, key);
+    try {
+      return has(collection, key);
+    } catch (e) {
+      throw Error(`${e.message} Path: ${JSON.stringify(path)}.`);
+    }
   }
   const oldNestedValue = get(collection, key);
   if (isNull(oldNestedValue)) {
     return false;
   }
-  if (!isObjectCollection(oldNestedValue)) {
+  if (!isCollection(oldNestedValue)) {
     throw Error(
-      `Invalid path ${JSON.stringify(
-        path,
-      )} at index ${pathIndex}. Must be an object.`,
+      `Invalid path ${
+        JSON.stringify(
+          path,
+        )
+      } at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}.`,
     );
   }
   return hasInInternal(oldNestedValue, path, pathIndex + 1);
@@ -212,18 +238,18 @@ function updateInInternal<C>(
   if (path.length === pathIndex + 1) {
     try {
       if (performInsert) {
-        if (typeof key === 'number' && isArrayCollection(collection)) {
+        if (typeof key === "number" && isArrayCollection(collection)) {
           return insert(collection, key, updater);
         }
         throw Error(
-          `insertIn called on invalid collection. 
-          leaf collection must be of type Array 
-          & leaf path must be a number.`,
+          `insertIn called on invalid collection. leaf collection must be of type Array & leaf path must be a number.`,
         );
       }
       return update(collection, key, updater);
     } catch (e) {
-      throw Error(`${e.message} Path: ${JSON.stringify(path)}.`);
+      throw Error(
+        `${e.message} Path: ${JSON.stringify(path)} at index ${pathIndex}.`,
+      );
     }
   }
   let oldNestedValue: Collection | null;
@@ -237,17 +263,19 @@ function updateInInternal<C>(
 
   let nestedValue;
   if (isNull(oldNestedValue)) {
-    if (typeof path[pathIndex + 1] === 'number') {
+    if (typeof path[pathIndex + 1] === "number") {
       nestedValue = [];
     } else {
       nestedValue = {};
     }
   } else {
-    if (!isObjectCollection(oldNestedValue)) {
+    if (!isCollection(oldNestedValue)) {
       throw Error(
-        `Invalid path ${JSON.stringify(
-          path,
-        )} at index ${pathIndex}. Must be an object.`,
+        `Invalid path ${
+          JSON.stringify(
+            path,
+          )
+        } at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}`,
       );
     }
     nestedValue = oldNestedValue;
@@ -262,13 +290,7 @@ function updateInInternal<C>(
   if (nestedValue === oldNestedValue) {
     return collection;
   }
-  try {
-    return set(collection, key, nestedValue);
-  } catch (e) {
-    throw Error(
-      `${e.message} Path: ${JSON.stringify(path)} at index ${pathIndex}.`,
-    );
-  }
+  return set(collection, key, nestedValue);
 }
 
 function updateIn<C>(
@@ -288,42 +310,58 @@ function insertIn<C>(collection: C, path: Path, value: unknown): C {
   return updateInInternal(collection, path, 0, () => value, true);
 }
 
-function remove<C>(collection: C, key: Key): C {
+function remove<C extends Collection>(collection: C, key: Key): C {
   if (has(collection, key)) {
     if (isArrayCollection(collection)) {
-      if (typeof key === 'number') {
-        return ([
-          ...collection.slice(0, key),
-          ...collection.slice(key + 1),
-        ] as unknown) as C;
-      } else {
-        throw Error(`Invalid key ${key}. Must be of type number.`);
-      }
+      return ([
+        ...collection.slice(0, key as number),
+        ...collection.slice(+key + 1),
+      ] as unknown) as C;
     }
-    const copy = shallowCopy(collection);
-    if (isObjectCollection(copy)) {
-      delete copy[key];
-      return copy;
-    }
+    const copy = shallowCopy(collection as ObjectCollection);
+    delete copy[key];
+    return copy as C;
   }
   return collection;
 }
 
-function removeInInternal<C>(collection: C, path: Path, pathIndex: number): C {
+function removeInInternal<C extends Collection>(
+  collection: C,
+  path: Path,
+  pathIndex: number,
+): C {
+  if (path.length === 0 && pathIndex === 0) {
+    return (isArrayCollection(collection) ? [] : {}) as C;
+  }
   const key = path[pathIndex];
   if (path.length === pathIndex + 1) {
-    return remove(collection, key);
+    try {
+      return remove(collection, key);
+    } catch (e) {
+      throw Error(
+        `${e.message} Path: ${JSON.stringify(path)} at index ${pathIndex}.`,
+      );
+    }
   }
-  const oldNestedValue = get(collection, key);
+  let oldNestedValue;
+  try {
+    oldNestedValue = get(collection, key);
+  } catch (e) {
+    throw Error(
+      `${e.message} Path: ${JSON.stringify(path)} at index ${pathIndex}.`,
+    );
+  }
   let nestedValue: Collection;
   if (isNull(oldNestedValue)) {
     return collection;
   } else {
     nestedValue = toCollection(
       oldNestedValue,
-      `Invalid path ${JSON.stringify(
-        path,
-      )} at index ${pathIndex}. Must be an object.`,
+      `Invalid path ${
+        JSON.stringify(
+          path,
+        )
+      } at index ${pathIndex}. Must be an object.`,
     );
   }
   nestedValue = removeInInternal(nestedValue, path, pathIndex + 1);
@@ -333,7 +371,7 @@ function removeInInternal<C>(collection: C, path: Path, pathIndex: number): C {
   return set(collection, key, nestedValue);
 }
 
-function removeIn<C>(collection: C, path: Path): C {
+function removeIn<C extends Collection>(collection: C, path: Path): C {
   return removeInInternal(collection, path, 0);
 }
 

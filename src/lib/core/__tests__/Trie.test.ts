@@ -86,6 +86,44 @@ describe('Trie', () => {
       trie.addNode(['a', 'x', 'x1'], 'X');
       trie.removeNode(trie.getNode(['a']));
       trie.getNode(['a'], false);
-    }).toThrow('Node not found at path a! Parent a at index 0 is missing!');
+    }).toThrow('Node not found at path ["a"]! Parent a at index 0 is missing!');
+  });
+
+  test('isChildNode true', () => {
+    const trie = new Trie<string>(() => '');
+    trie.addNode(['a', 'x', 'x1'], 'X');
+    const node = trie.getNode(['a', 'x', 'x1'], false);
+    expect(trie.isChildNode(['a'], node)).toBe(true);
+  });
+
+  test('isThisOrChildNode true', () => {
+    const trie = new Trie<string>(() => '');
+    trie.addNode(['a', 'x', 'x1'], 'X');
+    const node = trie.getNode(['a', 'x', 'x1'], false);
+    expect(trie.isThisOrChildNode(['a'], node)).toBe(true);
+  });
+
+  test('isChildNode false', () => {
+    const trie = new Trie<string>(() => '');
+    trie.addNode(['a', 'x', 'x1'], 'X');
+    const node = trie.getNode(['a', 'x', 'x1'], false);
+    expect(trie.isChildNode(['b'], node)).toBe(false);
+  });
+
+  test('isThisOrChildNode', () => {
+    const trie = new Trie<string>(() => '');
+    trie.addNode(['a', 'x', 'x1'], 'X');
+    const node = trie.getNode(['a', 'x', 'x1'], false);
+    expect(trie.isThisOrChildNode(['a', 'x', 'x1'], node)).toBe(true);
+  });
+
+  test('isThisOrChildNode', () => {
+    const trie = new Trie<string>(() => '');
+    trie.addNode(['a', 'x', 'x1'], 'X');
+    let count = 0;
+    trie.forEach(['a'], (n) => {
+      count++;
+    });
+    expect(count).toBe(3);
   });
 });

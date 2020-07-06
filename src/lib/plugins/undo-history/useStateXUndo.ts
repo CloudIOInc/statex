@@ -6,12 +6,12 @@
  *
  */
 
-import { useStateXSnapshotSetter, Path, StateChangeListenerProps } from '../..';
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
-import { getNode } from '../../core/StateX';
-import UndoRedo from './UndoRedo';
-import { useStateXStore } from '../../core/StateXContext';
-import { useStateXSnapshotCallback } from '../../core/StateXHooks';
+import { useStateXSnapshotSetter, Path, StateChangeListenerProps } from "../..";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { getNode } from "../../core/StateX";
+import UndoRedo from "./UndoRedo";
+import { useStateXStore } from "../../core/StateXContext";
+import { useStateXSnapshotCallback } from "../../core/StateXHooks";
 
 function samePaths(newPaths: Path[], oldPaths: Path[]): boolean {
   if (oldPaths.length !== newPaths.length) {
@@ -27,8 +27,9 @@ function samePaths(newPaths: Path[], oldPaths: Path[]): boolean {
 
 export default function useStateXUndo(
   path: Path = [],
-  hash: string = '#',
+  hash: string = "#",
   auto: boolean = false,
+  limit: number = 200,
 ) {
   const store = useStateXStore();
   const node = getNode(store, path);
@@ -52,19 +53,21 @@ export default function useStateXUndo(
   nodeRef.current = node;
 
   const undoRedo = useMemo(
-    () =>
-      new UndoRedo({
+    () => {
+      const ur = new UndoRedo({
         onChange: (hash, state) => {
           ref.current.state = state;
           ref.current.updatedPaths = [];
           ref.current.removedPaths = [];
-
           setSnapshot(state, nodeRef.current.path);
           setCanUndo(undoRedo.canUndo(hash));
           setCanRedo(undoRedo.canRedo(hash));
         },
-      }),
-    [nodeRef, setSnapshot],
+      });
+      ur.setLimit(limit);
+      return ur;
+    },
+    [limit, setSnapshot],
   );
 
   const updateState = useCallback(() => {
@@ -89,20 +92,23 @@ export default function useStateXUndo(
   }, [undoRedo]);
 
   const addToUndo = useCallback(() => {
-    if (currentRef.current.state) {
-      undoRedo.add(hashRef.current, currentRef.current.state);
-      updateState();
-    }
+    undoRedo.add(hashRef.current, currentRef.current.state);
+    updateState();
   }, [undoRedo, updateState]);
 
   const updateToUndo = useCallback(() => {
-    if (currentRef.current.state) {
-      undoRedo.update(hashRef.current, currentRef.current.state);
-    }
+    undoRedo.update(hashRef.current, currentRef.current.state);
+  }, [undoRedo]);
+
+  const clear = useCallback(() => {
+    undoRedo.clear(hashRef.current);
+  }, [undoRedo]);
+
+  const isEmpty = useCallback(() => {
+    return undoRedo.isEmpty(hashRef.current);
   }, [undoRedo]);
 
   useStateXSnapshotCallback(
-    node.path,
     ({ state, oldState, updatedPaths, removedPaths }) => {
       currentRef.current = { state, oldState, updatedPaths, removedPaths };
       if (state && auto && ref.current.state !== state) {
@@ -119,12 +125,15 @@ export default function useStateXUndo(
         ref.current.removedPaths = removedPaths;
       }
     },
+    node.path,
   );
 
   return {
     addToUndo,
     canRedo,
     canUndo,
+    clear,
+    isEmpty,
     redo,
     reset,
     undo,

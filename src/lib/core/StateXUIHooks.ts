@@ -27,16 +27,19 @@ import Atom from './Atom';
 import { useStateXStore } from './StateXContext';
 import { getNode } from './StateX';
 import { isPath } from './ImmutableTypes';
-import { isReactElement } from './StateXUtils';
+import { isReactElement, pathToString } from './StateXUtils';
 
 function useStateXOnChangeForTextInput<T extends HTMLElement>(
   path: PathOrStateXOrSelector<string>,
   options?: Options,
 ): [(event: React.ChangeEvent<T>) => void, Dispatch<string>] {
   const setValue = useStateXValueSetter<string>(path, options);
-  const onChange = useCallback((event) => setValue(event.target.value), [
-    setValue,
-  ]);
+  const onChange = useCallback(
+    (event) => {
+      setValue(event.target.value);
+    },
+    [setValue],
+  );
 
   return [onChange, setValue];
 }
@@ -118,7 +121,7 @@ function useStateXForTextInput(
     }
     defaultValue = defaultOrOptions;
   } else {
-    throw Error('Invalid atom type value! Must be either an atom or path.');
+    throw Error('Invalid state type value! Must be either an atom or path.');
   }
   const value = useStateXValueInternal(pathOrAtom, defaultValue, options);
   const [onChange] = useStateXOnChangeForTextInput<HTMLInputElement>(
@@ -181,7 +184,7 @@ function useStateXForNumberInput(
     }
     defaultValue = defaultOrOptions;
   } else {
-    throw Error('Invalid atom type value! Must be either an atom or path.');
+    throw Error('Invalid state type value! Must be either an atom or path.');
   }
   const value = useStateXValueInternal(pathOrAtom, defaultValue, options);
   const [onChange] = useStateXOnChangeForNumberInput(pathOrAtom);
@@ -225,7 +228,7 @@ function useStateXForToggle(
     }
     defaultValue = defaultOrOptions;
   } else {
-    throw Error('Invalid atom type value! Must be either an atom or path.');
+    throw Error('Invalid state type value! Must be either an atom or path.');
   }
   const value = useStateXValueInternal(pathOrAtom, defaultValue, options);
   const [onToggle] = useStateXOnToggle(pathOrAtom, options);
@@ -284,22 +287,34 @@ function usePrintTree() {
     const sb: string[] = [];
     store.trie().forEach(path, (node: Node<NodeData<any>>, level: number) => {
       sb.push(
-        `${''.padStart(level * 2, '-')}${node.path.join('.')} ${
+        `${''.padStart(level * 2, '-')}${pathToString(node.path)} ${
           node.data.holders.size
         }`,
       );
       node.data.holders.forEach((holder) => {
         sb.push(
-          `${''.padStart(level * 2 + 2, ' ')}${holder.node.path.join('.')}`,
+          `${''.padStart(level * 2 + 2, ' ')}${pathToString(holder.node.path)}`,
         );
       });
     });
-    console.log(sb.join('\n'));
+    return sb.join('\n');
+  };
+}
+
+function useActivePaths() {
+  const store = useStateXStore();
+  return (path: Path) => {
+    const sb: Path[] = [];
+    store.trie().forEach(path, (node: Node<NodeData<any>>, level: number) => {
+      sb.push(node.path);
+    });
+    return sb;
   };
 }
 
 export {
   isReactElement,
+  useActivePaths,
   usePrintTree,
   useStateXForCheckbox,
   useStateXForNumberInput,

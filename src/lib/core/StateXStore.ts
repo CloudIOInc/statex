@@ -6,23 +6,23 @@
  *
  */
 
-import { deepFreeze, emptyFunction } from './StateXUtils';
+import { deepFreeze, emptyFunction, pathToString } from "./StateXUtils";
 import {
   NodeData,
   Path,
   SchedulerFn,
   StateChangeListenerInternal,
   StateXHolder,
-} from './StateXTypes';
-import Trie, { Node } from './Trie';
-import { Collection } from './ImmutableTypes';
-import { inform } from './StateX';
-import { setIn, removeIn } from './ImmutableUtils';
-import { SetStateAction } from 'react';
+} from "./StateXTypes";
+import Trie, { Node } from "./Trie";
+import { Collection } from "./ImmutableTypes";
+import { inform } from "./StateX";
+import { setIn, removeIn } from "./ImmutableUtils";
+import { SetStateAction } from "react";
 
 export function notInAContext(): any {
-  throw new Error(
-    'This component must be used inside a <StateXProvider> component.',
+  throw Error(
+    "This component must be used inside a <StateXProvider> component.",
   );
 }
 
@@ -56,14 +56,17 @@ export class StateX {
   rendering = false;
   handleError: (error: any) => void;
   stateChangeListeners = new Set<StateChangeListenerInternal>();
+  destroyed = false;
 
   constructor(
     initialState: Collection = {},
     handleError: (error: any) => void = emptyFunction,
   ) {
-    if (process.env.NODE_ENV !== 'production') {
+    /* istanbul ignore next */
+    if (process.env.NODE_ENV !== "production") {
       this.state = deepFreeze(initialState);
     } else {
+      /* istanbul ignore next */
       this.state = initialState;
     }
     this.handleError = handleError;
@@ -84,20 +87,21 @@ export class StateX {
     ) {
       return false;
     }
-    if (process.env.NODE_ENV === 'development') {
-      const log = ['State changed...'];
+    /* istanbul ignore next */
+    if (process.env.NODE_ENV !== "production") {
+      const log = ["State changed..."];
       const log2: string[] = [];
       if (this.updatedNodes.length) {
-        log.push('updates:');
-        this.updatedNodes.forEach((node) => log2.push(node.path.join('.')));
-        log.push(log2.join(', '));
+        log.push("updates:");
+        this.updatedNodes.forEach((node) => log2.push(pathToString(node.path)));
+        log.push(log2.join(", "));
       }
       if (this.removedNodes.length) {
-        log.push('deletes:');
-        this.removedNodes.forEach((node) => log2.push(node.path.join('.')));
-        log.push(log2.join(', '));
+        log.push("deletes:");
+        this.removedNodes.forEach((node) => log2.push(pathToString(node.path)));
+        log.push(log2.join(", "));
       }
-      this.debug(log.join(' '), 'state');
+      this.debug(log.join(" "), "state");
     }
     this.stateChangeListeners.forEach((listener) =>
       listener({
@@ -105,7 +109,7 @@ export class StateX {
         oldState: this._lastKnownState,
         updatedNodes: this.updatedNodes,
         removedNodes: this.removedNodes,
-      }),
+      })
     );
     this._lastKnownState = this.state;
     this.updatedNodes = [];
@@ -130,20 +134,21 @@ export class StateX {
   beforeAtomUpdater(node: Node<NodeData<any>>) {}
   afterAtomUpdater(node: Node<NodeData<any>>) {}
   updatingState(node: Node<NodeData<any>>) {}
-  readingState(node: Node<NodeData<any>>) {}
   removingState(node: Node<NodeData<any>>) {}
 
   afterSelectorReads() {
-    if (process.env.NODE_ENV === 'development') {
-      this.debug('afterSelectorReads', 'render');
+    /* istanbul ignore next */
+    if (process.env.NODE_ENV !== "production") {
+      this.debug("afterSelectorReads", "render");
     }
     if (this.activeNodes.size) {
-      if (process.env.NODE_ENV === 'development') {
-        const log = ['Derived nodes during render...'];
+      /* istanbul ignore next */
+      if (process.env.NODE_ENV !== "production") {
+        const log = ["Derived nodes during render..."];
         this.activeNodes.forEach((count, node) =>
-          log.push(node.path.join('.')),
+          log.push(pathToString(node.path))
         );
-        this.debug(log.join(', '), 'render');
+        this.debug(log.join(", "), "render");
       }
       // clear all active read nodes
       this.activeNodes.clear();
@@ -166,28 +171,35 @@ export class StateX {
   started() {}
 
   afterStateUpdates() {
-    if (process.env.NODE_ENV === 'development') {
-      this.debug('afterStateUpdates', 'update');
+    /* istanbul ignore next */
+    if (process.env.NODE_ENV !== "production") {
+      this.debug("afterStateUpdates", "update");
     }
     if (this.activeNodes.size) {
-      if (process.env.NODE_ENV === 'development') {
-        const log = ['Changed Nodes during update...'];
+      /* istanbul ignore next */
+      if (process.env.NODE_ENV !== "production") {
+        const log = ["Changed Nodes during update..."];
         this.activeNodes.forEach((count, node) =>
-          log.push(node.path.join('.')),
+          log.push(pathToString(node.path))
         );
-        this.debug(log.join(', '), 'event');
+        this.debug(log.join(", "), "event");
       }
       // clear all active nodes
       this.activeNodes.clear();
     }
     if (this.getPendingPaths().length) {
       inform(this);
+      // changed components will re-render. mark rendering start
+      // to write to console.warn in scheduleForUpdate if any
+      // setter is invoked during render
+      this.renderingStarted();
     }
     this.postUpdateRenderSchedule([]);
   }
 
+  /* istanbul ignore next */
   debug(log: string, action?: string, data?: any) {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV !== "production") {
       const logItem = { log, id: ++this.id, ts: performance.now(), action };
       const ms = this.lastLogItem
         ? Math.round(logItem.ts - this.lastLogItem.ts)
@@ -195,13 +207,13 @@ export class StateX {
       if (data !== undefined) {
         console.debug(
           logItem.id,
-          `${action} => ${log}${ms ? ` - ${ms}ms` : ''}`,
+          `${action} => ${log}${ms ? ` - ${ms}ms` : ""}`,
           data,
         );
       } else {
         console.debug(
           logItem.id,
-          `${action} => ${log}${ms ? ` - ${ms}ms` : ''}`,
+          `${action} => ${log}${ms ? ` - ${ms}ms` : ""}`,
         );
       }
       this.lastLogItem = logItem;
@@ -212,27 +224,26 @@ export class StateX {
     let count = this.activeNodes.get(node) ?? 0;
     if (count > 10) {
       throw Error(
-        `Trying to ${action} $${node.path.join('.')} too many times!`,
+        `Trying to ${action} ${pathToString(node.path)} too many times!`,
       );
     }
     this.activeNodes.set(node, ++count);
     this.scheduleForUpdate(node, action);
   }
 
-  _renderTimeout: NodeJS.Timeout = (0 as unknown) as NodeJS.Timeout;
-  _updateTimeout: NodeJS.Timeout = (0 as unknown) as NodeJS.Timeout;
-
   scheduleForUpdate(node: Node<NodeData<any>>, action: string) {
     switch (action) {
-      case 'read':
+      case "read":
         this._scheduleRead();
         break;
       default:
         this._scheduleUpdate();
         if (this.rendering) {
-          const log = `WARNING: Trying to ${action} $${node.path.join(
-            '.',
-          )} during render!`;
+          const log = `WARNING: Trying to ${action} ${
+            pathToString(
+              node.path,
+            )
+          } during render!`;
           console.warn(log, action);
         }
         break;
@@ -254,10 +265,6 @@ export class StateX {
   }
 
   destroy() {
-    this._renderTimeout && clearTimeout(this._renderTimeout);
-    this._updateTimeout && clearTimeout(this._updateTimeout);
-    delete this._renderTimeout;
-    delete this._updateTimeout;
     this.updateSchedule = notInAContext;
     this.renderSchedule = notInAContext;
     this.postRenderSchedule = notInAContext;
@@ -268,6 +275,7 @@ export class StateX {
     this.activeNodes.clear();
     delete this.activeNodes;
     delete this.pending;
+    this.destroyed = true;
   }
 
   addToPending(path: Path, action: string) {
@@ -276,6 +284,10 @@ export class StateX {
   }
 
   trie() {
+    /* istanbul ignore next */
+    if (this.destroyed) {
+      throw Error("store destroyed!");
+    }
     return this._trie;
   }
 
@@ -310,6 +322,13 @@ export class StateX {
     this.postUpdateRenderSchedule = fn;
   };
 
+  selectorInitialized<T>(node: Node<NodeData<T>>) {
+    if (this.updatedNodes.indexOf(node) === -1) {
+      this.updatedNodes.push(node);
+      this.addToPending(node.path, "init");
+    }
+  }
+
   trackAndUpdate<T>(node: Node<NodeData<T>>, value: SetStateAction<T>) {
     this.setState(setIn(this.getState(), node.path, value));
     if (this.updatedNodes.indexOf(node) === -1) {
@@ -324,8 +343,6 @@ export class StateX {
 
   trackAndRemove<T>(node: Node<NodeData<T>>) {
     this.setState(removeIn(this.getState(), node.path));
-    if (this.removedNodes.indexOf(node) === -1) {
-      this.removedNodes.push(node);
-    }
+    this.removedNodes.push(node);
   }
 }

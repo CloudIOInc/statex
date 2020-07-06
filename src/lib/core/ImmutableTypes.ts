@@ -30,7 +30,11 @@ export function isArrayCollection(value: unknown): value is ArrayCollection {
 }
 
 export function isObjectCollection(value: unknown): value is ObjectCollection {
-  return value && typeof value === 'object';
+  return value && !Array.isArray(value) && typeof value === 'object';
+}
+
+export function isCollection(value: unknown): value is Collection {
+  return isArrayCollection(value) || isObjectCollection(value);
 }
 
 export function isNull(value: unknown): value is null | undefined {

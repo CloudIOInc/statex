@@ -18,16 +18,21 @@ import {
   isResolvable,
   StateXRefGetter,
   StateXActionCaller,
-} from './StateXTypes';
+} from "./StateXTypes";
 import {
   Resolvable,
   StateXSetter,
   Options,
   StateXRemover,
-} from './StateXTypes';
-import type { Node } from './Trie';
-import type { Path, Key } from './ImmutableTypes';
-import { isPromise, applyParamsToPath } from './StateXUtils';
+} from "./StateXTypes";
+import type { Node } from "./Trie";
+import type { Path, Key } from "./ImmutableTypes";
+import {
+  isPromise,
+  applyParamsToPath,
+  emptyFunction,
+  pathToString,
+} from "./StateXUtils";
 import {
   enterStateX,
   getNode,
@@ -36,11 +41,11 @@ import {
   makeRemove,
   makeGetRef,
   makeCall,
-} from './StateX';
-import { StateX } from './StateXStore';
+} from "./StateX";
+import { StateX } from "./StateXStore";
 
 function notWritableSelector<T>(): T {
-  throw Error('Not a writable selector!');
+  throw Error("Not a writable selector!");
 }
 
 export default class Selector<T> implements SelectorInterface<T> {
@@ -48,7 +53,7 @@ export default class Selector<T> implements SelectorInterface<T> {
   private readonly _set: Write<T>;
   readonly path?: Path;
   dynamic: boolean = false;
-  params = new Map();
+  params = new Map<string, number>();
   pathWithParams: Path;
   defaultValue: T;
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
@@ -67,7 +72,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     this.shouldComponentUpdate = shouldComponentUpdate;
     for (let i = 0; i < path.length; i++) {
       const key = path[i];
-      if (typeof key === 'string' && key.charAt(0) === ':') {
+      if (typeof key === "string" && key.charAt(0) === ":") {
         this.params.set(key.substr(1), i);
       }
     }
@@ -95,7 +100,7 @@ export default class Selector<T> implements SelectorInterface<T> {
       promiseOrError
         .then((value) => {
           resolvable.value = value;
-          resolvable.status = 'resolved';
+          resolvable.status = "resolved";
           if (!resolvable.cancelled) {
             if (self) {
               // react doesn't re-render if we return the same resolveable... hence clone it
@@ -105,28 +110,25 @@ export default class Selector<T> implements SelectorInterface<T> {
             } else {
               this.update(store, selectorNode, params);
             }
-            // setStateXValue(this.pathWithParams, value, { params });
           }
           return value;
         })
         .catch((error) => {
           resolvable.error = error;
-          resolvable.status = 'error';
+          resolvable.status = "error";
+          store.catch(error);
           if (!resolvable.cancelled) {
-            try {
-              // react doesn't re-render if we return the same resolveable... hence clone it
-              selectorNode.data.resolveable = resolvable.clone();
-              selectorNode.data.holders.forEach((holder) =>
-                holder.setter(selectorNode.data.resolveable),
-              );
-            } catch (error) {
-              console.error(error);
-            }
+            // react doesn't re-render if we return the same resolveable... hence clone it
+            selectorNode.data.resolveable = resolvable.clone();
+            selectorNode.data.holders.forEach((holder) =>
+              holder.setter(selectorNode.data.resolveable)
+            );
           }
         });
     } else {
       resolvable.error = promiseOrError;
-      resolvable.status = 'error';
+      resolvable.status = "error";
+      store.catch(promiseOrError);
     }
     selectorNode.data.resolveable = resolvable;
     return resolvable;
@@ -147,7 +149,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     const path = applyParamsToPath(this.pathWithParams, options?.params);
     const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
     let value: T | Promise<T>;
-    store.activateNode(selectorNode, 'read');
+    store.activateNode(selectorNode, "read");
     store.beforeSelectorGet(selectorNode);
     try {
       value = this._get({
@@ -157,7 +159,7 @@ export default class Selector<T> implements SelectorInterface<T> {
         params: options?.params,
         remove,
         set,
-      });
+      }) ?? this.defaultValue;
     } catch (errorOrPromise) {
       return this.makeResolvable(
         store,
@@ -197,7 +199,11 @@ export default class Selector<T> implements SelectorInterface<T> {
       selectorNode.data.unregisterMap = new Map();
       selectorNode.data.previousNodes = new Set();
       selectorNode.data.initialized = true;
-      return this.selectValueWithStateXHolder(store, options);
+      const value = this.selectValueWithStateXHolder(store, options);
+      if (!isResolvable(value)) {
+        store.selectorInitialized(selectorNode);
+      }
+      return value;
     }
     if (selectorNode.data.resolveable) {
       return selectorNode.data.resolveable;
@@ -240,21 +246,21 @@ export default class Selector<T> implements SelectorInterface<T> {
     options?: Options,
   ) => {
     const unreg = selectorNode.data.unregisterMap.get(node);
+    /* istanbul ignore next */
     if (unreg) {
       console.warn(
-        'Node already registered',
-        selectorNode.path.join('.'),
-        node.path.join('.'),
+        "Node already registered",
+        pathToString(selectorNode.path),
+        pathToString(node.path),
       );
       unreg();
     }
     const stateXHolder: StateXHolder<T> = {
-      setter: () => {
-        // do nothing during initial enterStateX callback
-      },
+      // do nothing during initial enterStateX callback
+      setter: emptyFunction,
       node: selectorNode,
     };
-    const leaveStateX = enterStateX(node, stateXHolder);
+    const leaveStateX = enterStateX(store, node, stateXHolder);
     stateXHolder.setter = () => this.update(store, selectorNode, options);
     selectorNode.data.unregisterMap.set(node, leaveStateX);
   };
@@ -266,15 +272,8 @@ export default class Selector<T> implements SelectorInterface<T> {
   ) => {
     const val = this.selectValueWithStateXHolder(store, options);
     if (isResolvable(val)) {
-      try {
-        selectorNode.data.holders.forEach((holder) => holder.setter(val));
-      } catch (error) {
-        console.error(error);
-      }
+      selectorNode.data.holders.forEach((holder) => holder.setter(val));
     } else {
-      // update the state... this will trigger re-render on all components watching this atom
-      // setStateXValue(this.pathWithParams, val, props);
-      // trigger the selector component re-render
       selectorNode.data.selectorValue = val;
       this.inform(store, val, selectorNode, true);
     }
@@ -296,6 +295,11 @@ export default class Selector<T> implements SelectorInterface<T> {
       set: makeSet(store),
     });
     nodes.forEach((node) => {
+      /* istanbul ignore next */
+      if (selectorNode.data.previousNodes === undefined) {
+        console.log(selectorNode);
+        throw Error("invalid node!");
+      }
       if (!selectorNode.data.previousNodes.has(node)) {
         // watch the atom
         this.watchStateXForSelector(store, selectorNode, node, options);
@@ -314,46 +318,60 @@ export default class Selector<T> implements SelectorInterface<T> {
     return value;
   };
 
-  private inform(
+  informInitialChange(
+    store: StateX,
+    selectorNode: Node<NodeDataWithSelector<T>>,
+  ) {
+    this.inform(
+      store,
+      selectorNode.data.selectorValue as T,
+      selectorNode,
+      true,
+    );
+  }
+
+  inform(
     store: StateX,
     val: T,
     selectorNode: Node<NodeDataWithSelector<T>>,
     self: boolean,
   ) {
-    const { oldValue } = selectorNode.data;
-    selectorNode.data.oldValue = val;
+    const { oldSelectorValue } = selectorNode.data;
+    selectorNode.data.oldSelectorValue = val;
     let shouldSelectorUpdate = true;
     if (this.shouldComponentUpdate) {
       store.beforeShouldComponentUpdate(selectorNode);
-      shouldSelectorUpdate = this.shouldComponentUpdate(val, oldValue);
+      shouldSelectorUpdate = this.shouldComponentUpdate(val, oldSelectorValue);
       store.afterShouldComponentUpdate(selectorNode);
     }
     if (shouldSelectorUpdate) {
       selectorNode.data.holders.forEach((holder) => {
-        if (holder.holding) {
-          let shouldUpdate = true;
-          if (holder.shouldComponentUpdate) {
-            store.beforeShouldComponentUpdate(holder.node);
-            shouldUpdate = holder.shouldComponentUpdate(val, oldValue);
-            store.afterShouldComponentUpdate(holder.node);
-          }
-          if (shouldUpdate) {
-            holder.setter(val);
-          }
-          // Do we need to call onChange
-          // if atom.shouldComponentUpdate returns false?
-          if (holder.onChange) {
-            store.beforeOnChange(holder.node);
-            holder.onChange({
-              call: makeCall(store),
-              get: makeGet(store),
-              getRef: makeGetRef(store),
-              oldValue,
-              set: makeSet(store),
-              value: val,
-            });
-            store.afterOnChange(holder.node);
-          }
+        /* istanbul ignore next */
+        if (!holder.holding) {
+          return;
+        }
+        let shouldUpdate = true;
+        if (holder.shouldComponentUpdate) {
+          store.beforeShouldComponentUpdate(holder.node);
+          shouldUpdate = holder.shouldComponentUpdate(val, oldSelectorValue);
+          store.afterShouldComponentUpdate(holder.node);
+        }
+        if (shouldUpdate) {
+          holder.setter(val);
+        }
+        // Do we need to call onChange
+        // if atom.shouldComponentUpdate returns false?
+        if (holder.onChange) {
+          store.beforeOnChange(holder.node);
+          holder.onChange({
+            call: makeCall(store),
+            get: makeGet(store),
+            getRef: makeGetRef(store),
+            oldValue: oldSelectorValue,
+            set: makeSet(store),
+            value: val,
+          });
+          store.afterOnChange(holder.node);
         }
       });
     }

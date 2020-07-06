@@ -25,30 +25,30 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@babel/cli": "^7.10.3",
-    "@babel/core": "^7.10.3",
-    "@babel/plugin-proposal-class-properties": "^7.10.1",
-    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.10.1",
-    "@babel/plugin-proposal-object-rest-spread": "^7.10.3",
-    "@babel/plugin-proposal-optional-chaining": "^7.10.3",
+    "@babel/cli": "^7.10.4",
+    "@babel/core": "^7.10.4",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.10.4",
+    "@babel/plugin-proposal-object-rest-spread": "^7.10.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.10.4",
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
     "@babel/plugin-syntax-optional-chaining": "^7.8.3",
-    "@babel/plugin-transform-runtime": "^7.10.3",
-    "@babel/preset-env": "^7.10.3",
-    "@babel/preset-react": "^7.10.1",
-    "@babel/preset-typescript": "^7.10.1",
-    "@material-ui/core": "^4.10.2",
+    "@babel/plugin-transform-runtime": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/preset-react": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@material-ui/core": "^4.11.0",
     "@material-ui/icons": "^4.9.1",
     "@popmotion/popcorn": "^0.4.4",
     "@rollup/plugin-babel": "^5.0.4",
     "@rollup/plugin-commonjs": "^13.0.0",
     "@rollup/plugin-image": "^2.0.5",
     "@rollup/plugin-node-resolve": "^8.1.0",
-    "@rollup/plugin-typescript": "^5.0.0",
+    "@rollup/plugin-typescript": "^5.0.1",
     "@tailwindcss/ui": "^0.3.0",
-    "@testing-library/dom": "^7.18.1",
+    "@testing-library/dom": "^7.20.0",
     "@testing-library/jest-dom": "^5.11.0",
-    "@testing-library/react": "^10.4.3",
+    "@testing-library/react": "^10.4.4",
     "@testing-library/react-hooks": "^3.3.0",
     "@testing-library/user-event": "^12.0.11",
     "@types/dagre": "^0.7.44",
@@ -68,6 +68,7 @@
     "dagre": "^0.8.5",
     "debounce": "^1.2.0",
     "framer-motion": "^1.11.1",
+    "mutation-observer": "^1.0.3",
     "npm-check-updates": "^7.0.1",
     "postcss-cli": "^7.1.1",
     "prettier": "^2.0.5",
@@ -77,14 +78,14 @@
     "react-color": "^2.18.1",
     "react-dom": "^16.13.0",
     "react-live": "^2.2.2",
-    "react-native-web": "^0.12.3",
+    "react-native-web": "^0.13.1",
     "react-require": "^1.0.1",
     "react-scripts": "3.4.1",
     "react-test-renderer": "^16.13.1",
     "react-use-gesture": "^7.0.15",
-    "rollup": "^2.18.0",
+    "rollup": "^2.19.0",
     "rollup-plugin-cleanup": "^3.1.1",
-    "rollup-plugin-peer-deps-external": "^2.2.2",
+    "rollup-plugin-peer-deps-external": "^2.2.3",
     "rollup-plugin-postcss": "^3.1.2",
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-terser": "^6.1.0",
@@ -92,7 +93,7 @@
     "tailwindcss": "^1.4.6",
     "todomvc-app-css": "^2.3.0",
     "todomvc-common": "^1.0.5",
-    "typescript": "^3.9.5",
+    "typescript": "^3.9.6",
     "uuid": "^8.2.0"
   },
   "scripts": {
@@ -103,6 +104,7 @@
     "build:rollup": "rollup -c --compact && node scripts/postbuild.js",
     "emit-types": "mkdir -p dist/types && yarn run tsc src/lib/index.ts --lib DOM,ES2015 --declaration --declarationDir dist/types --emitDeclarationOnly --jsx react --esModuleInterop true",
     "test": "react-app-rewired test",
+    "test:coverage": "react-app-rewired test --coverage",
     "ncu": "./node_modules/npm-check-updates/bin/ncu.js",
     "prepublish": "yarn build"
   },
@@ -120,5 +122,34 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "src/lib/core/**/*.{ts,tsx}",
+      "src/lib/plugins/**/*.{ts,tsx}"
+    ],
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/build/",
+      "<rootDir>/dist/",
+      "<rootDir>/node_modules/",
+      "<rootDir>/src/examples/",
+      "<rootDir>/src/lib/testing/",
+      "<rootDir>/src/website/",
+      "<rootDir>/src/lib/index.ts",
+      "<rootDir>/src/lib/plugins/index.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 95,
+        "functions": 100,
+        "lines": 95,
+        "statements": 95
+      }
+    },
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ],
+    "snapshotSerializers": []
   }
 }

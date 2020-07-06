@@ -95,20 +95,20 @@ export interface NodeDataWithSelector<T> extends NodeData<T> {
   resolveable?: Resolvable<T>;
   initialized?: boolean;
   selectorValue?: T;
-  oldValue?: T;
+  oldSelectorValue?: T;
   unregisterMap: Map<Node<NodeData<T>>, () => void>;
   previousNodes: Set<Node<NodeData<T>>>;
 }
 
-export function hasStateX<T>(node: NodeData<T>): node is NodeDataWithStateX<T> {
-  return node.atom !== undefined;
-}
+// export function hasStateX<T>(node: NodeData<T>): node is NodeDataWithStateX<T> {
+//   return node.atom !== undefined;
+// }
 
-export function hasSelector<T>(
-  node: NodeData<T>,
-): node is NodeDataWithSelector<T> {
-  return node.selector !== undefined;
-}
+// export function hasSelector<T>(
+//   node: NodeData<T>,
+// ): node is NodeDataWithSelector<T> {
+//   return node.selector !== undefined;
+// }
 
 export function isSelectorNode<T>(
   node: Node<NodeData<T>>,
@@ -146,6 +146,8 @@ export type StateXGetter = <T>(
   pathOrAtom: PathOrStateXOrSelector<T>,
   props?: Options,
 ) => T;
+
+export type StateXActivePathsGetter = (path: Path) => Path[];
 
 export type StateXActionCaller = <T = void>(
   action: Action<T>,

@@ -1,3 +1,8 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "deno.enable": false,
+  "jest.coverageFormatter": "GutterFormatter",
+  "jest.runAllTestsFirst": false,
+  "jest.autoEnable": false,
+  "jest.enableInlineErrorMessages": true
 }

@@ -6,7 +6,8 @@
  *
  */
 
-import { Key, Path } from './ImmutableTypes';
+import { Key, Path } from "./ImmutableTypes";
+import { pathToString } from "./StateXUtils";
 
 export interface Node<T> {
   children: Record<Key, Node<T>>;
@@ -22,11 +23,11 @@ export default class Trie<T> {
 
   constructor(makeData: (key: Key, parent?: Node<T>) => T) {
     this.makeData = makeData;
-    this.root = this._createNode('_ROOT_');
+    this.root = this._createNode("_ROOT_");
   }
 
   reset = () => {
-    this.root = this._createNode('_ROOT_');
+    this.root = this._createNode("_ROOT_");
   };
 
   private _createNode = (key: Key, parent?: Node<T>): Node<T> => {
@@ -69,9 +70,11 @@ export default class Trie<T> {
           node.children[key] = child;
         } else {
           throw Error(
-            `Node not found at path ${path.join(
-              '.',
-            )}! Parent ${key} at index ${i} is missing!`,
+            `Node not found at path ${
+              pathToString(
+                path,
+              )
+            }! Parent ${key} at index ${i} is missing!`,
           );
         }
       }

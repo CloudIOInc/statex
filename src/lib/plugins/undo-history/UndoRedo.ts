@@ -11,7 +11,6 @@ class UndoRedo<T> {
     [hash: string]: { history: T[]; index: number };
   } = {};
   limit = 200;
-  isExecuting = false;
   onChange: (hash: string, state: T) => void;
 
   constructor(props: { onChange: (hash: string, state: T) => void }) {
@@ -28,9 +27,6 @@ class UndoRedo<T> {
   };
 
   add = (hash: string, state: T) => {
-    if (this.isExecuting) {
-      return;
-    }
     const historyWithIndex = this._history(hash);
     const { history, index } = historyWithIndex;
     if (history.length > index + 1) {
@@ -63,10 +59,8 @@ class UndoRedo<T> {
     if (!state) {
       return;
     }
-    this.isExecuting = true;
     historyWithIndex.index -= 1;
     this.onChange(hash, state);
-    this.isExecuting = false;
   };
 
   redo = (hash: string) => {
@@ -76,10 +70,8 @@ class UndoRedo<T> {
     if (!state) {
       return;
     }
-    this.isExecuting = true;
     historyWithIndex.index += 1;
     this.onChange(hash, state);
-    this.isExecuting = false;
   };
 
   clear = (hash: string) => {

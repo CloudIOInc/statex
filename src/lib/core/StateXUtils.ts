@@ -11,15 +11,18 @@ import { Resolvable } from './StateXTypes';
 
 function isNode(object: any): boolean {
   if (typeof window === 'undefined') {
-    return false;
+    return typeof object === 'object' &&
+      typeof object.nodeType === 'number' &&
+      typeof object.nodeName === 'string'
+      ? true
+      : false;
   }
 
   const defaultView = object.ownerDocument?.defaultView ?? window;
-  return typeof defaultView.Node === 'function'
-    ? object instanceof defaultView.Node
-    : typeof object === 'object' &&
-        typeof object.nodeType === 'number' &&
-        typeof object.nodeName === 'string';
+  if (object === defaultView) {
+    return true;
+  }
+  return object instanceof defaultView.Node;
 }
 
 function isPromise<T>(object: any): object is Promise<T> {
@@ -54,10 +57,14 @@ export function shouldFreeze(object: any) {
   if (isNull(object) || typeof object !== 'object') {
     return false;
   }
-  if (object.current) {
-    console.warn('ref cannot be frozen');
+  if (object.hasOwnProperty('current')) {
     return false;
   }
+
+  if (isReactElement(object)) {
+    return false;
+  }
+
   if (Object.isFrozen(object)) {
     return false;
   }
@@ -66,16 +73,11 @@ export function shouldFreeze(object: any) {
     return false;
   }
 
-  if (isReactElement(object)) {
-    return false;
-  }
-
   if (isPromise(object)) {
     return false;
   }
 
   if (object instanceof Resolvable) {
-    console.warn('Resolvable cannot be frozen');
     return false;
   }
 
@@ -83,8 +85,8 @@ export function shouldFreeze(object: any) {
 }
 
 function deepFreeze(object: any) {
-  if (typeof object === 'object' && object.current) {
-    throw Error('Ref in deepFreeze!!!');
+  if (typeof object === 'object' && object.hasOwnProperty('current')) {
+    throw Error('Ref must not be passed to deepFreeze!');
   }
   if (!shouldFreeze(object)) {
     return object;
@@ -109,16 +111,18 @@ export function applyParamsToPath(
   pathWithParams: Path,
   params?: Record<string, Key>,
 ): Path {
+  let path: Path;
   if (!params || Object.keys(params).length === 0) {
-    return pathWithParams;
+    path = pathWithParams;
+  } else {
+    path = [...pathWithParams];
+    Object.entries(params).forEach((entry) => {
+      const index = path.indexOf(`:${entry[0]}`);
+      if (index !== -1) {
+        path[index] = entry[1];
+      }
+    });
   }
-  const path = [...pathWithParams];
-  Object.entries(params).forEach((entry) => {
-    const index = path.indexOf(`:${entry[0]}`);
-    if (index !== -1) {
-      path[index] = entry[1];
-    }
-  });
   const missingParams = path.filter(
     (key) => typeof key === 'string' && key.charAt(0) === ':',
   );
@@ -126,10 +130,14 @@ export function applyParamsToPath(
     throw Error(
       `Missing parameter values for ${missingParams.join(
         ', ',
-      )} in path ${JSON.stringify(path)}. Params passed ${JSON.stringify(
-        params,
-      )}`,
+      )} in path ${JSON.stringify(path)}. ${
+        params ? `Params passed ${JSON.stringify(params)}` : 'No params passed!'
+      }`,
     );
   }
   return path;
+}
+
+export function pathToString(path: Path) {
+  return JSON.stringify(path);
 }
