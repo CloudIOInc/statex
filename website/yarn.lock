@@ -1018,10 +1018,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@cloudio/statex@^0.0.26":
-  version "0.0.26"
-  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.26.tgz#01fec45721720b1393ac18c0b40df4e8cc4f1b77"
-  integrity sha512-SUhs31vy73ctZh1nR52as2eb2YRozBwP29Z8uUx9MfcnUYQHwUtnqLLE7jQ75oXSO9rn7YPtpeD9Cet2gdR3zg==
+"@cloudio/statex@^0.0.27":
+  version "0.0.27"
+  resolved "https://registry.yarnpkg.com/@cloudio/statex/-/statex-0.0.27.tgz#933410577bc511d429eb7eb12625fe49023f1c39"
+  integrity sha512-WHAkSj0fMSFHMWOZIjKC4lr7g7K7q2Bd61/dmv/KzAJPS/CHqu1H/hQrRaClqvZswu+5JbBt0QAZJFh95BM0tw==
 
 "@csstools/convert-colors@^1.4.0":
   version "1.4.0"
