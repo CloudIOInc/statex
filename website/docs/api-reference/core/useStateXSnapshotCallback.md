@@ -7,8 +7,8 @@ This hook takes a path and a callback function that get's called everytime the s
 
 ```javascript
 function useStateXSnapshotCallback<T>(
-  path: Path = [],
   callback: (props: StateChangeListenerProps<T>) => void,
+  path: Path = [],
 )
 ```
 

@@ -6,7 +6,7 @@
  *
  */
 
-import type { SetStateAction, MutableRefObject } from "react";
+import type { SetStateAction, MutableRefObject } from 'react';
 import type {
   NodeData,
   Path,
@@ -16,20 +16,20 @@ import type {
   PathOrStateX,
   Key,
   NodeDataWithSelector,
-} from "./StateXTypes";
-import { isResolvable, Resolvable, isSelectorNode } from "./StateXTypes";
-import { getIn } from "./ImmutableUtils";
-import { Node } from "./Trie";
+} from './StateXTypes';
+import { isResolvable, Resolvable, isSelectorNode } from './StateXTypes';
+import { getIn } from './ImmutableUtils';
+import { Node } from './Trie';
 import {
   deepFreeze,
   applyParamsToPath,
   shouldFreeze,
   pathToString,
-} from "./StateXUtils";
-import { StateX } from "./StateXStore";
-import Atom from "./Atom";
-import Selector from "./Selector";
-import Action from "./Action";
+} from './StateXUtils';
+import { StateX } from './StateXStore';
+import Atom from './Atom';
+import Selector from './Selector';
+import Action from './Action';
 
 function _getIn<T>(
   store: StateX,
@@ -46,8 +46,8 @@ function _getIn<T>(
     return defaultValue as T;
   }
   /* istanbul ignore next */
-  if (process.env.NODE_ENV !== "production") {
-    return !mutableRefObject && val && typeof val === "object"
+  if (process.env.NODE_ENV !== 'production') {
+    return !mutableRefObject && val && typeof val === 'object'
       ? deepFreeze(val)
       : val;
   } else {
@@ -66,15 +66,13 @@ function isNodeDirty<T>(store: StateX, node: Node<NodeData<T>>) {
 
 function getNode<T>(store: StateX, path: Path) {
   const missingParams = path.filter(
-    (key) => typeof key === "string" && key.charAt(0) === ":",
+    (key) => typeof key === 'string' && key.charAt(0) === ':',
   );
   if (missingParams.length) {
     throw Error(
-      `Missing parameter values for ${
-        missingParams.join(
-          ", ",
-        )
-      } in path ${pathToString(path)}!`,
+      `Missing parameter values for ${missingParams.join(
+        ', ',
+      )} in path ${pathToString(path)}!`,
     );
   }
   return store.trie().getNode(path) as Node<NodeData<T>>;
@@ -181,8 +179,8 @@ function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
     return;
   }
   /* istanbul ignore next */
-  if (process.env.NODE_ENV !== "production") {
-    store.debug("Found " + nodes.size + " dirty nodes...", "inform");
+  if (process.env.NODE_ENV !== 'production') {
+    store.debug('Found ' + nodes.size + ' dirty nodes...', 'inform');
     // nodes.forEach((n) => store.debug(pathToString(n.path), 'inform'));
   }
   let total = 0;
@@ -231,6 +229,7 @@ function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
                 get: makeGet(store),
                 getRef: makeGetRef(store),
                 oldValue: lastKnownValue,
+                remove: makeRemove(store),
                 set: makeSet(store),
                 value,
               });
@@ -245,6 +244,7 @@ function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
             get: makeGet(store),
             getRef: makeGetRef(store),
             oldValue: lastKnownValue,
+            remove: makeRemove(store),
             set: makeSet(store),
             value,
           });
@@ -254,29 +254,29 @@ function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
     }
   });
   /* istanbul ignore next */
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== 'production') {
     store.debug(
-      "Triggered re-render for " +
+      'Triggered re-render for ' +
         total +
-        " components... " +
-        informedNodes.map((node) => pathToString(node.path)).join(", "),
+        ' components... ' +
+        informedNodes.map((node) => pathToString(node.path)).join(', '),
     );
   }
 }
 
 function isSetStateActionValue<T>(value: SetStateAction<T>): value is T {
-  return typeof value !== "function";
+  return typeof value !== 'function';
 }
 
 function _removeIn<T>(store: StateX, path: Path): T {
   const node = store.trie().getNode(path);
-  store.activateNode(node, "remove");
+  store.activateNode(node, 'remove');
   const oldValue = _getIn<T>(store, node);
   node.data.lastKnownValue = oldValue;
   store.removingState(node);
   store.trackAndRemove(node);
   if (node.parent) {
-    store.addToPending(node.parent.path, "remove-child");
+    store.addToPending(node.parent.path, 'remove-child');
   }
   // node.data.holders.forEach((h) => {
   //   /* istanbul ignore next */
@@ -311,17 +311,18 @@ function _setIn<T>(
     // do nothing
     return oldValue;
   }
-  store.activateNode(node, "update", value);
+  store.activateNode(node, 'update', value);
   if (isSelectorNode(node)) {
     returnValue = node.data.selector.setValue(store, node, newValue, options);
   } else {
-    if (typeof node.data.atom?.updater === "function") {
+    if (typeof node.data.atom?.updater === 'function') {
       store.beforeAtomUpdater(node);
       newValue = node.data.atom.updater({
         call: makeCall(store),
         get: makeGet(store),
         getRef: makeGetRef(store),
         oldValue,
+        remove: makeRemove(store),
         set: makeSet(store),
         value: newValue,
       });
@@ -333,7 +334,7 @@ function _setIn<T>(
     }
     returnValue = newValue;
     /* istanbul ignore next */
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== 'production') {
       if (!options?.mutableRefObject && shouldFreeze(returnValue)) {
         if (Array.isArray(returnValue)) {
           newValue = ([...returnValue] as unknown) as T;
@@ -346,7 +347,7 @@ function _setIn<T>(
     }
     store.updatingState(node);
     store.trackAndUpdate(node, newValue);
-    store.addToPending(node.path, "update");
+    store.addToPending(node.path, 'update');
   }
   return returnValue;
 }
@@ -389,7 +390,7 @@ function getAndUpdateUndefinedStateWithDefaultValue<T>(
     node.data.lastKnownValue = defaultValue;
     store.trackAndUpdate(node, defaultValue);
     usedDefaultValue = true;
-    store.addToPendingWithoutSchedule(node.path, "default");
+    store.addToPendingWithoutSchedule(node.path, 'default');
   }
   return [currentValue, usedDefaultValue];
 }
@@ -434,7 +435,7 @@ function registerStateX<T>(
     const val = getIn(store.getState(), node.path, undefined);
     if (val === undefined) {
       store.trackAndUpdate(node, pathOrAtom.defaultValue);
-      store.addToPendingWithoutSchedule(node.path, "default");
+      store.addToPendingWithoutSchedule(node.path, 'default');
     } else {
       node.data.lastKnownValue = val;
     }
@@ -461,11 +462,9 @@ function resolvePath<T>(
     path = pathOrAtom;
   } else {
     throw Error(
-      `Invalid state ${
-        JSON.stringify(
-          pathOrAtom,
-        )
-      }. Must be path or atom or selector.`,
+      `Invalid state ${JSON.stringify(
+        pathOrAtom,
+      )}. Must be path or atom or selector.`,
     );
   }
   return applyParamsToPath(path, params);

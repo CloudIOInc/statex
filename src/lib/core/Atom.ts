@@ -6,7 +6,11 @@
  *
  */
 
-import type { StateXProps, StateXRefGetter } from './StateXTypes';
+import type {
+  StateXProps,
+  StateXRefGetter,
+  StateXRemover,
+} from './StateXTypes';
 import { Path } from './ImmutableTypes';
 import { StateXGetter, StateXSetter, StateXActionCaller } from './StateXTypes';
 
@@ -19,6 +23,7 @@ export default class Atom<T> {
     get: StateXGetter;
     getRef: StateXRefGetter;
     oldValue: T;
+    remove: StateXRemover;
     set: StateXSetter;
     value: T;
   }) => T;
@@ -27,6 +32,7 @@ export default class Atom<T> {
     get: StateXGetter;
     getRef: StateXRefGetter;
     oldValue: T;
+    remove: StateXRemover;
     set: StateXSetter;
     value: T;
   }) => void;

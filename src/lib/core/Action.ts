@@ -23,11 +23,11 @@ export default class Action<T> {
       ReactDOM.unstable_batchedUpdates(() => {
         this.fn(
           {
-            set: makeSet(store),
+            call: makeCall(store),
             get: makeGet(store),
             getRef: makeGetRef(store),
-            call: makeCall(store),
             remove: makeRemove(store),
+            set: makeSet(store),
           },
           value,
         );

@@ -18,21 +18,21 @@ import {
   isResolvable,
   StateXRefGetter,
   StateXActionCaller,
-} from "./StateXTypes";
+} from './StateXTypes';
 import {
   Resolvable,
   StateXSetter,
   Options,
   StateXRemover,
-} from "./StateXTypes";
-import type { Node } from "./Trie";
-import type { Path, Key } from "./ImmutableTypes";
+} from './StateXTypes';
+import type { Node } from './Trie';
+import type { Path, Key } from './ImmutableTypes';
 import {
   isPromise,
   applyParamsToPath,
   emptyFunction,
   pathToString,
-} from "./StateXUtils";
+} from './StateXUtils';
 import {
   enterStateX,
   getNode,
@@ -41,11 +41,11 @@ import {
   makeRemove,
   makeGetRef,
   makeCall,
-} from "./StateX";
-import { StateX } from "./StateXStore";
+} from './StateX';
+import { StateX } from './StateXStore';
 
 function notWritableSelector<T>(): T {
-  throw Error("Not a writable selector!");
+  throw Error('Not a writable selector!');
 }
 
 export default class Selector<T> implements SelectorInterface<T> {
@@ -72,7 +72,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     this.shouldComponentUpdate = shouldComponentUpdate;
     for (let i = 0; i < path.length; i++) {
       const key = path[i];
-      if (typeof key === "string" && key.charAt(0) === ":") {
+      if (typeof key === 'string' && key.charAt(0) === ':') {
         this.params.set(key.substr(1), i);
       }
     }
@@ -100,7 +100,7 @@ export default class Selector<T> implements SelectorInterface<T> {
       promiseOrError
         .then((value) => {
           resolvable.value = value;
-          resolvable.status = "resolved";
+          resolvable.status = 'resolved';
           if (!resolvable.cancelled) {
             if (self) {
               // react doesn't re-render if we return the same resolveable... hence clone it
@@ -115,19 +115,19 @@ export default class Selector<T> implements SelectorInterface<T> {
         })
         .catch((error) => {
           resolvable.error = error;
-          resolvable.status = "error";
+          resolvable.status = 'error';
           store.catch(error);
           if (!resolvable.cancelled) {
             // react doesn't re-render if we return the same resolveable... hence clone it
             selectorNode.data.resolveable = resolvable.clone();
             selectorNode.data.holders.forEach((holder) =>
-              holder.setter(selectorNode.data.resolveable)
+              holder.setter(selectorNode.data.resolveable),
             );
           }
         });
     } else {
       resolvable.error = promiseOrError;
-      resolvable.status = "error";
+      resolvable.status = 'error';
       store.catch(promiseOrError);
     }
     selectorNode.data.resolveable = resolvable;
@@ -149,17 +149,18 @@ export default class Selector<T> implements SelectorInterface<T> {
     const path = applyParamsToPath(this.pathWithParams, options?.params);
     const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
     let value: T | Promise<T>;
-    store.activateNode(selectorNode, "read");
+    store.activateNode(selectorNode, 'read');
     store.beforeSelectorGet(selectorNode);
     try {
-      value = this._get({
-        call,
-        get,
-        getRef,
-        params: options?.params,
-        remove,
-        set,
-      }) ?? this.defaultValue;
+      value =
+        this._get({
+          call,
+          get,
+          getRef,
+          params: options?.params,
+          remove,
+          set,
+        }) ?? this.defaultValue;
     } catch (errorOrPromise) {
       return this.makeResolvable(
         store,
@@ -249,7 +250,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     /* istanbul ignore next */
     if (unreg) {
       console.warn(
-        "Node already registered",
+        'Node already registered',
         pathToString(selectorNode.path),
         pathToString(node.path),
       );
@@ -298,7 +299,7 @@ export default class Selector<T> implements SelectorInterface<T> {
       /* istanbul ignore next */
       if (selectorNode.data.previousNodes === undefined) {
         console.log(selectorNode);
-        throw Error("invalid node!");
+        throw Error('invalid node!');
       }
       if (!selectorNode.data.previousNodes.has(node)) {
         // watch the atom
@@ -368,6 +369,7 @@ export default class Selector<T> implements SelectorInterface<T> {
             get: makeGet(store),
             getRef: makeGetRef(store),
             oldValue: oldSelectorValue,
+            remove: makeRemove(store),
             set: makeSet(store),
             value: val,
           });

@@ -17,7 +17,6 @@ module.exports = {
       'basic-tutorial/intro',
       'basic-tutorial/atoms',
       'basic-tutorial/selectors',
-      'basic-tutorial/actions',
     ],
     Examples: [
       'examples/form',

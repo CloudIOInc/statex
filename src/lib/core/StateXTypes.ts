@@ -49,6 +49,7 @@ export interface StateXProps<T> {
     get: StateXGetter;
     getRef: StateXRefGetter;
     oldValue: T;
+    remove: StateXRemover;
     set: StateXSetter;
     value: T;
   }) => T;
@@ -70,6 +71,7 @@ export interface StateXHolder<T> {
     get: StateXGetter;
     getRef: StateXRefGetter;
     oldValue?: T;
+    remove: StateXRemover;
     set: StateXSetter;
     value: T;
   }) => void;
@@ -128,6 +130,7 @@ export interface StateXOptions<T> extends Options {
     get: StateXGetter;
     getRef: StateXRefGetter;
     oldValue?: T;
+    remove: StateXRemover;
     set: StateXSetter;
     value: T;
   }) => void;

@@ -8,7 +8,7 @@ title: Getting Started
 StateX is a state management library for React, so you need to have React installed and running to use StateX. The easiest and recommended way for bootstrapping a React application is to use <a href="https://github.com/facebook/create-react-app#creating-an-app" target="_blank">Create React App</a>
 
 ```shell
-npx create-react-app my-statex
+npx create-react-app my-app --template statex-typescript
 ```
 
 > `npx` is a package runner tool that comes with npm 5.2+ and higher.

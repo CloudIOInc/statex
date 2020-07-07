@@ -12,7 +12,7 @@ function useStateX<T>(
   path: Path,
   defaultValue: T,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [T, Dispatch<T>];
 ```
 
 ## useStateX(atom)
@@ -21,7 +21,7 @@ function useStateX<T>(
 function useStateX<T>(
   atom: Atom<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [T, Dispatch<T>];
 ```
 
 ## useStateX(selector)
@@ -30,7 +30,7 @@ function useStateX<T>(
 function useStateX<T>(
   atom: Selector<T>,
   options?: StateXOptions<T>,
-): [Readonly<T>, Dispatch<T>];
+): [T, Dispatch<T>];
 ```
 
 ## StateXOptions
@@ -39,12 +39,12 @@ function useStateX<T>(
 interface StateXOptions<T> {
   params?: Record<string, Key>;
   shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
+    value: T,
+    oldValue?: T,
   ) => boolean;
   onChange?: (props: {
-    value: Readonly<T>;
-    oldValue?: Readonly<T>;
+    value: T;
+    oldValue?: T;
     get: StateXGetter;
     set: StateXSetter;
   }) => void;

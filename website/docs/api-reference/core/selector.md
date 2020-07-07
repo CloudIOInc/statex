@@ -12,7 +12,7 @@ Selectors represent **derived state**. You can think of derived state as the out
   - `path`: A unique json path for this selector. This path should be unique with respect to other atoms and selectors in the entire application. Path can have placeholders (bind variables) e.g. ['employee', ':empId']
   - `defaultValue`: The initial value of the selector.
   - ```tsx title="shouldComponentUpdate?:"
-    (value: Readonly<T>, oldValue?: Readonly<T>) => boolean;
+    (value: T, oldValue?: T) => boolean;
     ```
 
     Similar to the react class component lifecyle method, if set, will be invoked before triggering a re-render of the component due to a change in the state. Return false to prevent re-rendering of the component subscribed to this atom.
@@ -20,32 +20,37 @@ Selectors represent **derived state**. You can think of derived state as the out
     > Returning false will also prevent the below functions updater & onChange from being invoked.
 
   - ```tsx title="get: A function that is passed an object as the first parameter containing the following properties:"
-    get: StateXGetter;
-    set: StateXSetter;
-    call: StateXActionCaller;
-    remove: StateXRemover;
-    params?: Record<string, Key>;
+    (props: {
+      call: StateXActionCaller;
+      get: StateXGetter;
+      getRef: StateXRefGetter;
+      params?: Record<string, Key>;
+      remove: StateXRemover;
+      set: StateXSetter;
+    }) => T | Promise<T>
     ```
 
-    - `get` All atoms/selectors passed to this function will be implicitly added to a list of **dependencies** for the selector. If any of the selector's dependencies change, the selector will re-evaluate.
-    - `set` Can be used to set value of other paths/atoms/selectors.
-    - `remove` Can be used to remove value at other paths or atoms.
     - `call` Can be used to invoke other actions.
+    - `get` All atoms/selectors passed to this function will be implicitly added to a list of **dependencies** for the selector. If any of the selector's dependencies change, the selector will re-evaluate.
+    - `getRef` Can be used to get a global MutableRefObject.
     - `params?:` Are the key/value pairs used to evaluate this selector's path with placeholders
+    - `remove` Can be used to remove value at other paths or atoms.
+    - `set` Can be used to set value of other paths/atoms/selectors.
 
   - ```tsx title="set?: If this property is set, the selector will return **writeable** state. A function that is passed an object as the first parameter containing the following properties:"
-    get: StateXGetter;
-    set: StateXSetter;
-    call: StateXActionCaller;
-    remove: StateXRemover;
-    params?: Record<string, Key>;
+    (
+      props: {
+        call: StateXActionCaller;
+        get: StateXGetter;
+        getRef: StateXRefGetter;
+        params?: Record<string, Key>;
+        remove: StateXRemover;
+        set: StateXSetter;
+        value: T;
+      },
+      value: T,
+    ) => T;
     ```
-
-    - `get` a function used to retrieve values from other paths/atoms/selectors. This function will not subscribe the selector to the given atoms/selectors.
-    - `set` Can be used to set value of other paths/atoms/selectors.
-    - `remove` Can be used to remove value at other paths or atoms.
-    - `call` Can be used to invoke other actions.
-    - `params?:` Are the key/value pairs used to evaluate this selector's path with placeholders
 
 ### Demo
 

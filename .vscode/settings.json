@@ -4,5 +4,8 @@
   "jest.coverageFormatter": "GutterFormatter",
   "jest.runAllTestsFirst": false,
   "jest.autoEnable": false,
-  "jest.enableInlineErrorMessages": true
+  "jest.enableInlineErrorMessages": true,
+  "prettier.packageManager": "yarn",
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "all"
 }

@@ -19,7 +19,7 @@ Unlike [useStateXValue()](useStateXValue), this hook will not throw a Promise wh
 function useStateXValueResolveable<T>(
   selector: Selector<T>,
   options?: StateXOptions<T>,
-): Resolvable<Readonly<T>>
+): Resolvable<<T>>
 ```
 
 For writable selectors
@@ -28,7 +28,7 @@ For writable selectors
 function useStateXResolveable<T>(
   selector: Selector<T>,
   options?: StateXOptions<T>,
-): [Resolvable<Readonly<T>>, Dispatch<T>]
+): [Resolvable<<T>>, Dispatch<T>]
 ```
 
 ## SelectorOptions
@@ -37,8 +37,8 @@ function useStateXResolveable<T>(
 interface SelectorOptions<T> {
   params?: Record<string, Key>;
   shouldComponentUpdate?: (
-    value: Readonly<T>,
-    oldValue?: Readonly<T>,
+    value: T,
+    oldValue?: T,
   ) => boolean;
 }
 ```
