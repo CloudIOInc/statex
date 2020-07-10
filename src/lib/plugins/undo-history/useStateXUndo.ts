@@ -6,12 +6,12 @@
  *
  */
 
-import { useStateXSnapshotSetter, Path, StateChangeListenerProps } from "../..";
-import { useCallback, useMemo, useState, useRef, useEffect } from "react";
-import { getNode } from "../../core/StateX";
-import UndoRedo from "./UndoRedo";
-import { useStateXStore } from "../../core/StateXContext";
-import { useStateXSnapshotCallback } from "../../core/StateXHooks";
+import { useStateXSnapshotSetter, Path, StateChangeListenerProps } from '../..';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { getNode } from '../../core/StateX';
+import UndoRedo from './UndoRedo';
+import { useStateXStore } from '../../core/StateXContext';
+import { useStateXSnapshotCallback } from '../../core/StateXHooks';
 
 function samePaths(newPaths: Path[], oldPaths: Path[]): boolean {
   if (oldPaths.length !== newPaths.length) {
@@ -27,7 +27,7 @@ function samePaths(newPaths: Path[], oldPaths: Path[]): boolean {
 
 export default function useStateXUndo(
   path: Path = [],
-  hash: string = "#",
+  hash: string = '#',
   auto: boolean = false,
   limit: number = 200,
 ) {
@@ -52,23 +52,20 @@ export default function useStateXUndo(
   const nodeRef = useRef(node);
   nodeRef.current = node;
 
-  const undoRedo = useMemo(
-    () => {
-      const ur = new UndoRedo({
-        onChange: (hash, state) => {
-          ref.current.state = state;
-          ref.current.updatedPaths = [];
-          ref.current.removedPaths = [];
-          setSnapshot(state, nodeRef.current.path);
-          setCanUndo(undoRedo.canUndo(hash));
-          setCanRedo(undoRedo.canRedo(hash));
-        },
-      });
-      ur.setLimit(limit);
-      return ur;
-    },
-    [limit, setSnapshot],
-  );
+  const undoRedo = useMemo(() => {
+    const ur = new UndoRedo({
+      onChange: (hash, state) => {
+        ref.current.state = state;
+        ref.current.updatedPaths = [];
+        ref.current.removedPaths = [];
+        setSnapshot(state, nodeRef.current.path);
+        setCanUndo(undoRedo.canUndo(hash));
+        setCanRedo(undoRedo.canRedo(hash));
+      },
+    });
+    ur.setLimit(limit);
+    return ur;
+  }, [limit, setSnapshot]);
 
   const updateState = useCallback(() => {
     setCanUndo(undoRedo.canUndo(hashRef.current));

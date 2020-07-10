@@ -17,7 +17,7 @@ import {
   isObjectCollection,
   isNull,
   isCollection,
-} from "./ImmutableTypes";
+} from './ImmutableTypes';
 
 function shallowCopy<C>(collection: C): C {
   if (Array.isArray(collection)) {
@@ -66,7 +66,7 @@ function update<C>(
   updater: (val: unknown) => unknown,
 ): C {
   if (isArrayCollection(collection)) {
-    if (typeof key === "number") {
+    if (typeof key === 'number') {
       return arraySet(
         collection,
         key,
@@ -93,7 +93,7 @@ function set<C>(collection: C, key: Key, value: unknown): C {
 
 function get(collection: any, key: Key): any {
   if (isArrayCollection(collection)) {
-    if (typeof key === "number") {
+    if (typeof key === 'number') {
       if (collection.length > key) {
         return collection[key];
       }
@@ -133,11 +133,9 @@ function getInInternal(
   }
   if (!isCollection(oldNestedValue)) {
     throw Error(
-      `Invalid path ${
-        JSON.stringify(
-          path,
-        )
-      } at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}`,
+      `Invalid path ${JSON.stringify(
+        path,
+      )} at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}`,
     );
   }
   return getInInternal(oldNestedValue, path, pathIndex + 1);
@@ -153,7 +151,7 @@ function getIn(collection: any, path: Path, defaultValue: any): any {
 
 function has(collection: any, key: Key): boolean {
   if (isArrayCollection(collection)) {
-    if (typeof key === "number") {
+    if (typeof key === 'number') {
       return collection.hasOwnProperty(key);
     } else {
       throw Error(`Invalid key ${key}. Must be of type number.`);
@@ -190,11 +188,9 @@ function hasInInternal(
   }
   if (!isCollection(oldNestedValue)) {
     throw Error(
-      `Invalid path ${
-        JSON.stringify(
-          path,
-        )
-      } at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}.`,
+      `Invalid path ${JSON.stringify(
+        path,
+      )} at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}.`,
     );
   }
   return hasInInternal(oldNestedValue, path, pathIndex + 1);
@@ -238,7 +234,7 @@ function updateInInternal<C>(
   if (path.length === pathIndex + 1) {
     try {
       if (performInsert) {
-        if (typeof key === "number" && isArrayCollection(collection)) {
+        if (typeof key === 'number' && isArrayCollection(collection)) {
           return insert(collection, key, updater);
         }
         throw Error(
@@ -263,7 +259,7 @@ function updateInInternal<C>(
 
   let nestedValue;
   if (isNull(oldNestedValue)) {
-    if (typeof path[pathIndex + 1] === "number") {
+    if (typeof path[pathIndex + 1] === 'number') {
       nestedValue = [];
     } else {
       nestedValue = {};
@@ -271,11 +267,9 @@ function updateInInternal<C>(
   } else {
     if (!isCollection(oldNestedValue)) {
       throw Error(
-        `Invalid path ${
-          JSON.stringify(
-            path,
-          )
-        } at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}`,
+        `Invalid path ${JSON.stringify(
+          path,
+        )} at index ${pathIndex}. Must be an object. Instead found ${oldNestedValue}`,
       );
     }
     nestedValue = oldNestedValue;
@@ -357,11 +351,9 @@ function removeInInternal<C extends Collection>(
   } else {
     nestedValue = toCollection(
       oldNestedValue,
-      `Invalid path ${
-        JSON.stringify(
-          path,
-        )
-      } at index ${pathIndex}. Must be an object.`,
+      `Invalid path ${JSON.stringify(
+        path,
+      )} at index ${pathIndex}. Must be an object.`,
     );
   }
   nestedValue = removeInInternal(nestedValue, path, pathIndex + 1);

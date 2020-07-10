@@ -11,7 +11,7 @@ import { render } from '@testing-library/react';
 import React, { ReactNode } from 'react';
 import { StateXProvider } from '../StateXContext';
 import { useStateXValue, useDebug } from '../StateXHooks';
-import ErrorBoundary from '../../../examples/ErrorBoundary';
+import ErrorBoundary from '../../testing/ErrorBoundary';
 import { renderHook } from '@testing-library/react-hooks';
 import { act } from 'react-dom/test-utils';
 import { testSelector } from '../../testing/TestSelectors';

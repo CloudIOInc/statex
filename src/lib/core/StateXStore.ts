@@ -6,23 +6,23 @@
  *
  */
 
-import { deepFreeze, emptyFunction, pathToString } from "./StateXUtils";
+import { deepFreeze, emptyFunction, pathToString } from './StateXUtils';
 import {
   NodeData,
   Path,
   SchedulerFn,
   StateChangeListenerInternal,
   StateXHolder,
-} from "./StateXTypes";
-import Trie, { Node } from "./Trie";
-import { Collection } from "./ImmutableTypes";
-import { inform } from "./StateX";
-import { setIn, removeIn } from "./ImmutableUtils";
-import { SetStateAction } from "react";
+} from './StateXTypes';
+import Trie, { Node } from './Trie';
+import { Collection } from './ImmutableTypes';
+import { inform } from './StateX';
+import { setIn, removeIn } from './ImmutableUtils';
+import { SetStateAction } from 'react';
 
 export function notInAContext(): any {
   throw Error(
-    "This component must be used inside a <StateXProvider> component.",
+    'This component must be used inside a <StateXProvider> component.',
   );
 }
 
@@ -63,7 +63,7 @@ export class StateX {
     handleError: (error: any) => void = emptyFunction,
   ) {
     /* istanbul ignore next */
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== 'production') {
       this.state = deepFreeze(initialState);
     } else {
       /* istanbul ignore next */
@@ -88,20 +88,20 @@ export class StateX {
       return false;
     }
     /* istanbul ignore next */
-    if (process.env.NODE_ENV !== "production") {
-      const log = ["State changed..."];
+    if (process.env.NODE_ENV !== 'production') {
+      const log = ['State changed...'];
       const log2: string[] = [];
       if (this.updatedNodes.length) {
-        log.push("updates:");
+        log.push('updates:');
         this.updatedNodes.forEach((node) => log2.push(pathToString(node.path)));
-        log.push(log2.join(", "));
+        log.push(log2.join(', '));
       }
       if (this.removedNodes.length) {
-        log.push("deletes:");
+        log.push('deletes:');
         this.removedNodes.forEach((node) => log2.push(pathToString(node.path)));
-        log.push(log2.join(", "));
+        log.push(log2.join(', '));
       }
-      this.debug(log.join(" "), "state");
+      this.debug(log.join(' '), 'state');
     }
     this.stateChangeListeners.forEach((listener) =>
       listener({
@@ -109,7 +109,7 @@ export class StateX {
         oldState: this._lastKnownState,
         updatedNodes: this.updatedNodes,
         removedNodes: this.removedNodes,
-      })
+      }),
     );
     this._lastKnownState = this.state;
     this.updatedNodes = [];
@@ -138,17 +138,17 @@ export class StateX {
 
   afterSelectorReads() {
     /* istanbul ignore next */
-    if (process.env.NODE_ENV !== "production") {
-      this.debug("afterSelectorReads", "render");
+    if (process.env.NODE_ENV !== 'production') {
+      this.debug('afterSelectorReads', 'render');
     }
     if (this.activeNodes.size) {
       /* istanbul ignore next */
-      if (process.env.NODE_ENV !== "production") {
-        const log = ["Derived nodes during render..."];
+      if (process.env.NODE_ENV !== 'production') {
+        const log = ['Derived nodes during render...'];
         this.activeNodes.forEach((count, node) =>
-          log.push(pathToString(node.path))
+          log.push(pathToString(node.path)),
         );
-        this.debug(log.join(", "), "render");
+        this.debug(log.join(', '), 'render');
       }
       // clear all active read nodes
       this.activeNodes.clear();
@@ -172,17 +172,17 @@ export class StateX {
 
   afterStateUpdates() {
     /* istanbul ignore next */
-    if (process.env.NODE_ENV !== "production") {
-      this.debug("afterStateUpdates", "update");
+    if (process.env.NODE_ENV !== 'production') {
+      this.debug('afterStateUpdates', 'update');
     }
     if (this.activeNodes.size) {
       /* istanbul ignore next */
-      if (process.env.NODE_ENV !== "production") {
-        const log = ["Changed Nodes during update..."];
+      if (process.env.NODE_ENV !== 'production') {
+        const log = ['Changed Nodes during update...'];
         this.activeNodes.forEach((count, node) =>
-          log.push(pathToString(node.path))
+          log.push(pathToString(node.path)),
         );
-        this.debug(log.join(", "), "event");
+        this.debug(log.join(', '), 'event');
       }
       // clear all active nodes
       this.activeNodes.clear();
@@ -199,7 +199,7 @@ export class StateX {
 
   /* istanbul ignore next */
   debug(log: string, action?: string, data?: any) {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== 'production') {
       const logItem = { log, id: ++this.id, ts: performance.now(), action };
       const ms = this.lastLogItem
         ? Math.round(logItem.ts - this.lastLogItem.ts)
@@ -207,13 +207,13 @@ export class StateX {
       if (data !== undefined) {
         console.debug(
           logItem.id,
-          `${action} => ${log}${ms ? ` - ${ms}ms` : ""}`,
+          `${action} => ${log}${ms ? ` - ${ms}ms` : ''}`,
           data,
         );
       } else {
         console.debug(
           logItem.id,
-          `${action} => ${log}${ms ? ` - ${ms}ms` : ""}`,
+          `${action} => ${log}${ms ? ` - ${ms}ms` : ''}`,
         );
       }
       this.lastLogItem = logItem;
@@ -233,17 +233,15 @@ export class StateX {
 
   scheduleForUpdate(node: Node<NodeData<any>>, action: string) {
     switch (action) {
-      case "read":
+      case 'read':
         this._scheduleRead();
         break;
       default:
         this._scheduleUpdate();
         if (this.rendering) {
-          const log = `WARNING: Trying to ${action} ${
-            pathToString(
-              node.path,
-            )
-          } during render!`;
+          const log = `WARNING: Trying to ${action} ${pathToString(
+            node.path,
+          )} during render!`;
           console.warn(log, action);
         }
         break;
@@ -286,7 +284,7 @@ export class StateX {
   trie() {
     /* istanbul ignore next */
     if (this.destroyed) {
-      throw Error("store destroyed!");
+      throw Error('store destroyed!');
     }
     return this._trie;
   }
@@ -325,7 +323,7 @@ export class StateX {
   selectorInitialized<T>(node: Node<NodeData<T>>) {
     if (this.updatedNodes.indexOf(node) === -1) {
       this.updatedNodes.push(node);
-      this.addToPending(node.path, "init");
+      this.addToPending(node.path, 'init');
     }
   }
 

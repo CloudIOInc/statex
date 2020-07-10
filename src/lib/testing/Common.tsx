@@ -1,4 +1,4 @@
-import React, { ReactNode, useRef, Suspense } from "react";
+import React, { ReactNode, useRef, Suspense } from 'react';
 import {
   StateXProvider,
   atom,
@@ -8,10 +8,10 @@ import {
   StateXRemover,
   StateXSetter,
   StateXActivePathsGetter,
-} from "..";
-import { selector } from "../core/StateXHooks";
-import { screen, render, act, waitFor } from "@testing-library/react";
-import { useStateXStore } from "../core/StateXContext";
+} from '..';
+import { selector } from '../core/StateXHooks';
+import { screen, render, act, waitFor } from '@testing-library/react';
+import { useStateXStore } from '../core/StateXContext';
 import {
   makeSet,
   makeGet,
@@ -19,45 +19,45 @@ import {
   makeCall,
   makeRemove,
   makePaths,
-} from "../core/StateX";
-import ErrorBoundary from "../../examples/ErrorBoundary";
+} from '../core/StateX';
+import ErrorBoundary from './ErrorBoundary';
 
 const initialState = () => ({
   root: {
-    person: { firstName: "Steve", lastName: "Jobs" },
+    person: { firstName: 'Steve', lastName: 'Jobs' },
     numArray: [0, 1, 2],
-    objArray: [{ a: "a" }, { b: "b" }],
+    objArray: [{ a: 'a' }, { b: 'b' }],
     num: 1955,
     bool: true,
-    key: "",
+    key: '',
   },
 });
 
 export const keyAtom = atom({
-  path: ["root", "key"],
-  defaultValue: "",
+  path: ['root', 'key'],
+  defaultValue: '',
 });
 
 export const firstNameAtom = atom({
-  path: ["root", "person", "firstName"],
-  defaultValue: "DEFAULT_firstName",
+  path: ['root', 'person', 'firstName'],
+  defaultValue: 'DEFAULT_firstName',
 });
 
 export const lastNameAtom = atom({
-  path: ["root", "person", "lastName"],
-  defaultValue: "DEFAULT_lastName",
+  path: ['root', 'person', 'lastName'],
+  defaultValue: 'DEFAULT_lastName',
 });
 
-export const numericAtom = atom({ path: ["root", "num"], defaultValue: 0 });
+export const numericAtom = atom({ path: ['root', 'num'], defaultValue: 0 });
 
 export const booleanAtom = atom({
-  path: ["root", "bool"],
+  path: ['root', 'bool'],
   defaultValue: false,
 });
 
 export const fullNameSelector = selector({
-  path: ["selector", "fullName"],
-  defaultValue: "DEFAULT_fullName",
+  path: ['selector', 'fullName'],
+  defaultValue: 'DEFAULT_fullName',
   get: ({ get }) => `${get(firstNameAtom)} ${get(lastNameAtom)}`,
 });
 
@@ -112,13 +112,13 @@ const renderComp = (
   }
   const { getByTestId } = render(<Wrapper />, { wrapper });
   const textContent = () => {
-    const ele = getByTestId("id");
+    const ele = getByTestId('id');
     return ele.textContent;
   };
   const waitForElement = async () =>
-    await waitFor(() => screen.getByTestId("id"));
+    await waitFor(() => screen.getByTestId('id'));
   const waitForErrorElement = async () =>
-    await waitFor(() => screen.getByTestId("eid"));
+    await waitFor(() => screen.getByTestId('eid'));
   return {
     waitForElement,
     waitForErrorElement,

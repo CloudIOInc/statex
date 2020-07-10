@@ -14,9 +14,9 @@ import React, {
   useContext,
   MutableRefObject,
   useMemo,
-} from "react";
-import { StateX, notInAContext } from "./StateXStore";
-import { SchedulerFn } from "./StateXTypes";
+} from 'react';
+import { StateX, notInAContext } from './StateXStore';
+import { SchedulerFn } from './StateXTypes';
 
 const DEFAULT = Object.freeze(new StateX());
 
@@ -33,7 +33,7 @@ function useStateXStore(): StateX {
 }
 
 function defaultErrorHandler(error: any) {
-  console.error("Unhandled Exception!");
+  console.error('Unhandled Exception!');
   console.error(error);
 }
 
@@ -172,10 +172,12 @@ function StateXProvider({
       <StateXPostScheduler
         registerPostRenderScheduler={ref.current.registerPostRenderScheduler}
         registerPostUpdateScheduler={ref.current.registerPostUpdateScheduler}
-        registerPostListenerScheduler={ref.current
-          .registerPostListenerScheduler}
-        registerPostUpdateRenderSchedule={ref.current
-          .registerPostUpdateRenderSchedule}
+        registerPostListenerScheduler={
+          ref.current.registerPostListenerScheduler
+        }
+        registerPostUpdateRenderSchedule={
+          ref.current.registerPostUpdateRenderSchedule
+        }
       />
     </StateXContext.Provider>
   );
