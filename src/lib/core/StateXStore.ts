@@ -357,6 +357,7 @@ export class StateX {
     this._nodesToBeRemoved.forEach((node) => {
       this._trie.removeNode(node);
     });
+    this._nodesToBeRemoved.clear();
   }
 
   enteringNode(node: Node<NodeData<any>>) {
