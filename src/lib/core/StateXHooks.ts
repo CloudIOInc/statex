@@ -402,7 +402,10 @@ function action<T = void>(fn: ActionFunction<T>): Action<T> {
 
 function useStateXAction<T = void>(action: Action<T>): (value: T) => void {
   const store = useStateXStore();
-  return useCallback((value: T) => action.execute(store, value), [action]);
+  return useCallback((value: T) => action.execute(store, value), [
+    action,
+    store,
+  ]);
 }
 
 function useStateXValueRemover<T>(

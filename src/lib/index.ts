@@ -11,3 +11,4 @@ export * from './core/StateXHooks';
 export * from './core/StateXUIHooks';
 export * from './core/StateXUtilHooks';
 export * from './plugins';
+export * from './core/ImmutableUtils';

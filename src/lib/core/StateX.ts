@@ -78,17 +78,33 @@ function getNode<T>(store: StateX, path: Path) {
   return store.trie().getNode(path) as Node<NodeData<T>>;
 }
 
+function hasHoldersOnChildren(node: Node<NodeData<any>>) {
+  const children = Object.values(node.children);
+  const len = children.length;
+  for (let i = 0; i < len; i++) {
+    const child = children[i];
+    if (child.data.holders.size || hasHoldersOnChildren(child)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function enterStateX<T>(
   store: StateX,
   node: Node<NodeData<T>>,
   stateXHolder: StateXHolder<T>,
 ) {
+  if (node.deleted) {
+    throw Error(`Node already removed! ${pathToString(node.path)}`);
+  }
+  store.enteringNode(node);
   node.data.holders.add(stateXHolder);
   stateXHolder.holding = true;
   return () => {
     stateXHolder.holding = false;
     node.data.holders.delete(stateXHolder);
-    if (node.data.holders.size === 0) {
+    if (node.data.holders.size === 0 && !hasHoldersOnChildren(node)) {
       if (!store.destroyed) {
         if (isSelectorNode(node)) {
           // keep all the selector nodes to avoid re-evaluating when the component
@@ -100,8 +116,7 @@ function enterStateX<T>(
           return;
           // }
         }
-        const trie = store.trie();
-        trie.removeNode(node);
+        store.markToBeRemoved(node);
       }
     }
   };

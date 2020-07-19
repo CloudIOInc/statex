@@ -57,6 +57,7 @@ export class StateX {
   handleError: (error: any) => void;
   stateChangeListeners = new Set<StateChangeListenerInternal>();
   destroyed = false;
+  _nodesToBeRemoved = new Set<Node<NodeData<any>>>();
 
   constructor(
     initialState: Collection = {},
@@ -81,6 +82,7 @@ export class StateX {
   }
 
   informStateChange(): boolean {
+    this.removeMarkedNodes();
     if (
       this._lastKnownState === this.state ||
       this.stateChangeListeners.size === 0
@@ -342,5 +344,22 @@ export class StateX {
   trackAndRemove<T>(node: Node<NodeData<T>>) {
     this.setState(removeIn(this.getState(), node.path));
     this.removedNodes.push(node);
+  }
+
+  markToBeRemoved(node: Node<NodeData<any>>) {
+    this._nodesToBeRemoved.add(node);
+  }
+
+  removeMarkedNodes() {
+    if (this.destroyed || this._nodesToBeRemoved.size === 0) {
+      return;
+    }
+    this._nodesToBeRemoved.forEach((node) => {
+      this._trie.removeNode(node);
+    });
+  }
+
+  enteringNode(node: Node<NodeData<any>>) {
+    this._nodesToBeRemoved.delete(node);
   }
 }

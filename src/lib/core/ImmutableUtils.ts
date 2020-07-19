@@ -367,6 +367,8 @@ function removeIn<C extends Collection>(collection: C, path: Path): C {
   return removeInInternal(collection, path, 0);
 }
 
+export type { ArrayCollection, ObjectCollection, Collection };
+
 export {
   get,
   getIn,

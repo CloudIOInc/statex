@@ -15,6 +15,7 @@ export interface Node<T> {
   key: Key;
   parent?: Node<T>;
   path: Path;
+  deleted?: boolean;
 }
 
 export default class Trie<T> {
@@ -87,7 +88,11 @@ export default class Trie<T> {
   };
 
   removeNode = (node: Node<T>) => {
+    if (node === this.root) {
+      throw Error('Cannot remove root node!');
+    }
     delete node.parent?.children[node.key];
+    node.deleted = true;
   };
 
   private _collectAllParentNodes = (list: Node<T>[], node: Node<T>) => {
