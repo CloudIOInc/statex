@@ -16,8 +16,15 @@ import type {
   PathOrStateXOrSelector,
   Options,
   NodeData,
+  StateXHolder,
 } from './StateXTypes';
-import React, { useCallback, useRef, MutableRefObject, useEffect } from 'react';
+import React, {
+  useCallback,
+  useRef,
+  MutableRefObject,
+  useEffect,
+  useState,
+} from 'react';
 import {
   useStateXValue,
   useStateXValueSetter,
@@ -25,7 +32,7 @@ import {
 } from './StateXHooks';
 import Atom from './Atom';
 import { useStateXStore } from './StateXContext';
-import { getNode } from './StateX';
+import { getNode, enterStateX, setRef } from './StateX';
 import { isPath } from './ImmutableTypes';
 import { isReactElement, pathToString } from './StateXUtils';
 
@@ -63,24 +70,31 @@ function useStateXOnChangeForNumberInput(
 function useStateXRef<T>(path: Path, value: T): MutableRefObject<T> {
   const newRef = useRef<T>(value);
   const store = useStateXStore();
-  const node = getNode(store, path);
+  const node = getNode<T>(store, path);
   if (!node.data.ref) {
-    node.data.ref = newRef;
+    setRef(node, newRef);
   }
-
   useEffect(() => {
     return () => {
-      node.data.ref = undefined;
+      setRef(node, undefined);
     };
   }, [node]);
-
-  return node.data.ref;
+  return node.data.ref as MutableRefObject<T>;
 }
 
 function useStateXRefValue<T>(path: Path): MutableRefObject<T> | undefined {
   const store = useStateXStore();
   const node = getNode<T>(store, path);
-  return node.data.ref;
+  const [value, setValue] = useState(node.data.ref);
+  const holderRef = useRef<StateXHolder<T>>({
+    setter: setValue,
+    node,
+  });
+  useEffect(() => {
+    // watch the path
+    return enterStateX(store, node, holderRef.current);
+  }, [store, node, holderRef]);
+  return value;
 }
 
 function useStateXForTextInput(

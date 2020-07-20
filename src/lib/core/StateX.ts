@@ -522,6 +522,23 @@ function makeGetRef(store: StateX) {
   };
 }
 
+function setRef<T>(
+  node: Node<NodeData<T>>,
+  ref: MutableRefObject<T> | undefined,
+) {
+  node.data.ref = ref;
+  node.data.holders.forEach((holder) => {
+    holder.setter(ref);
+  });
+}
+
+function makeSetRef(store: StateX) {
+  return <T>(path: Path, ref: MutableRefObject<T> | undefined): void => {
+    const node = getNode<T>(store, path);
+    setRef(node, ref);
+  };
+}
+
 function makeSet(store: StateX) {
   return <V>(
     pathOrAtomOrSelector: PathOrStateXOrSelector<V>,
@@ -559,9 +576,11 @@ export {
   makePaths,
   makeRemove,
   makeSet,
+  makeSetRef,
   registerStateX,
   removeStateXValue,
   resolvePath,
+  setRef,
   setStateXValue,
   updateState,
 };

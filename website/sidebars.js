@@ -21,7 +21,6 @@ module.exports = {
     Examples: [
       'examples/form',
       'examples/performance',
-      'examples/canvas',
       'examples/master-detail',
       'examples/todomvc',
     ],

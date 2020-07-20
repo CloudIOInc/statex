@@ -53,6 +53,7 @@ import {
   updateState,
   makeRemove,
   getAndUpdateUndefinedStateWithDefaultValue,
+  makeSetRef,
 } from './StateX';
 import { emptyFunction, pathToString } from './StateXUtils';
 import { useStateXStore, StateXProvider } from './StateXContext';
@@ -85,6 +86,11 @@ function useStateXGetter() {
 function useStateXRefGetter() {
   const store = useStateXStore();
   return useMemo(() => makeGetRef(store), [store]);
+}
+
+function useStateXRefSetter() {
+  const store = useStateXStore();
+  return useMemo(() => makeSetRef(store), [store]);
 }
 
 function useStateXValueGetter() {
@@ -556,6 +562,7 @@ export {
   useStateXCallback,
   useStateXGetter,
   useStateXRefGetter,
+  useStateXRefSetter,
   useStateXRemover,
   useStateXResolveable,
   useStateXSetter,
