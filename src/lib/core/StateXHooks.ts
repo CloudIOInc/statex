@@ -54,6 +54,7 @@ import {
   makeRemove,
   getAndUpdateUndefinedStateWithDefaultValue,
   makeSetRef,
+  makeCall,
 } from './StateX';
 import { emptyFunction, pathToString } from './StateXUtils';
 import { useStateXStore, StateXProvider } from './StateXContext';
@@ -71,6 +72,11 @@ function atom<T>(props: StateXProps<T>): Atom<T> {
 function useStateXSetter() {
   const store = useStateXStore();
   return useMemo(() => makeSet(store), [store]);
+}
+
+function useStateXActionCaller() {
+  const store = useStateXStore();
+  return useMemo(() => makeCall(store), [store]);
 }
 
 function useStateXRemover() {
@@ -559,6 +565,7 @@ export {
   useRemoveStateX,
   useStateX,
   useStateXAction,
+  useStateXActionCaller,
   useStateXCallback,
   useStateXGetter,
   useStateXRefGetter,
