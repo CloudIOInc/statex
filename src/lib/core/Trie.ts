@@ -153,5 +153,10 @@ export default class Trie<T> {
     return nodes;
   };
 
+  hasChildren = (path: Path): boolean => {
+    const node: Node<any> = this.getNode(path);
+    return Object.keys(node.children).length > 0;
+  };
+
   isRootNode = (node: Node<T>) => node === this.root;
 }
