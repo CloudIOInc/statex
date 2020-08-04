@@ -1,6 +1,6 @@
 {
   "name": "@cloudio/statex",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "description": "StateX - A React state management library",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
