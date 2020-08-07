@@ -9,7 +9,7 @@ import '../../../testing/JestInit.ts';
 
 import React, { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
-import useStateXUndo from '../useStateXUndo';
+import { useStateXUndo, useStateXAddToUndo } from '../useStateXUndo';
 import {
   StateXProvider,
   useStateXSetter,
@@ -44,84 +44,11 @@ describe('StateX', () => {
     ur.add('#', { a: 2 });
     ur.add('#', { a: 3 });
     ur.add('#', { a: 4 });
-    expect(ur.getIndex('#')).toBe(1);
+    expect(ur.getIndex('#')).toBe(2);
     ur.undo('#');
-    expect(ur.getIndex('#')).toBe(0);
-    ur.add('#', { a: 5 });
     expect(ur.getIndex('#')).toBe(1);
-  });
-
-  test('useStateXUndo auto', () => {
-    const { result } = renderHook(
-      () => {
-        const set = useStateXSetter();
-        const get = useStateXGetter();
-        const { canRedo, canUndo, redo, reset, undo } = useStateXUndo(
-          ['a'],
-          '#',
-          true,
-        );
-        return {
-          set,
-          get,
-          canRedo,
-          canUndo,
-          redo,
-          reset,
-          undo,
-        };
-      },
-      { wrapper },
-    );
-    const { set, get, redo, reset, undo } = result.current;
-    expect(result.current.canUndo).toBe(false);
-    expect(result.current.canRedo).toBe(false);
-    expect(get(['a', 'b'])).toBe('x');
-    act(() => {
-      set(['a', 'b'], 'y');
-    });
-    expect(get(['a', 'b'])).toBe('y');
-    expect(result.current.canUndo).toBe(true);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      undo();
-    });
-    expect(get(['a', 'b'])).toBe('x');
-    expect(result.current.canUndo).toBe(false);
-    expect(result.current.canRedo).toBe(true);
-    act(() => {
-      redo();
-    });
-    expect(get(['a', 'b'])).toBe('y');
-    expect(result.current.canUndo).toBe(true);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      reset();
-    });
-    expect(get(['a', 'b'])).toBe('y');
-    expect(result.current.canUndo).toBe(false);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      set(['a', 'c'], 'c');
-      set(['a', 'd'], 'd');
-    });
-    expect(get(['a'])).toStrictEqual({ b: 'y', c: 'c', d: 'd' });
-    expect(result.current.canUndo).toBe(true);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      set(['a', 'c'], 'c2');
-      set(['a', 'd'], 'd2');
-    });
-    expect(get(['a'])).toStrictEqual({ b: 'y', c: 'c2', d: 'd2' });
-    expect(result.current.canUndo).toBe(true);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      set(['a', 'c'], 'c3');
-      set(['a', 'e'], 'e');
-    });
-    expect(get(['a'])).toStrictEqual({ b: 'y', c: 'c3', d: 'd2', e: 'e' });
-    expect(result.current.canUndo).toBe(true);
-    expect(result.current.canRedo).toBe(false);
+    ur.add('#', { a: 5 });
+    expect(ur.getIndex('#')).toBe(2);
   });
 
   test('useStateXUndo manual', () => {
@@ -129,46 +56,41 @@ describe('StateX', () => {
       () => {
         const set = useStateXSetter();
         const get = useStateXGetter();
-        const {
-          addToUndo,
-          canRedo,
-          canUndo,
-          redo,
-          reset,
-          undo,
-          updateToUndo,
-        } = useStateXUndo(['a'], 'some value', false);
+        const addToUndo = useStateXAddToUndo();
+        const { canRedo, canUndo, redo, undo, clear, isEmpty } = useStateXUndo(
+          ['a'],
+          'some value',
+        );
         return {
           set,
           get,
-          addToUndo,
           canRedo,
           canUndo,
           redo,
-          reset,
           undo,
-          updateToUndo,
+          addToUndo,
+          clear,
+          isEmpty,
         };
       },
       { wrapper },
     );
-    const { set, get, addToUndo, redo, reset, undo } = result.current;
+    const { set, get, redo, undo, addToUndo, clear, isEmpty } = result.current;
     act(() => {
-      addToUndo();
+      addToUndo(['aa', 'bb']); // no effect
     });
     expect(result.current.canUndo).toBe(false);
     expect(result.current.canRedo).toBe(false);
     expect(get(['a', 'b'])).toBe('x');
     act(() => {
+      addToUndo(['a', 'b']);
+    });
+    act(() => {
       set(['a', 'b'], 'y');
     });
     expect(get(['a', 'b'])).toBe('y');
-    expect(result.current.canUndo).toBe(false);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      addToUndo();
-    });
     expect(result.current.canUndo).toBe(true);
+    expect(result.current.canRedo).toBe(false);
     act(() => {
       undo();
     });
@@ -182,9 +104,9 @@ describe('StateX', () => {
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
     act(() => {
-      reset();
+      clear();
     });
-    expect(get(['a', 'b'])).toBe('y');
+    expect(isEmpty()).toBe(true);
     expect(result.current.canUndo).toBe(false);
     expect(result.current.canRedo).toBe(false);
   });
@@ -194,62 +116,33 @@ describe('StateX', () => {
       () => {
         const set = useStateXSetter();
         const get = useStateXGetter();
-        const {
-          addToUndo,
-          canRedo,
-          canUndo,
-          clear,
-          isEmpty,
-          redo,
-          reset,
-          undo,
-          updateToUndo,
-        } = useStateXUndo();
+        const addToUndo = useStateXAddToUndo();
+        const { canRedo, canUndo, redo, undo } = useStateXUndo();
         return {
-          addToUndo,
+          set,
+          get,
           canRedo,
           canUndo,
-          clear,
-          get,
-          isEmpty,
           redo,
-          reset,
-          set,
           undo,
-          updateToUndo,
+          addToUndo,
         };
       },
       { wrapper },
     );
-    const {
-      clear,
-      isEmpty,
-      set,
-      get,
-      addToUndo,
-      redo,
-      reset,
-      undo,
-    } = result.current;
-    act(() => {
-      reset(); // no effect
-    });
-    act(() => {
-      addToUndo();
-    });
+    const { set, get, redo, undo, addToUndo } = result.current;
     expect(result.current.canUndo).toBe(false);
     expect(result.current.canRedo).toBe(false);
     expect(get(['a', 'b'])).toBe('x');
     act(() => {
+      addToUndo(['a', 'b']);
+    });
+    act(() => {
       set(['a', 'b'], 'y');
     });
     expect(get(['a', 'b'])).toBe('y');
-    expect(result.current.canUndo).toBe(false);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      addToUndo();
-    });
     expect(result.current.canUndo).toBe(true);
+    expect(result.current.canRedo).toBe(false);
     act(() => {
       undo();
     });
@@ -262,26 +155,5 @@ describe('StateX', () => {
     expect(get(['a', 'b'])).toBe('y');
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
-    act(() => {
-      reset();
-    });
-    expect(get(['a', 'b'])).toBe('y');
-    expect(result.current.canUndo).toBe(false);
-    expect(result.current.canRedo).toBe(false);
-    act(() => {
-      reset();
-    });
-    expect(get(['a', 'b'])).toBe('y');
-    expect(result.current.canUndo).toBe(false);
-    expect(result.current.canRedo).toBe(false);
-    expect(isEmpty()).toBe(false);
-    act(() => {
-      clear();
-    });
-    expect(isEmpty()).toBe(true);
-    act(() => {
-      clear();
-    });
-    expect(isEmpty()).toBe(true);
   });
 });

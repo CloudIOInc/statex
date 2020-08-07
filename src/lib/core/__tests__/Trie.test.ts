@@ -89,6 +89,14 @@ describe('Trie', () => {
     }).toThrow('Node not found at path ["a"]! Parent a at index 0 is missing!');
   });
 
+  test('removeNode root', () => {
+    expect(() => {
+      const trie = new Trie<string>(() => '');
+      trie.addNode(['a', 'x', 'x1'], 'X');
+      trie.removeNode(trie.getNode([]));
+    }).toThrow('Cannot remove root node!');
+  });
+
   test('isChildNode true', () => {
     const trie = new Trie<string>(() => '');
     trie.addNode(['a', 'x', 'x1'], 'X');
@@ -125,5 +133,17 @@ describe('Trie', () => {
       count++;
     });
     expect(count).toBe(3);
+  });
+
+  test('hasNode', () => {
+    const trie = new Trie<string>(() => '');
+    expect(trie.hasNode(['x'])).toBe(false);
+  });
+
+  test('hasChildren', () => {
+    const trie = new Trie<string>(() => '');
+    expect(trie.hasChildren(['a'])).toBe(false);
+    trie.addNode(['a', 'x', 'x1'], 'X');
+    expect(trie.hasChildren(['a'])).toBe(true);
   });
 });

@@ -6,6 +6,7 @@
  *
  */
 
-import useStateXUndo from './undo-history/useStateXUndo';
-
-export { useStateXUndo };
+export {
+  useStateXAddToUndo,
+  useStateXUndo,
+} from './undo-history/useStateXUndo';

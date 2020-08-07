@@ -26,11 +26,18 @@ class UndoRedo<T> {
     return history;
   };
 
+  // when adding 1st entry history.length=1, history.index=1
   add = (hash: string, state: T) => {
     const historyWithIndex = this._history(hash);
     const { history, index } = historyWithIndex;
-    if (history.length > index + 1) {
-      history.splice(index + 1, history.length - index);
+    if (history.length === index) {
+      // never undo
+    } else if (history.length - 1 === index) {
+      // last redo... remove the last entry which gets add on first undo
+      history.splice(index, history.length - index);
+    } else if (history.length - 1 > index) {
+      // in undo... remove everything from the current undo index
+      history.splice(index, history.length - index);
     }
 
     history.push(state);
@@ -39,7 +46,7 @@ class UndoRedo<T> {
       history.splice(0, history.length - this.limit);
     }
 
-    historyWithIndex.index = history.length - 1;
+    historyWithIndex.index = history.length;
   };
 
   update = (hash: string, state: T) => {
@@ -111,7 +118,11 @@ class UndoRedo<T> {
   };
 
   isEmpty = (hash: string) => {
-    return this.getIndex(hash) === -1;
+    return this._history(hash).history.length === 0;
+  };
+
+  getLength = (hash: string) => {
+    return this._history(hash).history.length;
   };
 
   setLimit = (limit: number) => {

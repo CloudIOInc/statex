@@ -82,6 +82,21 @@ export default class Trie<T> {
     return node;
   };
 
+  hasNode = (path: Path) => {
+    let node = this.root;
+    let child: Node<T>;
+    let key: Key;
+    for (let i = 0; i < path.length; i++) {
+      key = path[i];
+      child = node.children[key];
+      if (!child) {
+        return false;
+      }
+      node = child;
+    }
+    return true;
+  };
+
   addNode = (path: Path, data: T) => {
     const node = this.getNode(path);
     node.data = data;
@@ -102,10 +117,10 @@ export default class Trie<T> {
     }
   };
 
-  _isChildNode = (pathNode: Node<T>, node: Node<T>): boolean => {
-    let parent = node.parent;
+  _isChildNode = (parentNode: Node<T>, childNode: Node<T>): boolean => {
+    let parent = childNode.parent;
     while (parent) {
-      if (parent === pathNode) {
+      if (parent === parentNode) {
         return true;
       }
       parent = parent.parent;
@@ -113,9 +128,9 @@ export default class Trie<T> {
     return false;
   };
 
-  isThisOrChildNode = (path: Path, node: Node<T>): boolean => {
-    const pathNode = this.getNode(path);
-    return pathNode === node || this._isChildNode(pathNode, node);
+  isThisOrChildNode = (path: Path, childNode: Node<T>): boolean => {
+    const parentNode = this.getNode(path);
+    return parentNode === childNode || this._isChildNode(parentNode, childNode);
   };
 
   isChildNode = (path: Path, node: Node<T>): boolean => {
@@ -154,8 +169,13 @@ export default class Trie<T> {
   };
 
   hasChildren = (path: Path): boolean => {
-    const node: Node<any> = this.getNode(path);
-    return Object.keys(node.children).length > 0;
+    try {
+      const node: Node<any> = this.getNode(path, false);
+      return Object.keys(node.children).length > 0;
+    } catch (e) {
+      // missing node
+      return false;
+    }
   };
 
   isRootNode = (node: Node<T>) => node === this.root;

@@ -58,6 +58,7 @@ export class StateX {
   stateChangeListeners = new Set<StateChangeListenerInternal>();
   destroyed = false;
   _nodesToBeRemoved = new Set<Node<NodeData<any>>>();
+  _pluginData: Record<string, any> = {};
 
   constructor(
     initialState: Collection = {},
@@ -71,6 +72,14 @@ export class StateX {
       this.state = initialState;
     }
     this.handleError = handleError;
+  }
+
+  getPluginData<T>(name: string): T {
+    return this._pluginData[name];
+  }
+
+  setPluginData<T>(name: string, value: T) {
+    this._pluginData[name] = value;
   }
 
   addStateChangeListener(stateChangeListener: StateChangeListenerInternal) {

@@ -6,86 +6,55 @@
  *
  */
 
-import {
-  useStateXSnapshotSetter,
-  Path,
-  StateChangeListenerProps,
-  getIn,
-} from '../..';
+import { useStateXSnapshotSetter, Path, getIn } from '../..';
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { getNode } from '../../core/StateX';
 import UndoRedo from './UndoRedo';
 import { useStateXStore } from '../../core/StateXContext';
-import {
-  useStateXSnapshotCallback,
-  useStateXGetter,
-} from '../../core/StateXHooks';
 import { StateX } from '../../core/StateXStore';
-import { StateXGetter } from '../../core/StateXTypes';
 
-type State = Record<string, any>;
-
-function samePaths(
-  basePath: Path,
-  get: StateXGetter,
-  store: StateX,
-  state: State,
-  oldState: State,
-  newPaths: Path[],
-  oldPaths: Path[],
-): boolean {
-  if (oldPaths.length !== newPaths.length) {
-    return false;
-  }
-  for (let i = 0; i < oldPaths.length; i++) {
-    if (oldPaths[i] !== newPaths[i]) {
-      return false;
-    } else if (store.trie().hasChildren(newPaths[i])) {
-      // if the node has other child nodes, then we should not update the
-      // existing undo state if there is a change in the child keys
-      const path = newPaths[i].slice(basePath.length, newPaths[i].length);
-      const oldObj = getIn(oldState, path, undefined);
-      const obj = getIn(state, path, undefined);
-      if (
-        typeof oldObj === 'object' &&
-        typeof obj === 'object' &&
-        Object.keys(oldObj).length !== Object.keys(obj).length
-      ) {
-        return false;
-      }
-
-      if (
-        Array.isArray(oldObj) &&
-        Array.isArray(obj) &&
-        oldObj.length !== obj.length
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
+interface UndoCache {
+  path: Path;
+  hash: string;
+  undoRedo: UndoRedo<any>;
+  updateState: () => void;
 }
 
-export default function useStateXUndo(
+function deleteFromUndoCache(store: StateX, { path: undoRedoPath }: UndoCache) {
+  let undoCache = store.getPluginData<UndoCache[] | undefined>('UndoCache');
+  if (undoCache) {
+    undoCache = undoCache.filter(
+      (v) => v.path.join('.') === undoRedoPath.join('.'),
+    );
+    store.setPluginData('UndoCache', undoCache);
+  }
+}
+
+function addToUndoCache(
+  store: StateX,
+  { path, hash, undoRedo, updateState }: UndoCache,
+) {
+  let undoCache = store.getPluginData<UndoCache[] | undefined>('UndoCache');
+  if (!undoCache) {
+    undoCache = [];
+  }
+  undoCache = undoCache.filter((v) => v.path.join('.') === path.join('.'));
+  undoCache.push({
+    path,
+    hash,
+    undoRedo,
+    updateState,
+  });
+  store.setPluginData('UndoCache', undoCache);
+}
+
+export function useStateXUndo(
   path: Path = [],
   hash: string = '#',
-  auto: boolean = false,
   limit: number = 200,
 ) {
   const store = useStateXStore();
-  const get = useStateXGetter();
   const node = getNode(store, path);
-  const currentRef = useRef<StateChangeListenerProps<unknown>>({
-    state: undefined,
-    updatedPaths: [],
-    removedPaths: [],
-  });
-  const ref = useRef<StateChangeListenerProps<unknown>>({
-    state: undefined,
-    updatedPaths: [],
-    removedPaths: [],
-  });
-
   const setSnapshot = useStateXSnapshotSetter();
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -95,19 +64,18 @@ export default function useStateXUndo(
   nodeRef.current = node;
 
   const undoRedo = useMemo(() => {
-    const ur = new UndoRedo({
+    return new UndoRedo({
       onChange: (hash, state) => {
-        ref.current.state = state;
-        ref.current.updatedPaths = [];
-        ref.current.removedPaths = [];
         setSnapshot(state, nodeRef.current.path);
         setCanUndo(undoRedo.canUndo(hash));
         setCanRedo(undoRedo.canRedo(hash));
       },
     });
-    ur.setLimit(limit);
-    return ur;
-  }, [limit, setSnapshot]);
+  }, [setSnapshot]);
+
+  useEffect(() => {
+    undoRedo.setLimit(limit);
+  }, [undoRedo, limit]);
 
   const updateState = useCallback(() => {
     setCanUndo(undoRedo.canUndo(hashRef.current));
@@ -115,75 +83,75 @@ export default function useStateXUndo(
   }, [hashRef, undoRedo]);
 
   useEffect(() => {
+    addToUndoCache(store, {
+      path: node.path,
+      hash,
+      undoRedo,
+      updateState,
+    });
+    return () =>
+      deleteFromUndoCache(store, {
+        path: node.path,
+        hash,
+        undoRedo,
+        updateState,
+      });
+  }, [node, store, updateState, undoRedo, hash]);
+
+  useEffect(() => {
     updateState();
   }, [node, hash, updateState]);
 
   const undo = useCallback(() => {
+    if (
+      undoRedo.getLength(hashRef.current) === undoRedo.getIndex(hashRef.current)
+    ) {
+      const initialState = getIn(store.getState(), node.path, {});
+      undoRedo.add(hashRef.current, initialState);
+      undoRedo.undo(hashRef.current);
+    }
     undoRedo.undo(hashRef.current);
-  }, [hashRef, undoRedo]);
+  }, [hashRef, undoRedo, node]);
 
   const redo = useCallback(() => {
     undoRedo.redo(hashRef.current);
   }, [undoRedo]);
 
-  const reset = useCallback(() => {
-    undoRedo.reset(hashRef.current);
-  }, [undoRedo]);
-
-  const addToUndo = useCallback(() => {
-    undoRedo.add(hashRef.current, currentRef.current.state);
-    updateState();
-  }, [undoRedo, updateState]);
-
-  const updateToUndo = useCallback(() => {
-    undoRedo.update(hashRef.current, currentRef.current.state);
-  }, [undoRedo]);
-
   const clear = useCallback(() => {
     undoRedo.clear(hashRef.current);
-  }, [undoRedo]);
+    updateState();
+  }, [undoRedo, updateState]);
 
   const isEmpty = useCallback(() => {
     return undoRedo.isEmpty(hashRef.current);
   }, [undoRedo]);
 
-  useStateXSnapshotCallback(
-    ({ state, oldState, updatedPaths, removedPaths }) => {
-      currentRef.current = { state, oldState, updatedPaths, removedPaths };
-      if (state && auto && ref.current.state !== state) {
-        if (
-          removedPaths.length === 0 &&
-          samePaths(
-            path,
-            get,
-            store,
-            state as State,
-            oldState as State,
-            updatedPaths,
-            ref.current.updatedPaths,
-          )
-        ) {
-          // same nodes changed... do not update undo history
-          updateToUndo();
-        } else {
-          addToUndo();
-        }
-        ref.current.updatedPaths = updatedPaths;
-        ref.current.removedPaths = removedPaths;
-      }
-    },
-    node.path,
-  );
-
   return {
-    addToUndo,
+    isEmpty,
     canRedo,
     canUndo,
     clear,
-    isEmpty,
     redo,
-    reset,
     undo,
-    updateToUndo,
   };
+}
+
+function addToUndo(store: StateX, childPath: Path) {
+  const childNode = getNode(store, childPath);
+  const undoCache = store.getPluginData<UndoCache[]>('UndoCache');
+  undoCache.forEach(({ path, undoRedo, hash, updateState }) => {
+    if (store.trie().isThisOrChildNode(path, childNode)) {
+      const undoState = getIn(store.getState(), path, {});
+      undoRedo.add(hash, undoState);
+      updateState();
+    }
+  });
+}
+
+export function useStateXAddToUndo() {
+  const store = useStateXStore();
+  return useCallback((childPath: Path) => {
+    const childNode = getNode(store, childPath);
+    addToUndo(store, childNode.path);
+  }, []);
 }
