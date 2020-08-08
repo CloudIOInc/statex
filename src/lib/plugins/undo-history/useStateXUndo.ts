@@ -21,13 +21,11 @@ interface UndoCache {
 }
 
 function deleteFromUndoCache(store: StateX, { path: undoRedoPath }: UndoCache) {
-  let undoCache = store.getPluginData<UndoCache[] | undefined>('UndoCache');
-  if (undoCache) {
+  let undoCache = store.getPluginData<UndoCache[]>('UndoCache');
     undoCache = undoCache.filter(
       (v) => v.path.join('.') === undoRedoPath.join('.'),
     );
     store.setPluginData('UndoCache', undoCache);
-  }
 }
 
 function addToUndoCache(
@@ -38,7 +36,7 @@ function addToUndoCache(
   if (!undoCache) {
     undoCache = [];
   }
-  undoCache = undoCache.filter((v) => v.path.join('.') === path.join('.'));
+  undoCache = undoCache.filter((v) => v.path.join('.') !== path.join('.'));
   undoCache.push({
     path,
     hash,
@@ -148,10 +146,29 @@ function addToUndo(store: StateX, childPath: Path) {
   });
 }
 
+function revertUndo(store: StateX, childPath: Path) {
+  const childNode = getNode(store, childPath);
+  const undoCache = store.getPluginData<UndoCache[]>('UndoCache');
+  undoCache.forEach(({ path, undoRedo, hash, updateState }) => {
+    if (store.trie().isThisOrChildNode(path, childNode)) {
+      undoRedo.revert(hash);
+      updateState();
+    }
+  });
+}
+
 export function useStateXAddToUndo() {
   const store = useStateXStore();
   return useCallback((childPath: Path) => {
     const childNode = getNode(store, childPath);
     addToUndo(store, childNode.path);
+  }, []);
+}
+
+export function useStateXRevertUndo() {
+  const store = useStateXStore();
+  return useCallback((childPath: Path) => {
+    const childNode = getNode(store, childPath);
+    revertUndo(store, childNode.path);
   }, []);
 }

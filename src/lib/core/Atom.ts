@@ -10,6 +10,8 @@ import type {
   StateXProps,
   StateXRefGetter,
   StateXRemover,
+  StateXReseter,
+  StateXRefSetter,
 } from './StateXTypes';
 import { Path } from './ImmutableTypes';
 import { StateXGetter, StateXSetter, StateXActionCaller } from './StateXTypes';
@@ -24,7 +26,9 @@ export default class Atom<T> {
     getRef: StateXRefGetter;
     oldValue: T;
     remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
     value: T;
   }) => T;
   onChange?: (props: {
@@ -33,7 +37,9 @@ export default class Atom<T> {
     getRef: StateXRefGetter;
     oldValue: T;
     remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
     value: T;
   }) => void;
 

@@ -12,10 +12,10 @@ import { pathToString } from './StateXUtils';
 export interface Node<T> {
   children: Record<Key, Node<T>>;
   data: T;
+  deleted?: boolean;
   key: Key;
   parent?: Node<T>;
   path: Path;
-  deleted?: boolean;
 }
 
 export default class Trie<T> {

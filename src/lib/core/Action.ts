@@ -7,7 +7,15 @@
  */
 
 import { ActionFunction } from './StateXTypes';
-import { makeGet, makeSet, makeRemove, makeGetRef, makeCall } from './StateX';
+import {
+  makeGet,
+  makeSet,
+  makeRemove,
+  makeGetRef,
+  makeCall,
+  makeSetRef,
+  makeReset,
+} from './StateX';
 import { StateX } from './StateXStore';
 import ReactDOM from 'react-dom';
 
@@ -27,7 +35,9 @@ export default class Action<T> {
             get: makeGet(store),
             getRef: makeGetRef(store),
             remove: makeRemove(store),
+            reset: makeReset(store),
             set: makeSet(store),
+            setRef: makeSetRef(store),
           },
           value,
         );

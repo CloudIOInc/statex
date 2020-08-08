@@ -95,6 +95,7 @@ function enterStateX<T>(
   node: Node<NodeData<T>>,
   stateXHolder: StateXHolder<T>,
 ) {
+  /* istanbul ignore if */
   if (node.deleted) {
     throw Error(`Node already removed! ${pathToString(node.path)}`);
   }
@@ -245,7 +246,9 @@ function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
                 getRef: makeGetRef(store),
                 oldValue: lastKnownValue,
                 remove: makeRemove(store),
+                reset: makeReset(store),
                 set: makeSet(store),
+                setRef: makeSetRef(store),
                 value,
               });
               store.afterOnChange(holder.node);
@@ -260,7 +263,9 @@ function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
             getRef: makeGetRef(store),
             oldValue: lastKnownValue,
             remove: makeRemove(store),
+            reset: makeReset(store),
             set: makeSet(store),
+            setRef: makeSetRef(store),
             value,
           });
           store.afterAtomOnChange(node);
@@ -338,7 +343,9 @@ function _setIn<T>(
         getRef: makeGetRef(store),
         oldValue,
         remove: makeRemove(store),
+        reset: makeReset(store),
         set: makeSet(store),
+        setRef: makeSetRef(store),
         value: newValue,
       });
       store.afterAtomUpdater(node);
@@ -385,29 +392,25 @@ function removeStateXValue<T>(
   return _removeIn(store, path);
 }
 
-function getAndUpdateUndefinedStateWithDefaultValue<T>(
+function updateParentNodesLastKnowValues<T>(
+  store: StateX,
+  node?: Node<NodeData<T>>,
+) {
+  if (node && node.data.lastKnownValue === undefined) {
+    const value: T = _getIn<T>(store, node);
+    if (value !== undefined) {
+      node.data.lastKnownValue = value;
+      updateParentNodesLastKnowValues(store, node.parent);
+    }
+  }
+}
+
+function getStateValue<T>(
   store: StateX,
   node: Node<NodeData<T>>,
-  defaultValue: T,
   options?: Options,
-): [T, boolean] {
-  let usedDefaultValue = false;
-
-  let currentValue: T = _getIn<T>(
-    store,
-    node,
-    undefined,
-    !!options?.mutableRefObject,
-  );
-  if (currentValue === undefined && defaultValue !== undefined) {
-    currentValue = defaultValue;
-    // prevent calling onChange callback for default values
-    node.data.lastKnownValue = defaultValue;
-    store.trackAndUpdate(node, defaultValue);
-    usedDefaultValue = true;
-    store.addToPendingWithoutSchedule(node.path, 'default');
-  }
-  return [currentValue, usedDefaultValue];
+): T {
+  return _getIn<T>(store, node, undefined, !!options?.mutableRefObject);
 }
 
 function getResolvableStateXValue<T>(
@@ -418,12 +421,7 @@ function getResolvableStateXValue<T>(
   if (isSelectorNode(node)) {
     return node.data.selector.getValue(store, node, options);
   } else {
-    return getAndUpdateUndefinedStateWithDefaultValue<T>(
-      store,
-      node,
-      node.data.defaultValue,
-      options,
-    )[0];
+    return getStateValue<T>(store, node, options);
   }
 }
 
@@ -443,24 +441,49 @@ function registerStateX<T>(
   store: StateX,
   pathOrAtom: PathOrStateXOrSelector<T>,
   node: Node<NodeData<T>>,
+  defaultValue?: T,
 ) {
-  if (pathOrAtom instanceof Atom && node.data.atom !== pathOrAtom) {
+  if (pathOrAtom instanceof Atom) {
+    if (node.data.atom === pathOrAtom) {
+      return;
+    }
     node.data.atom = pathOrAtom;
-    node.data.defaultValue = pathOrAtom.defaultValue;
+    /* istanbul ignore else */
+    if (!node.data.defaultValueInitialized) {
+      node.data.defaultValue = pathOrAtom.defaultValue;
+      node.data.defaultValueInitialized = true;
+      const val = getIn(store.getState(), node.path, undefined);
+      if (val === undefined) {
+        /* istanbul ignore else */
+        if (pathOrAtom.defaultValue !== undefined) {
+          node.data.lastKnownValue = pathOrAtom.defaultValue;
+          store.trackAndUpdate(node, pathOrAtom.defaultValue);
+          store.addToPendingWithoutSchedule(node.path, 'default');
+        }
+      } else {
+        node.data.lastKnownValue = val;
+      }
+      updateParentNodesLastKnowValues(store, node.parent);
+    }
+  } else if (pathOrAtom instanceof Selector) {
+    if (node.data.selector !== pathOrAtom) {
+      node.data.selector = pathOrAtom;
+      // re-initialize selector to cleanup existing subscriptions
+      (node as Node<NodeDataWithSelector<T>>).data.initialized = false;
+    }
+  } else if (!node.data.defaultValueInitialized) {
+    node.data.defaultValueInitialized = true;
     const val = getIn(store.getState(), node.path, undefined);
     if (val === undefined) {
-      store.trackAndUpdate(node, pathOrAtom.defaultValue);
-      store.addToPendingWithoutSchedule(node.path, 'default');
+      if (defaultValue !== undefined) {
+        node.data.lastKnownValue = defaultValue;
+        store.trackAndUpdate(node, defaultValue);
+        store.addToPendingWithoutSchedule(node.path, 'default');
+      }
     } else {
       node.data.lastKnownValue = val;
     }
-  } else if (
-    pathOrAtom instanceof Selector &&
-    node.data.selector !== pathOrAtom
-  ) {
-    node.data.selector = pathOrAtom;
-    // re-initialize selector to cleanup existing subscriptions
-    (node as Node<NodeDataWithSelector<T>>).data.initialized = false;
+    updateParentNodesLastKnowValues(store, node.parent);
   }
 }
 
@@ -493,7 +516,7 @@ function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
     registerStateX(store, pathOrAtom, node);
     // collect all the nodes being accessed
     if (nodes) {
-      nodes.add(getNode(store, path));
+      nodes.add(node);
     }
     return getStateXValue<V>(store, node, options);
   };
@@ -563,10 +586,18 @@ function makeRemove(store: StateX) {
   };
 }
 
+function makeReset(store: StateX) {
+  return <V>(atom: Atom<V>, options?: Options): V => {
+    const path = resolvePath(atom, options?.params);
+    const node = getNode<V>(store, path);
+    return setStateXValue<V>(store, node, atom.defaultValue, options);
+  };
+}
+
 export {
   enterStateX,
-  getAndUpdateUndefinedStateWithDefaultValue,
   getNode,
+  getStateValue,
   getStateXValue,
   inform,
   isResolvable,
@@ -575,6 +606,7 @@ export {
   makeGetRef,
   makePaths,
   makeRemove,
+  makeReset,
   makeSet,
   makeSetRef,
   registerStateX,

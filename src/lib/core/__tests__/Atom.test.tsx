@@ -7,8 +7,16 @@
  */
 import '../../testing/JestInit.ts';
 
-import React from 'react';
-import { Atom, useStateXValue, useRemoveStateX, atom } from '../..';
+import React, { ReactNode } from 'react';
+import {
+  Atom,
+  useStateXValue,
+  useRemoveStateX,
+  atom,
+  action,
+  useStateXActionCaller,
+  StateXProvider,
+} from '../..';
 import {
   firstNameAtom,
   lastNameAtom,
@@ -16,10 +24,21 @@ import {
   initialState,
   keyAtom,
 } from '../../testing/Common';
+import { useStateXRefValue } from '../StateXUIHooks';
+import { renderHook, act } from '@testing-library/react-hooks';
+import { useStateXResetter } from '../StateXHooks';
 
+let wrapper: React.FunctionComponent<{}>;
 describe('Atom', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
+    wrapper = ({ children }: { children?: ReactNode }) => {
+      return (
+        <StateXProvider initialState={initialState()} handleError={() => {}}>
+          {children}
+        </StateXProvider>
+      );
+    };
   });
 
   test('instanceof Atom', () => {
@@ -57,10 +76,10 @@ describe('Atom', () => {
     act(() => {
       remove(firstNameAtom);
     });
-    expect(textContent()).toBe('DEFAULT_firstName Jobs');
+    expect(textContent()).toBe('undefined Jobs');
     expect(counter).toBe(2);
     const state = initialState();
-    state.root.person.firstName = 'DEFAULT_firstName';
+    delete state.root.person.firstName;
     expect(get([])).toStrictEqual(state);
   });
 
@@ -70,13 +89,13 @@ describe('Atom', () => {
       const [firstName, removeFirstName] = useRemoveStateX(firstNameAtom);
       counter++;
       data.removeFirstName = removeFirstName;
-      return <>{firstName}</>;
+      return <>{`${firstName}`}</>;
     }, {});
     expect(textContent()).toBe('Steve');
     act(() => {
       data.removeFirstName(firstNameAtom);
     });
-    expect(textContent()).toBe('DEFAULT_firstName');
+    expect(textContent()).toBe('undefined');
     expect(counter).toBe(2);
   });
 
@@ -167,12 +186,12 @@ describe('Atom', () => {
     expect(counter).toBe(1);
   });
 
-  test('clearing the value in store should rerender with default value', () => {
+  test('setting the value in store with undefined should rerender with undefined', () => {
     let counter = 0;
     const { act, textContent, set } = render(() => {
       const firstName = useStateXValue(firstNameAtom);
       counter++;
-      return <>{firstName}</>;
+      return <>{`${firstName}`}</>;
     });
     expect(textContent()).toBe('Steve');
     expect(counter).toBe(1);
@@ -180,7 +199,24 @@ describe('Atom', () => {
       // @ts-ignore
       set(firstNameAtom, undefined);
     });
-    expect(textContent()).toBe('DEFAULT_firstName');
+    expect(textContent()).toBe('undefined');
+    expect(counter).toBe(2);
+  });
+
+  test('setting the value in store with null should rerender with null', () => {
+    let counter = 0;
+    const { act, textContent, set } = render(() => {
+      const firstName = useStateXValue(firstNameAtom);
+      counter++;
+      return <>{`${firstName}`}</>;
+    });
+    expect(textContent()).toBe('Steve');
+    expect(counter).toBe(1);
+    act(() => {
+      // @ts-ignore
+      set(firstNameAtom, null);
+    });
+    expect(textContent()).toBe('null');
     expect(counter).toBe(2);
   });
 
@@ -212,5 +248,58 @@ describe('Atom', () => {
     });
     expect(textContent()).toBe('null');
     expect(counter).toBe(3);
+  });
+
+  test('ref', () => {
+    let counter = 0;
+    const { textContent, setRef, act } = render(() => {
+      const ref = useStateXRefValue(['ref']);
+      counter++;
+      return <>{ref?.current}</>;
+    });
+    expect(textContent()).toBe('');
+    expect(counter).toBe(1);
+    act(() => {
+      setRef(['ref'], { current: 'x' });
+    });
+    expect(textContent()).toBe('x');
+    expect(counter).toBe(2);
+  });
+
+  test('reset', () => {
+    let counter = 0;
+    const { textContent, set, act, reset } = render(() => {
+      const firstName = useStateXValue(firstNameAtom);
+      counter++;
+      return <>{firstName}</>;
+    });
+    expect(textContent()).toBe('Steve');
+    expect(counter).toBe(1);
+    act(() => {
+      set(firstNameAtom, 'x');
+    });
+    expect(textContent()).toBe('x');
+    expect(counter).toBe(2);
+    act(() => {
+      reset(firstNameAtom);
+    });
+    expect(textContent()).toBe('DEFAULT_firstName');
+    expect(counter).toBe(3);
+  });
+
+  test('useStateXActionCaller', () => {
+    const { result } = renderHook(
+      () => {
+        const reset = useStateXResetter();
+        const value = useStateXValue(firstNameAtom);
+        return { reset, value };
+      },
+      { wrapper },
+    );
+    expect(result.current.value).toBe('Steve');
+    act(() => {
+      result.current.reset(firstNameAtom);
+    });
+    expect(result.current.value).toBe('DEFAULT_firstName');
   });
 });

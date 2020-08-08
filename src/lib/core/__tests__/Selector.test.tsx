@@ -19,7 +19,7 @@ import {
 } from '../StateXHooks';
 import Selector from '../Selector';
 import { renderHook, act } from '@testing-library/react-hooks';
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode } from 'react';
 import { usePrintTree } from '../StateXUIHooks';
 import { Resolvable } from '../StateXTypes';
 import { StateX } from '../StateXStore';
@@ -84,7 +84,7 @@ describe('Selector', () => {
     ]);
   });
 
-  test('removing object key should reset to default value', () => {
+  test('removing object key should remove from state', () => {
     let counter = 0;
     const { act, textContent, remove, get } = render(() => {
       const fullName = useStateXValue(fullNameSelector);
@@ -95,10 +95,10 @@ describe('Selector', () => {
     act(() => {
       remove(firstNameAtom);
     });
-    expect(textContent()).toBe('DEFAULT_firstName Jobs');
+    expect(textContent()).toBe('undefined Jobs');
     expect(counter).toBe(3);
     const state = initialState();
-    state.root.person.firstName = 'DEFAULT_firstName';
+    delete state.root.person.firstName;
     expect(get([])).toStrictEqual(state);
   });
 
@@ -172,26 +172,27 @@ describe('Selector', () => {
     const root = selector({
       path: ['root'],
       defaultValue: 'root dv',
-      get: ({ get }) => get(leaf),
+      get: ({ get }) => {
+        return get(leaf);
+      },
     });
     let counter = 0;
-    const { waitForElement, act, set } = render(() => {
+    const { waitForValueChange, act, set } = render(() => {
       const value = useStateXValue(root);
       counter++;
       return <>{value}</>;
     });
-    let ele;
     await act(async () => {
-      ele = await waitForElement();
-      expect(ele.textContent).toBe('Steve');
+      const value = await waitForValueChange();
+      expect(value).toBe('Steve');
     });
     counter = 0;
     act(() => {
       set(firstNameAtom, 'x');
     });
     await act(async () => {
-      ele = await waitForElement();
-      expect(ele.textContent).toBe('x');
+      const value = await waitForValueChange();
+      expect(value).toBe('x');
     });
     expect(counter).toBe(3);
   });
@@ -210,18 +211,14 @@ describe('Selector', () => {
       },
     });
     let counter = 0;
-    const { waitForElement, act, set } = render(() => {
+    const { act, set, waitForValueChange } = render(() => {
       const value = useStateXValue(s);
       counter++;
       return <>{value}</>;
     });
-    let ele;
     await act(async () => {
-      ele = await waitForElement();
-    });
-    await act(async () => {
-      ele = await waitForElement();
-      expect(ele.textContent).toBe('Steve');
+      const value = await waitForValueChange();
+      expect(value).toBe('Steve');
     });
     counter = 0;
     act(() => {
@@ -231,11 +228,8 @@ describe('Selector', () => {
       set(firstNameAtom, 'y');
     });
     await act(async () => {
-      ele = await waitForElement();
-    });
-    await act(async () => {
-      ele = await waitForElement();
-      expect(ele.textContent).toBe('y');
+      const value = await waitForValueChange();
+      expect(value).toBe('y');
     });
     expect(counter).toBe(1);
   });
@@ -300,7 +294,7 @@ describe('Selector', () => {
       // @ts-ignore
       set(firstNameAtom, undefined);
     });
-    expect(textContent()).toBe('DEFAULT_firstName Jobs');
+    expect(textContent()).toBe('undefined Jobs');
     expect(counter).toBe(1);
   });
 
@@ -552,5 +546,25 @@ describe('Selector', () => {
 
     resolvable.status = 'pending';
     expect(() => resolvable.resolveIfSelf(n)).toThrow(Promise);
+  });
+
+  test('do not call get when parent path removed', async () => {
+    const s1 = keySelector(['root', 'x', 'y']);
+    const { result, waitForValueToChange } = renderHook(
+      () => {
+        useWithStateX({ root: { x: { y: 'a' } } });
+        const value = useStateXValue(s1);
+        const set = useStateXSetter();
+        return { value, set };
+      },
+      { wrapper },
+    );
+
+    expect(result.current.value).toBe('a');
+    await act(async () => {
+      result.current.set(['root'], {});
+      await waitForValueToChange(() => result.current.value);
+    });
+    expect(result.current.value).toBe('');
   });
 });

@@ -26,6 +26,7 @@ import {
   useStateXRefValue,
   useStateXForTextInput,
   useActivePaths,
+  useStateXRefSetter,
 } from '../..';
 import { render, act as ract, fireEvent } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react-hooks';
@@ -40,6 +41,7 @@ import React, {
 import { StateXProvider, useStateXStore } from '../StateXContext';
 import { getNode } from '../StateX';
 import { pathToString } from '../StateXUtils';
+import { useStateXActionCaller } from '../StateXHooks';
 
 let wrapper: React.FunctionComponent<{}>;
 describe('StateX', () => {
@@ -1071,5 +1073,30 @@ describe('StateX', () => {
       { wrapper },
     );
     expect(result.error).toBe(undefined);
+  });
+
+  test('useStateXRefSetter', () => {
+    const { result } = renderHook(
+      () => {
+        const set = useStateXRefSetter();
+        const refValue = useStateXRefValue(['ref']);
+        const ref = useRef('x');
+        return { set, ref, refValue };
+      },
+      { wrapper },
+    );
+    expect(result.current.refValue).toBe(undefined);
+    act(() => {
+      result.current.set(['ref'], result.current.ref);
+    });
+    expect(result.current.refValue?.current).toBe('x');
+  });
+
+  test('useStateXActionCaller', () => {
+    const fn = jest.fn();
+    const myAction = action(fn);
+    const { result } = renderHook(() => useStateXActionCaller(), { wrapper });
+    result.current(myAction, null);
+    expect(fn).toHaveBeenCalled();
   });
 });

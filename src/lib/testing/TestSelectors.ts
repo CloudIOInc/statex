@@ -1,4 +1,5 @@
 import { selector } from '../core/StateXHooks';
+import { Path } from '..';
 
 export const testSelector = (value: string | Promise<string> = '') =>
   selector({
@@ -15,12 +16,12 @@ export const testSelector = (value: string | Promise<string> = '') =>
     },
   });
 
-export const keySelector = (value: string) =>
+export const keySelector = (value: string | Path) =>
   selector({
     path: ['testSelector2'],
     defaultValue: '',
     get: ({ get }) => {
-      return get([value]);
+      return get(Array.isArray(value) ? value : [value]);
     },
   });
 

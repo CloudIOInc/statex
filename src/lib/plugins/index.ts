@@ -8,5 +8,6 @@
 
 export {
   useStateXAddToUndo,
+  useStateXRevertUndo,
   useStateXUndo,
 } from './undo-history/useStateXUndo';

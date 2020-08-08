@@ -52,9 +52,10 @@ import {
   makeGetRef,
   updateState,
   makeRemove,
-  getAndUpdateUndefinedStateWithDefaultValue,
+  getStateValue,
   makeSetRef,
   makeCall,
+  makeReset,
 } from './StateX';
 import { emptyFunction, pathToString } from './StateXUtils';
 import { useStateXStore, StateXProvider } from './StateXContext';
@@ -82,6 +83,11 @@ function useStateXActionCaller() {
 function useStateXRemover() {
   const store = useStateXStore();
   return useMemo(() => makeRemove(store), [store]);
+}
+
+function useStateXResetter() {
+  const store = useStateXStore();
+  return useMemo(() => makeReset(store), [store]);
 }
 
 function useStateXGetter() {
@@ -241,15 +247,12 @@ function useStateXResolveable<T>(
 function useStateXValueResolveableInternal<T>(
   node: Node<NodeData<T>>,
   pathOrAtom: PathOrStateXOrSelector<T>,
-  defaultValue: T,
+  dv: T,
   options?: StateXOptions<T>,
 ): T | Resolvable<T> {
   const store = useStateXStore();
   // register the atom or selector to populate the empty state with default value
-  registerStateX(store, pathOrAtom, node);
-  if (node.data.defaultValue === undefined) {
-    node.data.defaultValue = defaultValue;
-  }
+  registerStateX(store, pathOrAtom, node, dv);
   const holderRef = useRef<StateXHolder<T>>({
     setter: emptyFunction,
     shouldComponentUpdate: options?.shouldComponentUpdate,
@@ -258,51 +261,25 @@ function useStateXValueResolveableInternal<T>(
   });
 
   const [selectorValue, setSelectorValue] = useState<T | Resolvable<T>>(
-    Resolvable.withValue<T>(node, defaultValue, true),
+    Resolvable.withValue<T>(node, dv, true),
   );
   let currentValue: T | Resolvable<T>;
   let usedDefaultValue = false;
   if (pathOrAtom instanceof Selector) {
     if (node !== holderRef.current.node) {
       // must be due to dynamic path change... discard existing selectorValue
-      currentValue = defaultValue;
+      currentValue = dv;
       usedDefaultValue = true;
     } else {
       currentValue = selectorValue;
     }
   } else {
-    [
-      currentValue,
-      usedDefaultValue,
-    ] = getAndUpdateUndefinedStateWithDefaultValue<T>(
-      store,
-      node,
-      defaultValue,
-      options,
-    );
+    currentValue = getStateValue<T>(store, node, options);
   }
 
-  const ref = useRef({ defaultValue, options, currentValue });
+  const ref = useRef({ options, currentValue });
 
   const [value, setValueInternal] = useState<T | Resolvable<T>>(currentValue);
-
-  useEffect(() => {
-    if (usedDefaultValue) {
-      if (isSelectorNode(node)) {
-        /* istanbul ignore next */
-        if (
-          isResolvable(selectorValue) &&
-          selectorValue.isDefault &&
-          selectorValue.value !== defaultValue
-        ) {
-          setSelectorValue(Resolvable.withValue<T>(node, defaultValue, true));
-        }
-      } else if (value !== defaultValue) {
-        setValueInternal(defaultValue);
-      }
-      store.addToPendingWithoutSchedule(node.path, 'default');
-    }
-  }, [defaultValue, value, node, selectorValue, store, usedDefaultValue]);
 
   const setValue = useCallback(
     (value: T) => {
@@ -317,31 +294,23 @@ function useStateXValueResolveableInternal<T>(
 
   useEffect(() => {
     ref.current.currentValue = currentValue;
-    ref.current.defaultValue = defaultValue;
     ref.current.options = options;
 
     holderRef.current.shouldComponentUpdate = options?.shouldComponentUpdate;
     holderRef.current.onChange = options?.onChange;
     holderRef.current.setter = setValue;
     holderRef.current.node = node;
-  }, [currentValue, defaultValue, options, node, setValue]);
+  }, [currentValue, options, node, setValue]);
 
   useEffect(() => {
     // initial or node changed due to dynamic path
-    const { defaultValue, options } = ref.current;
+    const { options } = ref.current;
     if (isSelectorNode(node)) {
       // selector may have side effects...
       // hence make the initial call inside useEffect
       setSelectorValue(node.data.selector.getValue(store, node, options));
     } else {
-      setValue(
-        getAndUpdateUndefinedStateWithDefaultValue<T>(
-          store,
-          node,
-          defaultValue,
-          options,
-        )[0],
-      );
+      setValue(getStateValue<T>(store, node, options));
     }
   }, [node, setValue, store]);
 
@@ -571,6 +540,7 @@ export {
   useStateXRefGetter,
   useStateXRefSetter,
   useStateXRemover,
+  useStateXResetter,
   useStateXResolveable,
   useStateXSetter,
   useStateXSnapshotCallback,

@@ -5,9 +5,11 @@ import {
   StateXActionCaller,
   StateXGetter,
   StateXRefGetter,
+  StateXRefSetter,
   StateXRemover,
   StateXSetter,
   StateXActivePathsGetter,
+  StateXReseter,
 } from '..';
 import { selector } from '../core/StateXHooks';
 import { screen, render, act, waitFor } from '@testing-library/react';
@@ -19,6 +21,8 @@ import {
   makeCall,
   makeRemove,
   makePaths,
+  makeSetRef,
+  makeReset,
 } from '../core/StateX';
 import ErrorBoundary from './ErrorBoundary';
 
@@ -48,17 +52,17 @@ export const lastNameAtom = atom({
   defaultValue: 'DEFAULT_lastName',
 });
 
+export const fullNameSelector = selector({
+  path: ['selector', 'fullName'],
+  defaultValue: 'DEFAULT_fullName',
+  get: ({ get }) => `${get(firstNameAtom)} ${get(lastNameAtom)}`,
+});
+
 export const numericAtom = atom({ path: ['root', 'num'], defaultValue: 0 });
 
 export const booleanAtom = atom({
   path: ['root', 'bool'],
   defaultValue: false,
-});
-
-export const fullNameSelector = selector({
-  path: ['selector', 'fullName'],
-  defaultValue: 'DEFAULT_fullName',
-  get: ({ get }) => `${get(firstNameAtom)} ${get(lastNameAtom)}`,
 });
 
 const wrapper: React.FunctionComponent<{}> = ({
@@ -75,12 +79,14 @@ const wrapper: React.FunctionComponent<{}> = ({
 
 interface Props {
   call: StateXActionCaller;
+  data: Record<string, any>;
   get: StateXGetter;
+  getActivePaths: StateXActivePathsGetter;
   getRef: StateXRefGetter;
   remove: StateXRemover;
+  reset: StateXReseter;
   set: StateXSetter;
-  getActivePaths: StateXActivePathsGetter;
-  data: Record<string, any>;
+  setRef: StateXRefSetter;
 }
 
 const renderComp = (
@@ -95,14 +101,16 @@ const renderComp = (
       set: makeSet(store),
       get: makeGet(store),
       getRef: makeGetRef(store),
+      setRef: makeSetRef(store),
       call: makeCall(store),
       remove: makeRemove(store),
+      reset: makeReset(store),
       getActivePaths: makePaths(store),
       data: {},
     });
     return (
       <ErrorBoundary>
-        <Suspense fallback={<>Suspended</>}>
+        <Suspense fallback={<div data-testid="id">Suspended</div>}>
           <div data-testid="id">
             <Comp {...ref.current} {...options} />
           </div>
@@ -116,10 +124,26 @@ const renderComp = (
     return ele.textContent;
   };
   const waitForElement = async () =>
-    await waitFor(() => screen.getByTestId('id'));
+    await waitFor(() => {
+      const el = screen.getByTestId('id');
+      if (el && el.textContent !== 'Suspended') {
+        return el;
+      }
+      console.log('still waiting...');
+      throw Error('Still waiting...');
+    });
+
+  const waitForValueChange = async () => {
+    await waitForElement();
+    return await waitFor(() => {
+      const value = screen.getByTestId('id').textContent;
+      return value;
+    });
+  };
   const waitForErrorElement = async () =>
     await waitFor(() => screen.getByTestId('eid'));
   return {
+    waitForValueChange,
     waitForElement,
     waitForErrorElement,
     screen,

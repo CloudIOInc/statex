@@ -30,12 +30,12 @@ class UndoRedo<T> {
   add = (hash: string, state: T) => {
     const historyWithIndex = this._history(hash);
     const { history, index } = historyWithIndex;
-    if (history.length === index) {
+    if (history.length === index || history.length === 0) {
       // never undo
     } else if (history.length - 1 === index) {
       // last redo... remove the last entry which gets add on first undo
       history.splice(index, history.length - index);
-    } else if (history.length - 1 > index) {
+    } else {
       // in undo... remove everything from the current undo index
       history.splice(index, history.length - index);
     }
@@ -49,13 +49,13 @@ class UndoRedo<T> {
     historyWithIndex.index = history.length;
   };
 
-  update = (hash: string, state: T) => {
+  revert = (hash: string) => {
     const historyWithIndex = this._history(hash);
     const { history, index } = historyWithIndex;
-    if (index === -1) {
-      this.add(hash, state);
-    } else {
-      history[index] = state;
+    if (history.length === index) {
+      const state = history.pop() as T;
+      historyWithIndex.index = history.length;
+      this.onChange(hash, state);
     }
   };
 
@@ -87,17 +87,6 @@ class UndoRedo<T> {
     if (history.length) {
       historyWithIndex.history = [];
       historyWithIndex.index = -1;
-    }
-  };
-
-  reset = (hash: string) => {
-    const historyWithIndex = this._history(hash);
-    const { history, index } = historyWithIndex;
-    if (history.length) {
-      const state = history[index];
-      historyWithIndex.history = [state];
-      historyWithIndex.index = 0;
-      this.onChange(hash, state);
     }
   };
 

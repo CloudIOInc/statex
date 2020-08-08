@@ -18,6 +18,8 @@ import {
   isResolvable,
   StateXRefGetter,
   StateXActionCaller,
+  StateXReseter,
+  StateXRefSetter,
 } from './StateXTypes';
 import {
   Resolvable,
@@ -41,8 +43,11 @@ import {
   makeRemove,
   makeGetRef,
   makeCall,
+  makeReset,
+  makeSetRef,
 } from './StateX';
 import { StateX } from './StateXStore';
+import { hasIn } from './ImmutableUtils';
 
 function notWritableSelector<T>(): T {
   throw Error('Not a writable selector!');
@@ -108,7 +113,7 @@ export default class Selector<T> implements SelectorInterface<T> {
               selectorNode.data.selectorValue = value;
               this.inform(store, value, selectorNode, self);
             } else {
-              this.update(store, selectorNode, params);
+              this.update(store, selectorNode, null, params);
             }
           }
           return value;
@@ -142,10 +147,12 @@ export default class Selector<T> implements SelectorInterface<T> {
       getRef: StateXRefGetter;
       options?: Options;
       remove: StateXRemover;
+      reset: StateXReseter;
       set: StateXSetter;
+      setRef: StateXRefSetter;
     },
   ): T | Resolvable<T> => {
-    const { call, get, getRef, set, remove, options } = props;
+    const { call, get, getRef, set, remove, reset, options, setRef } = props;
     const path = applyParamsToPath(this.pathWithParams, options?.params);
     const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
     let value: T | Promise<T>;
@@ -159,7 +166,9 @@ export default class Selector<T> implements SelectorInterface<T> {
           getRef,
           params: options?.params,
           remove,
+          reset,
           set,
+          setRef,
         }) ?? this.defaultValue;
     } catch (errorOrPromise) {
       return this.makeResolvable(
@@ -227,7 +236,9 @@ export default class Selector<T> implements SelectorInterface<T> {
           getRef: makeGetRef(store),
           params: options?.params,
           remove: makeRemove(store),
+          reset: makeReset(store),
           set: makeSet(store),
+          setRef: makeSetRef(store),
           value,
         },
         value,
@@ -262,21 +273,32 @@ export default class Selector<T> implements SelectorInterface<T> {
       node: selectorNode,
     };
     const leaveStateX = enterStateX(store, node, stateXHolder);
-    stateXHolder.setter = () => this.update(store, selectorNode, options);
+    stateXHolder.setter = () => this.update(store, selectorNode, node, options);
     selectorNode.data.unregisterMap.set(node, leaveStateX);
   };
 
   update = (
     store: StateX,
     selectorNode: Node<NodeDataWithSelector<T>>,
+    node: Node<NodeData<any>> | null,
     options?: Options,
   ) => {
-    const val = this.selectValueWithStateXHolder(store, options);
-    if (isResolvable(val)) {
-      selectorNode.data.holders.forEach((holder) => holder.setter(val));
+    /* istanbul ignore else */
+    if (!node || store.trie().hasNode(node.path)) {
+      if (node && !hasIn(store.getState(), node.path)) {
+        // State at path node.parent.path is deleted! and the node will be unmounted
+        // do not execute the select get to avoid population of default values
+        node.data.valueRemoved = true;
+      }
+      const val = this.selectValueWithStateXHolder(store, options);
+      if (isResolvable(val)) {
+        selectorNode.data.holders.forEach((holder) => holder.setter(val));
+      } else {
+        selectorNode.data.selectorValue = val;
+        this.inform(store, val, selectorNode, true);
+      }
     } else {
-      selectorNode.data.selectorValue = val;
-      this.inform(store, val, selectorNode, true);
+      // Node at path node.path is deleted!
     }
   };
 
@@ -293,12 +315,14 @@ export default class Selector<T> implements SelectorInterface<T> {
       getRef: makeGetRef(store),
       options,
       remove: makeRemove(store),
+      reset: makeReset(store),
       set: makeSet(store),
+      setRef: makeSetRef(store),
     });
     nodes.forEach((node) => {
       /* istanbul ignore next */
       if (selectorNode.data.previousNodes === undefined) {
-        console.log(selectorNode);
+        console.error(selectorNode);
         throw Error('invalid node!');
       }
       if (!selectorNode.data.previousNodes.has(node)) {
@@ -370,7 +394,9 @@ export default class Selector<T> implements SelectorInterface<T> {
             getRef: makeGetRef(store),
             oldValue: oldSelectorValue,
             remove: makeRemove(store),
+            reset: makeReset(store),
             set: makeSet(store),
+            setRef: makeSetRef(store),
             value: val,
           });
           store.afterOnChange(holder.node);

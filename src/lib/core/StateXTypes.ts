@@ -35,7 +35,9 @@ export type ActionFunction<T> = (
     get: StateXGetter;
     getRef: StateXRefGetter;
     remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
   },
   value: T,
 ) => void;
@@ -50,7 +52,9 @@ export interface StateXProps<T> {
     getRef: StateXRefGetter;
     oldValue: T;
     remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
     value: T;
   }) => T;
   onChange?: (props: {
@@ -58,7 +62,10 @@ export interface StateXProps<T> {
     get: StateXGetter;
     getRef: StateXRefGetter;
     oldValue: T;
+    remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
     value: T;
   }) => void;
 }
@@ -72,7 +79,9 @@ export interface StateXHolder<T> {
     getRef: StateXRefGetter;
     oldValue?: T;
     remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
     value: T;
   }) => void;
   holding?: boolean;
@@ -81,11 +90,14 @@ export interface StateXHolder<T> {
 
 export interface NodeData<T> {
   atom?: Atom<T>;
-  selector?: Selector<T>;
+  defaultValue: T;
+  defaultValueInitialized?: boolean;
   holders: Set<StateXHolder<T>>;
   lastKnownValue?: T;
-  defaultValue: T;
+  lastKnownValueInitialized?: boolean;
   ref?: React.RefObject<any>;
+  selector?: Selector<T>;
+  valueRemoved?: boolean;
 }
 
 export interface NodeDataWithStateX<T> extends NodeData<T> {
@@ -131,7 +143,9 @@ export interface StateXOptions<T> extends Options {
     getRef: StateXRefGetter;
     oldValue?: T;
     remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
     value: T;
   }) => void;
 }
@@ -167,7 +181,14 @@ export type StateXRefGetter = <T>(
   path: Path,
 ) => MutableRefObject<T> | undefined;
 
+export type StateXRefSetter = <T>(
+  path: Path,
+  ref: MutableRefObject<T> | undefined,
+) => void;
+
 export type StateXRemover = <V>(path: PathOrStateX<V>, options?: Options) => V;
+
+export type StateXReseter = <V>(path: Atom<V>, options?: Options) => V;
 
 export type Select<T> = (props: {
   call: StateXActionCaller;
@@ -175,7 +196,9 @@ export type Select<T> = (props: {
   getRef: StateXRefGetter;
   params?: Record<string, Key>;
   remove: StateXRemover;
+  reset: StateXReseter;
   set: StateXSetter;
+  setRef: StateXRefSetter;
 }) => T | Promise<T>;
 
 export type Write<T> = (
@@ -185,7 +208,9 @@ export type Write<T> = (
     getRef: StateXRefGetter;
     params?: Record<string, Key>;
     remove: StateXRemover;
+    reset: StateXReseter;
     set: StateXSetter;
+    setRef: StateXRefSetter;
     value: T;
   },
   value: T,
