@@ -53,14 +53,15 @@ function notWritableSelector<T>(): T {
   throw Error('Not a writable selector!');
 }
 
-export default class Selector<T> implements SelectorInterface<T> {
-  private readonly _get: Select<T>;
+export default class Selector<T, P> implements SelectorInterface<T, P> {
+  private readonly _get: Select<T, P>;
   private readonly _set: Write<T>;
   readonly path?: Path;
   dynamic: boolean = false;
   params = new Map<string, number>();
   pathWithParams: Path;
   defaultValue: T;
+  oldProps?: P;
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
 
   constructor({
@@ -69,7 +70,7 @@ export default class Selector<T> implements SelectorInterface<T> {
     set,
     shouldComponentUpdate,
     defaultValue,
-  }: SelectorProps<T>) {
+  }: SelectorProps<T, P>) {
     this._get = get;
     this._set = set ?? notWritableSelector;
     this.defaultValue = defaultValue;
@@ -88,7 +89,7 @@ export default class Selector<T> implements SelectorInterface<T> {
 
   makeResolvable(
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
     self: boolean,
     promiseOrError: Promise<T> | Error,
     params?: Record<string, Key>,
@@ -97,7 +98,7 @@ export default class Selector<T> implements SelectorInterface<T> {
       // cancel the pending resolvable
       selectorNode.data.resolveable.cancelled = true;
     }
-    const resolvable = new Resolvable<T>(selectorNode, self);
+    const resolvable = new Resolvable<T, P>(selectorNode, self);
     // remove the previous selectorValue if any
     delete selectorNode.data.selectorValue;
     if (isPromise(promiseOrError)) {
@@ -145,31 +146,36 @@ export default class Selector<T> implements SelectorInterface<T> {
       call: StateXActionCaller;
       get: StateXGetter;
       getRef: StateXRefGetter;
-      options?: Options;
+      options?: Options<P>;
       remove: StateXRemover;
       reset: StateXReseter;
       set: StateXSetter;
       setRef: StateXRefSetter;
     },
-  ): T | Resolvable<T> => {
+  ): T | Resolvable<T, P> => {
     const { call, get, getRef, set, remove, reset, options, setRef } = props;
     const path = applyParamsToPath(this.pathWithParams, options?.params);
-    const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
+    const selectorNode = getNode(store, path) as Node<
+      NodeDataWithSelector<T, P>
+    >;
     let value: T | Promise<T>;
     store.activateNode(selectorNode, 'read');
     store.beforeSelectorGet(selectorNode);
     try {
       value =
-        this._get({
-          call,
-          get,
-          getRef,
-          params: options?.params,
-          remove,
-          reset,
-          set,
-          setRef,
-        }) ?? this.defaultValue;
+        this._get(
+          {
+            call,
+            get,
+            getRef,
+            params: options?.params,
+            remove,
+            reset,
+            set,
+            setRef,
+          },
+          options?.props as P,
+        ) ?? this.defaultValue;
     } catch (errorOrPromise) {
       return this.makeResolvable(
         store,
@@ -199,9 +205,12 @@ export default class Selector<T> implements SelectorInterface<T> {
 
   getValue = (
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
-    options?: Options,
-  ): T | Resolvable<T> => {
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
+    options?: Options<P>,
+  ): T | Resolvable<T, P> => {
+    if (this.oldProps !== options?.props) {
+      selectorNode.data.initialized = false;
+    }
     if (!selectorNode.data.initialized) {
       selectorNode.data.previousNodes?.forEach((node) => {
         selectorNode.data.unregisterMap.get(node)?.();
@@ -223,9 +232,9 @@ export default class Selector<T> implements SelectorInterface<T> {
 
   setValue = (
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
     value: T,
-    options?: Options,
+    options?: Options<P>,
   ): T => {
     try {
       store.beforeSelectorSet(selectorNode);
@@ -253,9 +262,9 @@ export default class Selector<T> implements SelectorInterface<T> {
 
   watchStateXForSelector = (
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
-    node: Node<NodeData<any>>,
-    options?: Options,
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
+    node: Node<NodeData<any, any>>,
+    options?: Options<P>,
   ) => {
     const unreg = selectorNode.data.unregisterMap.get(node);
     /* istanbul ignore next */
@@ -267,7 +276,7 @@ export default class Selector<T> implements SelectorInterface<T> {
       );
       unreg();
     }
-    const stateXHolder: StateXHolder<T> = {
+    const stateXHolder: StateXHolder<T, P> = {
       // do nothing during initial enterStateX callback
       setter: emptyFunction,
       node: selectorNode,
@@ -279,9 +288,9 @@ export default class Selector<T> implements SelectorInterface<T> {
 
   update = (
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
     node: Node<NodeData<any>> | null,
-    options?: Options,
+    options?: Options<P>,
   ) => {
     /* istanbul ignore else */
     if (!node || store.trie().hasNode(node.path)) {
@@ -304,11 +313,13 @@ export default class Selector<T> implements SelectorInterface<T> {
 
   selectValueWithStateXHolder = (
     store: StateX,
-    options?: Options,
-  ): T | Resolvable<T> => {
+    options?: Options<P>,
+  ): T | Resolvable<T, P> => {
     const path = applyParamsToPath(this.pathWithParams, options?.params);
-    const selectorNode = getNode(store, path) as Node<NodeDataWithSelector<T>>;
-    const nodes = new Set<Node<NodeData<any>>>();
+    const selectorNode = getNode(store, path) as Node<
+      NodeDataWithSelector<T, P>
+    >;
+    const nodes = new Set<Node<NodeData<any, any>>>();
     const value = this._evaluate(store, {
       call: makeCall(store),
       get: makeGet(store, nodes),
@@ -345,7 +356,7 @@ export default class Selector<T> implements SelectorInterface<T> {
 
   informInitialChange(
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
   ) {
     this.inform(
       store,
@@ -358,7 +369,7 @@ export default class Selector<T> implements SelectorInterface<T> {
   inform(
     store: StateX,
     val: T,
-    selectorNode: Node<NodeDataWithSelector<T>>,
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
     self: boolean,
   ) {
     const { oldSelectorValue } = selectorNode.data;

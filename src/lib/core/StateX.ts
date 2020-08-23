@@ -33,7 +33,7 @@ import Action from './Action';
 
 function _getIn<T>(
   store: StateX,
-  node: Node<NodeData<any>>,
+  node: Node<NodeData<any, any>>,
   defaultValue?: T,
   mutableRefObject = true,
 ): T {
@@ -64,7 +64,7 @@ function isNodeDirty<T>(store: StateX, node: Node<NodeData<T>>) {
   return node.data.lastKnownValue !== value;
 }
 
-function getNode<T>(store: StateX, path: Path) {
+function getNode<T, P = void>(store: StateX, path: Path) {
   const missingParams = path.filter(
     (key) => typeof key === 'string' && key.charAt(0) === ':',
   );
@@ -75,10 +75,10 @@ function getNode<T>(store: StateX, path: Path) {
       )} in path ${pathToString(path)}!`,
     );
   }
-  return store.trie().getNode(path) as Node<NodeData<T>>;
+  return (store.trie().getNode(path) as unknown) as Node<NodeData<T, P>>;
 }
 
-function hasHoldersOnChildren(node: Node<NodeData<any>>) {
+function hasHoldersOnChildren(node: Node<NodeData<any, any>>) {
   const children = Object.values(node.children);
   const len = children.length;
   for (let i = 0; i < len; i++) {
@@ -90,10 +90,10 @@ function hasHoldersOnChildren(node: Node<NodeData<any>>) {
   return false;
 }
 
-function enterStateX<T>(
+function enterStateX<T, P>(
   store: StateX,
-  node: Node<NodeData<T>>,
-  stateXHolder: StateXHolder<T>,
+  node: Node<NodeData<T, P>>,
+  stateXHolder: StateXHolder<T, P>,
 ) {
   /* istanbul ignore if */
   if (node.deleted) {
@@ -308,11 +308,11 @@ function _removeIn<T>(store: StateX, path: Path): T {
   return oldValue;
 }
 
-function _setIn<T>(
+function _setIn<T, P>(
   store: StateX,
-  node: Node<NodeData<T>>,
+  node: Node<NodeData<T, P>>,
   value: SetStateAction<T>,
-  options?: Options,
+  options?: Options<P>,
 ): T {
   let newValue: T;
   let returnValue: T;
@@ -374,11 +374,11 @@ function _setIn<T>(
   return returnValue;
 }
 
-function setStateXValue<T>(
+function setStateXValue<T, P = void>(
   store: StateX,
-  node: Node<NodeData<T>>,
+  node: Node<NodeData<T, P>>,
   value: SetStateAction<T>,
-  options?: Options,
+  options?: Options<P>,
 ): T {
   return _setIn(store, node, value, options);
 }
@@ -392,9 +392,9 @@ function removeStateXValue<T>(
   return _removeIn(store, path);
 }
 
-function updateParentNodesLastKnowValues<T>(
+function updateParentNodesLastKnowValues<T, P>(
   store: StateX,
-  node?: Node<NodeData<T>>,
+  node?: Node<NodeData<T, P>>,
 ) {
   if (node && node.data.lastKnownValue === undefined) {
     const value: T = _getIn<T>(store, node);
@@ -405,42 +405,42 @@ function updateParentNodesLastKnowValues<T>(
   }
 }
 
-function getStateValue<T>(
+function getStateValue<T, P>(
   store: StateX,
-  node: Node<NodeData<T>>,
-  options?: Options,
+  node: Node<NodeData<T, P>>,
+  options?: Options<P>,
 ): T {
   return _getIn<T>(store, node, undefined, !!options?.mutableRefObject);
 }
 
-function getResolvableStateXValue<T>(
+function getResolvableStateXValue<T, P>(
   store: StateX,
-  node: Node<NodeData<T>>,
-  options?: Options,
-): T | Resolvable<T> {
+  node: Node<NodeData<T, P>>,
+  options?: Options<P>,
+): T | Resolvable<T, P> {
   if (isSelectorNode(node)) {
     return node.data.selector.getValue(store, node, options);
   } else {
-    return getStateValue<T>(store, node, options);
+    return getStateValue<T, P>(store, node, options);
   }
 }
 
-function getStateXValue<T>(
+function getStateXValue<T, P>(
   store: StateX,
-  node: Node<NodeData<T>>,
-  props?: Options,
+  node: Node<NodeData<T, P>>,
+  props?: Options<P>,
 ): T {
-  const value = getResolvableStateXValue<T>(store, node, props);
+  const value = getResolvableStateXValue<T, P>(store, node, props);
   if (isResolvable(value)) {
     return value.resolve();
   }
   return value;
 }
 
-function registerStateX<T>(
+function registerStateX<T, P>(
   store: StateX,
-  pathOrAtom: PathOrStateXOrSelector<T>,
-  node: Node<NodeData<T>>,
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
+  node: Node<NodeData<T, P>>,
   defaultValue?: T,
 ) {
   if (pathOrAtom instanceof Atom) {
@@ -469,11 +469,13 @@ function registerStateX<T>(
     if (node.data.selector !== pathOrAtom) {
       node.data.selector = pathOrAtom;
       // re-initialize selector to cleanup existing subscriptions
-      (node as Node<NodeDataWithSelector<T>>).data.initialized = false;
+      (node as Node<NodeDataWithSelector<T, P>>).data.initialized = false;
     }
   } else if (!node.data.defaultValueInitialized) {
-    node.data.defaultValueInitialized = true;
     const val = getIn(store.getState(), node.path, undefined);
+    if (val !== undefined || defaultValue !== undefined) {
+      node.data.defaultValueInitialized = true;
+    }
     if (val === undefined) {
       if (defaultValue !== undefined) {
         node.data.lastKnownValue = defaultValue;
@@ -487,8 +489,8 @@ function registerStateX<T>(
   }
 }
 
-function resolvePath<T>(
-  pathOrAtom: PathOrStateXOrSelector<T>,
+function resolvePath<T, P>(
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
   params?: Record<string, Key>,
 ): Path {
   let path: Path;
@@ -508,17 +510,20 @@ function resolvePath<T>(
   return applyParamsToPath(path, params);
 }
 
-function makeGet(store: StateX, nodes?: Set<Node<NodeData<any>>>) {
-  return <V>(pathOrAtom: PathOrStateXOrSelector<V>, options?: Options): V => {
+function makeGet(store: StateX, nodes?: Set<Node<NodeData<any, any>>>) {
+  return <V, P = void>(
+    pathOrAtom: PathOrStateXOrSelector<V, P>,
+    options?: Options<P>,
+  ): V => {
     const path = resolvePath(pathOrAtom, options?.params);
-    const node = getNode<V>(store, path);
+    const node = getNode<V, P>(store, path);
     // register the atom or selector to populate the empty state with default value
     registerStateX(store, pathOrAtom, node);
     // collect all the nodes being accessed
     if (nodes) {
       nodes.add(node);
     }
-    return getStateXValue<V>(store, node, options);
+    return getStateXValue<V, P>(store, node, options);
   };
 }
 
@@ -564,7 +569,7 @@ function makeSetRef(store: StateX) {
 
 function makeSet(store: StateX) {
   return <V>(
-    pathOrAtomOrSelector: PathOrStateXOrSelector<V>,
+    pathOrAtomOrSelector: PathOrStateXOrSelector<V, void>,
     value: SetStateAction<V>,
     options?: Options,
   ): V => {

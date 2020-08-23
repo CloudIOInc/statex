@@ -34,14 +34,14 @@ interface Log {
 }
 
 export class StateX {
-  _trie = new Trie<NodeData<any>>(() => ({
-    holders: new Set<StateXHolder<any>>(),
+  _trie = new Trie<NodeData<any, any>>(() => ({
+    holders: new Set<StateXHolder<any, any>>(),
     defaultValue: undefined,
   }));
-  activeNodes = new Map<Node<NodeData<any>>, number>();
-  updatedNodes: Node<NodeData<any>>[] = [];
-  removedNodes: Node<NodeData<any>>[] = [];
-  _lastUpdatedNode?: Node<NodeData<any>>;
+  activeNodes = new Map<Node<NodeData<any, any>>, number>();
+  updatedNodes: Node<NodeData<any, any>>[] = [];
+  removedNodes: Node<NodeData<any, any>>[] = [];
+  _lastUpdatedNode?: Node<NodeData<any, any>>;
   pending: Path[] = [];
   state: Collection;
   _lastKnownState?: Collection;
@@ -57,7 +57,7 @@ export class StateX {
   handleError: (error: any) => void;
   stateChangeListeners = new Set<StateChangeListenerInternal>();
   destroyed = false;
-  _nodesToBeRemoved = new Set<Node<NodeData<any>>>();
+  _nodesToBeRemoved = new Set<Node<NodeData<any, any>>>();
   _pluginData: Record<string, any> = {};
 
   constructor(
@@ -132,20 +132,20 @@ export class StateX {
     this.handleError(error);
   }
 
-  afterSelectorGet(node: Node<NodeData<any>>) {}
-  afterSelectorSet(node: Node<NodeData<any>>) {}
-  beforeSelectorGet(node: Node<NodeData<any>>) {}
-  beforeSelectorSet(node: Node<NodeData<any>>) {}
-  beforeShouldComponentUpdate(node: Node<NodeData<any>>) {}
-  afterShouldComponentUpdate(node: Node<NodeData<any>>) {}
-  beforeOnChange(node: Node<NodeData<any>>) {}
-  afterOnChange(node: Node<NodeData<any>>) {}
-  beforeAtomOnChange(node: Node<NodeData<any>>) {}
-  afterAtomOnChange(node: Node<NodeData<any>>) {}
-  beforeAtomUpdater(node: Node<NodeData<any>>) {}
-  afterAtomUpdater(node: Node<NodeData<any>>) {}
-  updatingState(node: Node<NodeData<any>>) {}
-  removingState(node: Node<NodeData<any>>) {}
+  afterSelectorGet(node: Node<NodeData<any, any>>) {}
+  afterSelectorSet(node: Node<NodeData<any, any>>) {}
+  beforeSelectorGet(node: Node<NodeData<any, any>>) {}
+  beforeSelectorSet(node: Node<NodeData<any, any>>) {}
+  beforeShouldComponentUpdate(node: Node<NodeData<any, any>>) {}
+  afterShouldComponentUpdate(node: Node<NodeData<any, any>>) {}
+  beforeOnChange(node: Node<NodeData<any, any>>) {}
+  afterOnChange(node: Node<NodeData<any, any>>) {}
+  beforeAtomOnChange(node: Node<NodeData<any, any>>) {}
+  afterAtomOnChange(node: Node<NodeData<any, any>>) {}
+  beforeAtomUpdater(node: Node<NodeData<any, any>>) {}
+  afterAtomUpdater(node: Node<NodeData<any, any>>) {}
+  updatingState(node: Node<NodeData<any, any>>) {}
+  removingState(node: Node<NodeData<any, any>>) {}
 
   afterSelectorReads() {
     /* istanbul ignore next */
@@ -231,7 +231,7 @@ export class StateX {
     }
   }
 
-  activateNode(node: Node<NodeData<any>>, action: string, data?: any) {
+  activateNode(node: Node<NodeData<any, any>>, action: string, data?: any) {
     let count = this.activeNodes.get(node) ?? 0;
     if (count > 10) {
       throw Error(
@@ -242,7 +242,7 @@ export class StateX {
     this.scheduleForUpdate(node, action);
   }
 
-  scheduleForUpdate(node: Node<NodeData<any>>, action: string) {
+  scheduleForUpdate(node: Node<NodeData<any, any>>, action: string) {
     switch (action) {
       case 'read':
         this._scheduleRead();
@@ -331,14 +331,14 @@ export class StateX {
     this.postUpdateRenderSchedule = fn;
   };
 
-  selectorInitialized<T>(node: Node<NodeData<T>>) {
+  selectorInitialized<T, P>(node: Node<NodeData<T, P>>) {
     if (this.updatedNodes.indexOf(node) === -1) {
       this.updatedNodes.push(node);
       this.addToPending(node.path, 'init');
     }
   }
 
-  trackAndUpdate<T>(node: Node<NodeData<T>>, value: SetStateAction<T>) {
+  trackAndUpdate<T, P>(node: Node<NodeData<T, P>>, value: SetStateAction<T>) {
     this.setState(setIn(this.getState(), node.path, value));
     if (this.updatedNodes.indexOf(node) === -1) {
       this.updatedNodes.push(node);
@@ -355,7 +355,7 @@ export class StateX {
     this.removedNodes.push(node);
   }
 
-  markToBeRemoved(node: Node<NodeData<any>>) {
+  markToBeRemoved(node: Node<NodeData<any, any>>) {
     this._nodesToBeRemoved.add(node);
   }
 
@@ -369,7 +369,7 @@ export class StateX {
     this._nodesToBeRemoved.clear();
   }
 
-  enteringNode(node: Node<NodeData<any>>) {
+  enteringNode(node: Node<NodeData<any, any>>) {
     this._nodesToBeRemoved.delete(node);
   }
 }

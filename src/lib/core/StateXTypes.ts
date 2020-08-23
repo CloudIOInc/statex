@@ -21,10 +21,10 @@ export type { Path, Key } from './ImmutableTypes';
 
 export type Setter = (v: any) => void;
 
-export interface SelectorProps<T> {
+export interface SelectorProps<T, P> {
   path: Path;
   defaultValue: T;
-  get: Select<T>;
+  get: Select<T, P>;
   set?: Write<T>;
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
 }
@@ -70,7 +70,7 @@ export interface StateXProps<T> {
   }) => void;
 }
 
-export interface StateXHolder<T> {
+export interface StateXHolder<T, P = void> {
   setter: Setter;
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
   onChange?: (props: {
@@ -85,18 +85,18 @@ export interface StateXHolder<T> {
     value: T;
   }) => void;
   holding?: boolean;
-  node: Node<NodeData<T>>;
+  node: Node<NodeData<T, P>>;
 }
 
-export interface NodeData<T> {
+export interface NodeData<T, P = void> {
   atom?: Atom<T>;
   defaultValue: T;
   defaultValueInitialized?: boolean;
-  holders: Set<StateXHolder<T>>;
+  holders: Set<StateXHolder<T, P>>;
   lastKnownValue?: T;
   lastKnownValueInitialized?: boolean;
   ref?: React.RefObject<any>;
-  selector?: Selector<T>;
+  selector?: Selector<T, P>;
   valueRemoved?: boolean;
 }
 
@@ -104,14 +104,14 @@ export interface NodeDataWithStateX<T> extends NodeData<T> {
   atom: Atom<T>;
 }
 
-export interface NodeDataWithSelector<T> extends NodeData<T> {
-  selector: Selector<T>;
-  resolveable?: Resolvable<T>;
+export interface NodeDataWithSelector<T, P> extends NodeData<T, P> {
+  selector: Selector<T, P>;
+  resolveable?: Resolvable<T, P>;
   initialized?: boolean;
   selectorValue?: T;
   oldSelectorValue?: T;
-  unregisterMap: Map<Node<NodeData<T>>, () => void>;
-  previousNodes: Set<Node<NodeData<T>>>;
+  unregisterMap: Map<Node<NodeData<T, P>>, () => void>;
+  previousNodes: Set<Node<NodeData<T, P>>>;
 }
 
 // export function hasStateX<T>(node: NodeData<T>): node is NodeDataWithStateX<T> {
@@ -124,18 +124,19 @@ export interface NodeDataWithSelector<T> extends NodeData<T> {
 //   return node.selector !== undefined;
 // }
 
-export function isSelectorNode<T>(
-  node: Node<NodeData<T>>,
-): node is Node<NodeDataWithSelector<T>> {
+export function isSelectorNode<T, P = void>(
+  node: Node<NodeData<T, P>>,
+): node is Node<NodeDataWithSelector<T, P>> {
   return node.data.selector !== undefined;
 }
 
-export interface Options {
+export interface Options<P = void> {
   mutableRefObject?: boolean;
   params?: Record<string, Key>;
+  props?: P;
 }
 
-export interface StateXOptions<T> extends Options {
+export interface StateXOptions<T, P = void> extends Options<P> {
   shouldComponentUpdate?: (value: T, oldValue?: T) => boolean;
   onChange?: (props: {
     call: StateXActionCaller;
@@ -159,9 +160,9 @@ export interface UIStateXOptions<T> extends StateXOptions<T> {
 
 export type Dispatch<T> = (value: SetStateAction<T>) => T;
 
-export type StateXGetter = <T>(
-  pathOrAtom: PathOrStateXOrSelector<T>,
-  props?: Options,
+export type StateXGetter = <T, P = void>(
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
+  props?: Options<P>,
 ) => T;
 
 export type StateXActivePathsGetter = (path: Path) => Path[];
@@ -172,9 +173,9 @@ export type StateXActionCaller = <T = void>(
 ) => void;
 
 export type StateXSetter = <V>(
-  path: PathOrStateXOrSelector<V>,
+  path: PathOrStateXOrSelector<V, void>,
   value: SetStateAction<V>,
-  options?: Options,
+  options?: Options<void>,
 ) => V;
 
 export type StateXRefGetter = <T>(
@@ -186,20 +187,26 @@ export type StateXRefSetter = <T>(
   ref: MutableRefObject<T> | undefined,
 ) => void;
 
-export type StateXRemover = <V>(path: PathOrStateX<V>, options?: Options) => V;
+export type StateXRemover = <V>(
+  path: PathOrStateX<V>,
+  options?: Options<void>,
+) => V;
 
-export type StateXReseter = <V>(path: Atom<V>, options?: Options) => V;
+export type StateXReseter = <V>(path: Atom<V>, options?: Options<void>) => V;
 
-export type Select<T> = (props: {
-  call: StateXActionCaller;
-  get: StateXGetter;
-  getRef: StateXRefGetter;
-  params?: Record<string, Key>;
-  remove: StateXRemover;
-  reset: StateXReseter;
-  set: StateXSetter;
-  setRef: StateXRefSetter;
-}) => T | Promise<T>;
+export type Select<T, P> = (
+  props: {
+    call: StateXActionCaller;
+    get: StateXGetter;
+    getRef: StateXRefGetter;
+    params?: Record<string, Key>;
+    remove: StateXRemover;
+    reset: StateXReseter;
+    set: StateXSetter;
+    setRef: StateXRefSetter;
+  },
+  userProps: P,
+) => T | Promise<T>;
 
 export type Write<T> = (
   props: {
@@ -216,18 +223,18 @@ export type Write<T> = (
   value: T,
 ) => T;
 
-export class Resolvable<T> {
+export class Resolvable<T, P> {
   status: 'pending' | 'resolved' | 'error';
   error?: Error;
   promise?: Promise<T>;
   value?: T;
   cancelled: boolean = false;
-  selectorNode: Node<NodeData<T>>;
+  selectorNode: Node<NodeData<T, P>>;
   self: boolean;
   readonly isDefault: boolean;
 
   constructor(
-    selectorNode: Node<NodeData<T>>,
+    selectorNode: Node<NodeData<T, P>>,
     self: boolean,
     isDefault = false,
   ) {
@@ -238,7 +245,7 @@ export class Resolvable<T> {
   }
 
   clone = () => {
-    const resolvable = new Resolvable(
+    const resolvable = new Resolvable<T, P>(
       this.selectorNode,
       this.self,
       this.isDefault,
@@ -251,18 +258,18 @@ export class Resolvable<T> {
     return resolvable;
   };
 
-  static withValue<T>(
-    selectorNode: Node<NodeData<T>>,
+  static withValue<T, P>(
+    selectorNode: Node<NodeData<T, P>>,
     value: T,
     isDefault = false,
   ) {
-    const resolvable = new Resolvable(selectorNode, true, isDefault);
+    const resolvable = new Resolvable<T, P>(selectorNode, true, isDefault);
     resolvable.value = value;
     resolvable.status = 'resolved';
     return resolvable;
   }
 
-  resolveIfSelf = (selectorNode: Node<NodeData<T>>): T => {
+  resolveIfSelf = (selectorNode: Node<NodeData<T, P>>): T => {
     switch (this.status) {
       case 'pending':
         throw this.promise;
@@ -288,29 +295,32 @@ export class Resolvable<T> {
   };
 }
 
-export function isResolvable<T>(
-  value: T | Resolvable<T>,
-): value is Resolvable<T> {
+export function isResolvable<T, P = void>(
+  value: T | Resolvable<T, P>,
+): value is Resolvable<T, P> {
   return value instanceof Resolvable;
 }
 
-export interface SelectorInterface<T> {
+export interface SelectorInterface<T, P> {
   getValue: (
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
-    options?: Options,
-  ) => T | Resolvable<T>;
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
+    options?: Options<P>,
+  ) => T | Resolvable<T, P>;
   setValue: (
     store: StateX,
-    selectorNode: Node<NodeDataWithSelector<T>>,
+    selectorNode: Node<NodeDataWithSelector<T, P>>,
     value: T,
-    options?: Options,
+    options?: Options<P>,
   ) => T;
 }
 
 export type PathOrStateX<T> = Path | Atom<T>;
 
-export type PathOrStateXOrSelector<T> = Path | Atom<T> | Selector<T>;
+export type PathOrStateXOrSelector<T, P = void> =
+  | Path
+  | Atom<T>
+  | Selector<T, P>;
 
 export interface StateChangeListenerPropsInternal<T> {
   state: T;

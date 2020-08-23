@@ -129,18 +129,18 @@ function useStateXCallback<P extends ReadonlyArray<unknown>, R>(
   );
 }
 
-function useStateXValueSetter<T>(
-  pathOrAtom: PathOrStateXOrSelector<T>,
-  options?: Options,
+function useStateXValueSetter<T, P = void>(
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
+  options?: Options<P>,
 ): Dispatch<T> {
   const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
-  const node = getNode<T>(store, path);
+  const node = getNode<T, P>(store, path);
   const optionsRef = useLatest(options);
 
   const setValue = useCallback(
     (value: SetStateAction<T>) => {
-      return setStateXValue(store, node, value, optionsRef.current);
+      return setStateXValue<T, P>(store, node, value, optionsRef.current);
     },
     [store, node, optionsRef],
   );
@@ -150,9 +150,9 @@ function useStateXValueSetter<T>(
 
 function useStateXValue<T>(atom: Atom<T>, options?: StateXOptions<T>): T;
 
-function useStateXValue<T>(
-  selector: Selector<T>,
-  options?: StateXOptions<T>,
+function useStateXValue<T, P = void>(
+  selector: Selector<T, P>,
+  options?: StateXOptions<T, P>,
 ): T;
 
 function useStateXValue<T>(
@@ -161,10 +161,10 @@ function useStateXValue<T>(
   options?: StateXOptions<T>,
 ): T;
 
-function useStateXValue<T>(
-  pathOrAtom: PathOrStateXOrSelector<T>,
-  defaultOrOptions?: T | StateXOptions<T>,
-  options?: StateXOptions<T>,
+function useStateXValue<T, P = void>(
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
+  defaultOrOptions?: T | StateXOptions<T, P>,
+  options?: StateXOptions<T, P>,
 ): T {
   let defaultValue: T;
   if (pathOrAtom instanceof Atom) {
@@ -194,14 +194,14 @@ function useStateXValue<T>(
   return useStateXValueInternal(pathOrAtom, defaultValue, options);
 }
 
-function useStateXValueInternal<T>(
-  pathOrAtom: PathOrStateXOrSelector<T>,
+function useStateXValueInternal<T, P>(
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
   defaultValue: T,
-  options?: StateXOptions<T>,
+  options?: StateXOptions<T, P>,
 ): T {
   const path = resolvePath(pathOrAtom, options?.params);
   const store = useStateXStore();
-  const node = getNode<T>(store, path);
+  const node = getNode<T, P>(store, path);
   let value = useStateXValueResolveableInternal(
     node,
     pathOrAtom,
@@ -214,13 +214,13 @@ function useStateXValueInternal<T>(
   return value;
 }
 
-function useStateXValueResolveable<T>(
-  selector: Selector<T>,
-  options?: StateXOptions<T>,
-): Resolvable<T> {
+function useStateXValueResolveable<T, P = void>(
+  selector: Selector<T, P>,
+  options?: StateXOptions<T, P>,
+): Resolvable<T, P> {
   const path = resolvePath(selector, options?.params);
   const store = useStateXStore();
-  const node = getNode<T>(store, path);
+  const node = getNode<T, P>(store, path);
   const value = useStateXValueResolveableInternal(
     node,
     selector,
@@ -231,55 +231,53 @@ function useStateXValueResolveable<T>(
     return value;
   } else {
     // must be default value
-    return Resolvable.withValue<T>(node, value);
+    return Resolvable.withValue<T, P>(node, value);
   }
 }
 
-function useStateXResolveable<T>(
-  selector: Selector<T>,
-  options?: StateXOptions<T>,
-): [Resolvable<T>, Dispatch<T>] {
+function useStateXResolveable<T, P = void>(
+  selector: Selector<T, P>,
+  options?: StateXOptions<T, P>,
+): [Resolvable<T, P>, Dispatch<T>] {
   const value = useStateXValueResolveable(selector, options);
-  const setValue = useStateXValueSetter<T>(selector, options);
+  const setValue = useStateXValueSetter<T, P>(selector, options);
   return [value, setValue];
 }
 
-function useStateXValueResolveableInternal<T>(
-  node: Node<NodeData<T>>,
-  pathOrAtom: PathOrStateXOrSelector<T>,
+function useStateXValueResolveableInternal<T, P>(
+  node: Node<NodeData<T, P>>,
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
   dv: T,
-  options?: StateXOptions<T>,
-): T | Resolvable<T> {
+  options?: StateXOptions<T, P>,
+): T | Resolvable<T, P> {
   const store = useStateXStore();
   // register the atom or selector to populate the empty state with default value
   registerStateX(store, pathOrAtom, node, dv);
-  const holderRef = useRef<StateXHolder<T>>({
+  const holderRef = useRef<StateXHolder<T, P>>({
     setter: emptyFunction,
     shouldComponentUpdate: options?.shouldComponentUpdate,
     onChange: options?.onChange,
     node,
   });
 
-  const [selectorValue, setSelectorValue] = useState<T | Resolvable<T>>(
-    Resolvable.withValue<T>(node, dv, true),
+  const [selectorValue, setSelectorValue] = useState<T | Resolvable<T, P>>(
+    Resolvable.withValue<T, P>(node, dv, true),
   );
-  let currentValue: T | Resolvable<T>;
-  let usedDefaultValue = false;
+  let currentValue: T | Resolvable<T, P>;
   if (pathOrAtom instanceof Selector) {
     if (node !== holderRef.current.node) {
       // must be due to dynamic path change... discard existing selectorValue
       currentValue = dv;
-      usedDefaultValue = true;
     } else {
       currentValue = selectorValue;
     }
   } else {
-    currentValue = getStateValue<T>(store, node, options);
+    currentValue = getStateValue<T, P>(store, node, options);
   }
 
   const ref = useRef({ options, currentValue });
 
-  const [value, setValueInternal] = useState<T | Resolvable<T>>(currentValue);
+  const [, setValueInternal] = useState<T | Resolvable<T, P>>(currentValue);
 
   const setValue = useCallback(
     (value: T) => {
@@ -302,6 +300,7 @@ function useStateXValueResolveableInternal<T>(
     holderRef.current.node = node;
   }, [currentValue, options, node, setValue]);
 
+  const userProps = options?.props;
   useEffect(() => {
     // initial or node changed due to dynamic path
     const { options } = ref.current;
@@ -310,9 +309,9 @@ function useStateXValueResolveableInternal<T>(
       // hence make the initial call inside useEffect
       setSelectorValue(node.data.selector.getValue(store, node, options));
     } else {
-      setValue(getStateValue<T>(store, node, options));
+      setValue(getStateValue<T, P>(store, node, options));
     }
-  }, [node, setValue, store]);
+  }, [node, setValue, store, userProps]);
 
   useEffect(() => {
     // watch the path
@@ -327,9 +326,9 @@ function useStateX<T>(
   options?: StateXOptions<T>,
 ): [T, Dispatch<T>];
 
-function useStateX<T>(
-  selector: Selector<T>,
-  options?: StateXOptions<T>,
+function useStateX<T, P = void>(
+  selector: Selector<T, P>,
+  options?: StateXOptions<T, P>,
 ): [T, Dispatch<T>];
 
 function useStateX<T>(
@@ -338,10 +337,10 @@ function useStateX<T>(
   options?: StateXOptions<T>,
 ): [T, Dispatch<T>];
 
-function useStateX<T>(
-  pathOrAtom: PathOrStateXOrSelector<T>,
-  defaultOrOptions?: T | StateXOptions<T>,
-  options?: StateXOptions<T>,
+function useStateX<T, P = void>(
+  pathOrAtom: PathOrStateXOrSelector<T, P>,
+  defaultOrOptions?: T | StateXOptions<T, P>,
+  options?: StateXOptions<T, P>,
 ): [T, Dispatch<T>] {
   let defaultValue: T;
   if (pathOrAtom instanceof Atom) {
@@ -369,11 +368,11 @@ function useStateX<T>(
     );
   }
   const value = useStateXValueInternal(pathOrAtom, defaultValue, options);
-  const setValue = useStateXValueSetter<T>(pathOrAtom, options);
+  const setValue = useStateXValueSetter<T, P>(pathOrAtom, options);
   return [value, setValue];
 }
 
-function selector<T>(props: SelectorProps<T>): Selector<T> {
+function selector<T, P = void>(props: SelectorProps<T, P>): Selector<T, P> {
   return new Selector(props);
 }
 
