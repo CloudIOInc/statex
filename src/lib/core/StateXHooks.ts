@@ -174,17 +174,8 @@ function useStateXValue<T, P = void>(
     defaultValue = pathOrAtom.defaultValue;
     options = defaultOrOptions;
   } else if (isPath(pathOrAtom)) {
-    if (defaultOrOptions === undefined) {
-      defaultOrOptions = (null as unknown) as T;
-      /* istanbul ignore next */
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `Missing default value for path ${pathToString(
-            pathOrAtom,
-          )}. Hence defaulting to null!`,
-        );
-      }
-    }
+    // defaultOrOptions could be undefined
+    // the state won't be initialized if the default value is undefined
     defaultValue = defaultOrOptions as T;
   } else {
     throw Error(

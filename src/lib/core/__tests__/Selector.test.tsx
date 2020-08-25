@@ -329,7 +329,7 @@ describe('Selector', () => {
       ref.defaultValue = undefined;
       set(keyAtom, 'unknownKey');
     });
-    expect(textContent()).toBe('null');
+    expect(textContent()).toBe('undefined');
     expect(counter).toBe(3);
   });
 

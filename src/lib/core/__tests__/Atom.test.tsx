@@ -220,14 +220,14 @@ describe('Atom', () => {
     expect(counter).toBe(2);
   });
 
-  test('Missing default value should render null', () => {
+  test('Missing default value should render undefined', () => {
     let counter = 0;
     const { textContent } = render(() => {
       const value = useStateXValue(['x'], undefined);
       counter++;
-      return <>{value === null ? 'null' : value}</>;
+      return <>{value === undefined ? 'undefined' : value}</>;
     });
-    expect(textContent()).toBe('null');
+    expect(textContent()).toBe('undefined');
     expect(counter).toBe(1);
   });
 
@@ -246,7 +246,7 @@ describe('Atom', () => {
       ref.defaultValue = undefined;
       set(keyAtom, 'unknownKey');
     });
-    expect(textContent()).toBe('null');
+    expect(textContent()).toBe('undefined');
     expect(counter).toBe(3);
   });
 

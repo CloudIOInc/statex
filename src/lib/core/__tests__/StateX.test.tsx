@@ -969,7 +969,7 @@ describe('StateX', () => {
     );
   });
 
-  test('useStateXValue w/ undefined default value to return null', () => {
+  test('useStateXValue w/ undefined default value to return undefined', () => {
     const { result } = renderHook(
       () => {
         const value = useStateXValue(['a'], undefined);
@@ -977,7 +977,7 @@ describe('StateX', () => {
       },
       { wrapper },
     );
-    expect(result.current.value).toBe(null);
+    expect(result.current.value).toBe(undefined);
   });
 
   test('useStateX w/ invalid state type', () => {
