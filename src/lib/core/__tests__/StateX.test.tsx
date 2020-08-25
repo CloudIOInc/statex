@@ -1010,7 +1010,7 @@ describe('StateX', () => {
     expect(result.current.value).toBe('x');
   });
 
-  test('useStateX w/ undefined default value to return null', () => {
+  test('useStateX w/ undefined default value to return undefined', () => {
     const { result } = renderHook(
       () => {
         const [value] = useStateX(['a'], undefined);
@@ -1018,7 +1018,7 @@ describe('StateX', () => {
       },
       { wrapper },
     );
-    expect(result.current.value).toBe(null);
+    expect(result.current.value).toBe(undefined);
   });
 
   test('useRemoveStateX w/ invalid state type', () => {
@@ -1046,7 +1046,7 @@ describe('StateX', () => {
     expect(result.current.value).toBe('x');
   });
 
-  test('useRemoveStateX w/ undefined default value to return null', () => {
+  test('useRemoveStateX w/ undefined default value to return undefined', () => {
     const { result } = renderHook(
       () => {
         const [value] = useRemoveStateX(['a'], undefined);
@@ -1054,7 +1054,7 @@ describe('StateX', () => {
       },
       { wrapper },
     );
-    expect(result.current.value).toBe(null);
+    expect(result.current.value).toBe(undefined);
   });
 
   test('getNode w/ missing params should throw error', () => {

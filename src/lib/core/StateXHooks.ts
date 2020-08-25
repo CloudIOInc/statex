@@ -66,7 +66,18 @@ import Action from './Action';
 import { useLatest } from './StateXUtilHooks';
 import ReactDOM from 'react-dom';
 
+const cache = new Set();
+
 function atom<T>(props: StateXProps<T>): Atom<T> {
+  if (process.env.NODE_ENV === 'development') {
+    const path = pathToString(props.path);
+    if (cache.has(path)) {
+      throw Error(
+        `Duplicate atom with path ${path}! It could also be due to HMR, in which case please refresh your browser.`,
+      );
+    }
+    cache.add(path);
+  }
   return new Atom(props);
 }
 
@@ -341,17 +352,6 @@ function useStateX<T, P = void>(
     defaultValue = pathOrAtom.defaultValue;
     options = defaultOrOptions;
   } else if (isPath(pathOrAtom)) {
-    if (defaultOrOptions === undefined) {
-      defaultOrOptions = (null as unknown) as T;
-      /* istanbul ignore next */
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `Missing default value for path ${pathToString(
-            pathOrAtom,
-          )}. Hence defaulting to null!`,
-        );
-      }
-    }
     defaultValue = defaultOrOptions as T;
   } else {
     throw Error(
@@ -364,6 +364,15 @@ function useStateX<T, P = void>(
 }
 
 function selector<T, P = void>(props: SelectorProps<T, P>): Selector<T, P> {
+  if (process.env.NODE_ENV === 'development') {
+    const path = pathToString(props.path);
+    if (cache.has(path)) {
+      throw Error(
+        `Duplicate selector with path ${path}! It could also be due to HMR, in which case please refresh your browser.`,
+      );
+    }
+    cache.add(path);
+  }
   return new Selector(props);
 }
 
@@ -416,17 +425,6 @@ function useRemoveStateX<T>(
     defaultValue = pathOrAtom.defaultValue;
     options = defaultOrOptions;
   } else if (isPath(pathOrAtom)) {
-    if (defaultOrOptions === undefined) {
-      defaultOrOptions = (null as unknown) as T;
-      /* istanbul ignore next */
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          `Missing default value for path ${pathToString(
-            pathOrAtom,
-          )}. Hence defaulting to null!`,
-        );
-      }
-    }
     defaultValue = defaultOrOptions as T;
   } else {
     throw Error('Invalid state type value! Must be either an atom or path.');

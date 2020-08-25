@@ -130,10 +130,16 @@ function useStateXForTextInput(
     defaultValue = pathOrAtom.defaultValue;
     options = defaultOrOptions as UIStateXOptions<string> | undefined;
   } else if (isPath(pathOrAtom)) {
-    if (typeof defaultOrOptions !== 'string') {
-      defaultOrOptions = '';
+    if (
+      typeof defaultOrOptions === 'string' ||
+      typeof defaultOrOptions === 'undefined'
+    ) {
+      defaultValue = defaultOrOptions as string;
+    } else {
+      throw Error(
+        `Invalid default value passed! Must be a number. Instead got ${typeof defaultOrOptions}`,
+      );
     }
-    defaultValue = defaultOrOptions;
   } else {
     throw Error('Invalid state type value! Must be either an atom or path.');
   }
@@ -193,10 +199,16 @@ function useStateXForNumberInput(
     defaultValue = pathOrAtom.defaultValue;
     options = defaultOrOptions as UIStateXOptions<number> | undefined;
   } else if (isPath(pathOrAtom)) {
-    if (typeof defaultOrOptions !== 'number') {
-      defaultOrOptions = 0;
+    if (
+      typeof defaultOrOptions === 'number' ||
+      typeof defaultOrOptions === 'undefined'
+    ) {
+      defaultValue = defaultOrOptions as number;
+    } else {
+      throw Error(
+        `Invalid default value passed! Must be a number. Instead got ${typeof defaultOrOptions}`,
+      );
     }
-    defaultValue = defaultOrOptions;
   } else {
     throw Error('Invalid state type value! Must be either an atom or path.');
   }
@@ -237,10 +249,16 @@ function useStateXForToggle(
     defaultValue = pathOrAtom.defaultValue;
     options = defaultOrOptions as StateXOptions<boolean> | undefined;
   } else if (isPath(pathOrAtom)) {
-    if (typeof defaultOrOptions !== 'boolean') {
-      defaultOrOptions = false;
+    if (
+      typeof defaultOrOptions === 'boolean' ||
+      typeof defaultOrOptions === 'undefined'
+    ) {
+      defaultValue = defaultOrOptions as boolean;
+    } else {
+      throw Error(
+        `Invalid default value passed! Must be a boolean. Instead got ${typeof defaultOrOptions}`,
+      );
     }
-    defaultValue = defaultOrOptions;
   } else {
     throw Error('Invalid state type value! Must be either an atom or path.');
   }
@@ -282,10 +300,16 @@ function useStateXForCheckbox(
     defaultValue = pathOrAtom.defaultValue;
     options = defaultOrOptions as StateXOptions<boolean> | undefined;
   } else if (isPath(pathOrAtom)) {
-    if (typeof defaultOrOptions !== 'boolean') {
-      defaultOrOptions = false;
+    if (
+      typeof defaultOrOptions === 'boolean' ||
+      typeof defaultOrOptions === 'undefined'
+    ) {
+      defaultValue = defaultOrOptions as boolean;
+    } else {
+      throw Error(
+        `Invalid default value passed! Must be a boolean. Instead got ${typeof defaultOrOptions}`,
+      );
     }
-    defaultValue = defaultOrOptions;
   } else {
     throw Error('Invalid atom type value! Must be either an atom or path.');
   }

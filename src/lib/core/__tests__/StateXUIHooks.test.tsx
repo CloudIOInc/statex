@@ -55,7 +55,7 @@ describe('StateX', () => {
   test('useStateXForTextInput ignores non string default value', () => {
     function Comp() {
       // @ts-ignore
-      const val = useStateXForTextInput(['a'], false);
+      const val = useStateXForTextInput(['a'], undefined);
       return <input data-testid="input" {...val} />;
     }
     const { getByTestId } = render(<Comp />, { wrapper });
@@ -116,7 +116,7 @@ describe('StateX', () => {
   test('useStateXForCheckbox', () => {
     function Comp() {
       // @ts-ignore
-      const val = useStateXForCheckbox(['ui', 'value'], 'invalid value');
+      const val = useStateXForCheckbox(['ui', 'value'], false);
       return <input data-testid="input" {...val} />;
     }
     const { getByTestId } = render(<Comp />, { wrapper });
@@ -216,7 +216,7 @@ describe('StateX', () => {
     );
   });
 
-  test('useStateXForNumberInput w/ undefined default value to return 0', () => {
+  test('useStateXForNumberInput w/ undefined default value to return undefined', () => {
     const { result } = renderHook(
       () => {
         // @ts-ignore
@@ -228,7 +228,7 @@ describe('StateX', () => {
     if (result.error) {
       console.error(result.error);
     }
-    expect(result.current.value).toBe(0);
+    expect(result.current.value).toBe(undefined);
   });
 
   test('useStateXForTextInput w/ invalid state type', () => {

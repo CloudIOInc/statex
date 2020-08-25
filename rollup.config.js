@@ -53,4 +53,4 @@ const config = (mode) => ({
   ],
 });
 
-export default [config('test'), config('production')];
+export default [config('development'), config('production')];
