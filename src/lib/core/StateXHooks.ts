@@ -65,6 +65,7 @@ import { setIn, getIn } from './ImmutableUtils';
 import Action from './Action';
 import { useLatest } from './StateXUtilHooks';
 import ReactDOM from 'react-dom';
+import { StateX } from './StateXStore';
 
 const cache = new Set();
 
@@ -514,6 +515,7 @@ export {
   Action,
   Atom,
   Selector,
+  StateX,
   StateXProvider,
   action,
   atom,
