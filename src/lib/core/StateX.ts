@@ -116,17 +116,18 @@ function enterStateX<T, P>(
   return () => {
     stateXHolder.holding = false;
     node.data.holders.delete(stateXHolder);
-    if (isSelectorNode(node)) {
-      node.data.previousNodes.forEach((n) => {
-        node.data.unregisterMap.get(n)?.();
-        node.data.unregisterMap.delete(n);
-      });
-      node.data.previousNodes.clear();
-    }
     if (node.data.holders.size === 0 && !hasHoldersOnChildren(node)) {
       if (!store.destroyed) {
         // remove the selector node as well as it's getting evaluated with stale data
         // especially if the subscribed nodes are removed
+        if (isSelectorNode(node)) {
+          node.data.previousNodes.forEach((n) => {
+            node.data.unregisterMap.get(n)?.();
+            node.data.unregisterMap.delete(n);
+          });
+          node.data.previousNodes.clear();
+        }
+
         store.markToBeRemoved(node);
       }
     }
