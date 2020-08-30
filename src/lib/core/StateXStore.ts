@@ -359,6 +359,10 @@ export class StateX {
     this._nodesToBeRemoved.add(node);
   }
 
+  isMarkedToBeRemoved(node: Node<NodeData<any, any>>) {
+    return this._nodesToBeRemoved.has(node);
+  }
+
   removeMarkedNodes() {
     if (this.destroyed || this._nodesToBeRemoved.size === 0) {
       return;

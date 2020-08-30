@@ -319,6 +319,9 @@ export default class Selector<T, P> implements SelectorInterface<T, P> {
     const selectorNode = getNode(store, path) as Node<
       NodeDataWithSelector<T, P>
     >;
+    if (store.isMarkedToBeRemoved(selectorNode)) {
+      throw Error(`selector deleted! ${pathToString(selectorNode.path)}`);
+    }
     const nodes = new Set<Node<NodeData<any, any>>>();
     const value = this._evaluate(store, {
       call: makeCall(store),
@@ -331,10 +334,13 @@ export default class Selector<T, P> implements SelectorInterface<T, P> {
       setRef: makeSetRef(store),
     });
     nodes.forEach((node) => {
+      if (store.isMarkedToBeRemoved(node)) {
+        throw Error(`deleted node!  ${pathToString(node.path)}`);
+      }
       /* istanbul ignore next */
       if (selectorNode.data.previousNodes === undefined) {
         console.error(selectorNode);
-        throw Error('invalid node!');
+        throw Error(`invalid node! ${pathToString(selectorNode.path)}`);
       }
       if (!selectorNode.data.previousNodes.has(node)) {
         // watch the atom

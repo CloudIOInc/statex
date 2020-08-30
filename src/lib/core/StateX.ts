@@ -57,6 +57,17 @@ function _getIn<T>(
 }
 
 function isNodeDirty<T>(store: StateX, node: Node<NodeData<T>>) {
+  if (store.isMarkedToBeRemoved(node)) {
+    if (process.env.NODE_ENV !== 'production') {
+      store.debug(
+        `Node ${pathToString(
+          node.path,
+        )} deleted and hence not informing update!`,
+        'inform',
+      );
+    }
+    return false;
+  }
   if (isSelectorNode(node)) {
     return node.data.oldSelectorValue !== node.data.selectorValue;
   }
@@ -105,18 +116,17 @@ function enterStateX<T, P>(
   return () => {
     stateXHolder.holding = false;
     node.data.holders.delete(stateXHolder);
+    if (isSelectorNode(node)) {
+      node.data.previousNodes.forEach((n) => {
+        node.data.unregisterMap.get(n)?.();
+        node.data.unregisterMap.delete(n);
+      });
+      node.data.previousNodes.clear();
+    }
     if (node.data.holders.size === 0 && !hasHoldersOnChildren(node)) {
       if (!store.destroyed) {
-        if (isSelectorNode(node)) {
-          // keep all the selector nodes to avoid re-evaluating when the component
-          // appears again
-
-          // if (node.data.resolveable?.error) {
-          // error node might be unmounted due to error boundry
-          // keep the node for debug purpose
-          return;
-          // }
-        }
+        // remove the selector node as well as it's getting evaluated with stale data
+        // especially if the subscribed nodes are removed
         store.markToBeRemoved(node);
       }
     }
@@ -202,6 +212,11 @@ function informNodes<T>(store: StateX, nodes: Set<Node<NodeData<any>>>) {
   let total = 0;
   const informedNodes: Node<NodeData<any>>[] = [];
   nodes.forEach((node) => {
+    if (store.isMarkedToBeRemoved(node)) {
+      throw Error(
+        `node already deleted! ${pathToString(node.path)} ${node.deleted}`,
+      );
+    }
     if (isSelectorNode(node)) {
       // selector's initial change
       node.data.selector.informInitialChange(store, node);

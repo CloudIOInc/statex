@@ -361,17 +361,17 @@ describe('Selector', () => {
 
   test('dynamicSelector w/ path change', () => {
     const s = selector({
-      path: ['a', ':param'],
+      path: ['selector', ':param'],
       defaultValue: '',
       get: ({ get, params = {} }) => {
         return get([params['param']]);
       },
     });
     const s2 = selector({
-      path: ['a', 'b'],
+      path: ['selector', 'x'],
       defaultValue: '',
       get: ({ get }) => {
-        return get(['bb']);
+        return get(['b']);
       },
     });
     const { result } = renderHook(
@@ -385,12 +385,12 @@ describe('Selector', () => {
       { wrapper },
     );
     expect(result.current.value).toBe('a');
-    expect(result.current.value2).toBe('bb');
+    expect(result.current.value2).toBe('b');
     act(() => {
       result.current.setPath('b');
     });
-    expect(result.current.value).toBe('bb');
-    expect(result.current.value2).toBe('bb');
+    expect(result.current.value).toBe('b');
+    expect(result.current.value2).toBe('b');
   });
 
   test('textSelector to be resolved', async () => {
