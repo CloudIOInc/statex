@@ -279,11 +279,8 @@ export class StateX {
     this.postRenderSchedule = notInAContext;
     this.postUpdateRenderSchedule = notInAContext;
     this._trie.reset();
-    delete this._trie;
-    delete this.state;
+    this.state = {};
     this.activeNodes.clear();
-    delete this.activeNodes;
-    delete this.pending;
     this.destroyed = true;
   }
 
@@ -356,7 +353,23 @@ export class StateX {
   }
 
   markToBeRemoved(node: Node<NodeData<any, any>>) {
+    if (process.env.NODE_ENV !== 'production') {
+      this.debug(
+        `Node ${pathToString(node.path)} is marked to be removed...`,
+        'unmount',
+      );
+    }
     this._nodesToBeRemoved.add(node);
+  }
+
+  unmarkToBeRemoved(node: Node<NodeData<any, any>>) {
+    if (process.env.NODE_ENV !== 'production') {
+      this.debug(
+        `Node ${pathToString(node.path)} is unmarked from being removed...`,
+        'remount',
+      );
+    }
+    this._nodesToBeRemoved.delete(node);
   }
 
   isMarkedToBeRemoved(node: Node<NodeData<any, any>>) {

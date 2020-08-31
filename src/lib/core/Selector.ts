@@ -212,16 +212,24 @@ export default class Selector<T, P> implements SelectorInterface<T, P> {
       selectorNode.data.initialized = false;
     }
     if (!selectorNode.data.initialized) {
-      selectorNode.data.previousNodes?.forEach((node) => {
-        selectorNode.data.unregisterMap.get(node)?.();
-      });
+      let previousNodes = selectorNode.data.previousNodes;
+      let unregisterMap = selectorNode.data.unregisterMap;
       selectorNode.data.unregisterMap = new Map();
       selectorNode.data.previousNodes = new Set();
       selectorNode.data.initialized = true;
+      if (store.isMarkedToBeRemoved(selectorNode)) {
+        // HMR may have unmounted and mounting it again
+        store.unmarkToBeRemoved(selectorNode);
+      }
       const value = this.selectValueWithStateXHolder(store, options);
       if (!isResolvable(value)) {
         store.selectorInitialized(selectorNode);
       }
+      // defer unsubscribing as the same nodes might be subscribed again
+      // deferring will prevent the nodes to be marked for removal
+      previousNodes?.forEach((node) => {
+        unregisterMap.get(node)?.();
+      });
       return value;
     }
     if (selectorNode.data.resolveable) {
@@ -334,15 +342,16 @@ export default class Selector<T, P> implements SelectorInterface<T, P> {
       setRef: makeSetRef(store),
     });
     nodes.forEach((node) => {
-      if (store.isMarkedToBeRemoved(node)) {
-        throw Error(`deleted node!  ${pathToString(node.path)}`);
-      }
       /* istanbul ignore next */
       if (selectorNode.data.previousNodes === undefined) {
         console.error(selectorNode);
         throw Error(`invalid node! ${pathToString(selectorNode.path)}`);
       }
       if (!selectorNode.data.previousNodes.has(node)) {
+        if (store.isMarkedToBeRemoved(node)) {
+          // HMR may have unmounted and mounting the selector again
+          store.unmarkToBeRemoved(node);
+        }
         // watch the atom
         this.watchStateXForSelector(store, selectorNode, node, options);
       } else {

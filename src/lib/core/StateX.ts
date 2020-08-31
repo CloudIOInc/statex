@@ -121,6 +121,20 @@ function enterStateX<T, P>(
         // remove the selector node as well as it's getting evaluated with stale data
         // especially if the subscribed nodes are removed
         if (isSelectorNode(node)) {
+          if (process.env.NODE_ENV !== 'production') {
+            store.debug(
+              `Unmounting selector node ${pathToString(
+                node.path,
+              )}: Unsubscribing ${node.data.previousNodes.size} nodes...!`,
+              'unmount',
+            );
+            node.data.previousNodes.forEach((n) =>
+              store.debug(
+                `  ..Unsubscribing from ${pathToString(n.path)}`,
+                'unmount',
+              ),
+            );
+          }
           node.data.previousNodes.forEach((n) => {
             node.data.unregisterMap.get(n)?.();
             node.data.unregisterMap.delete(n);
