@@ -63,7 +63,7 @@ describe('Selector', () => {
     expect(testSelector() instanceof Selector).toBe(true);
   });
 
-  test('should render initial state values in 2 renders', () => {
+  test('should render initial state values in 1 render', () => {
     let counter = 0;
     const { textContent, getActivePaths } = render(() => {
       const fullName = useStateXValue(fullNameSelector);
@@ -71,7 +71,7 @@ describe('Selector', () => {
       return <>{fullName}</>;
     });
     expect(textContent()).toBe('Steve Jobs');
-    expect(counter).toBe(2); // selectors are evaluated in useEffect and hence 2
+    expect(counter).toBe(1);
     expect(getActivePaths([])).toStrictEqual([
       [],
       ['selector'],
@@ -96,8 +96,9 @@ describe('Selector', () => {
       remove(firstNameAtom);
     });
     expect(textContent()).toBe('undefined Jobs');
-    expect(counter).toBe(3);
+    expect(counter).toBe(2);
     const state = initialState();
+    // @ts-ignore firstName is not optional
     delete state.root.person.firstName;
     expect(get([])).toStrictEqual(state);
   });
@@ -194,7 +195,7 @@ describe('Selector', () => {
       const value = await waitForValueChange();
       expect(value).toBe('x');
     });
-    expect(counter).toBe(3);
+    expect(counter).toBe(2);
   });
 
   test('cancel duplicate resolvers', async () => {
@@ -311,7 +312,7 @@ describe('Selector', () => {
       return <>{value === undefined ? 'undefined' : value}</>;
     });
     expect(textContent()).toBe('undefined');
-    expect(counter).toBe(2);
+    expect(counter).toBe(1);
   });
 
   test(`dynamically changing atom's path with no default value causes extra re-render`, () => {
@@ -524,7 +525,7 @@ describe('Selector', () => {
       { wrapper },
     );
     await act(async () => {
-      expect(result.current.value1).toBe('y');
+      expect(result.current.value1).toBe('x');
       expect(result.current.value2).toBe('y');
     });
   });

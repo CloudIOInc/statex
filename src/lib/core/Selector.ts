@@ -28,7 +28,7 @@ import {
   StateXRemover,
 } from './StateXTypes';
 import type { Node } from './Trie';
-import type { Path, Key } from './ImmutableTypes';
+import { Path, Key, isNull } from './ImmutableTypes';
 import {
   isPromise,
   applyParamsToPath,
@@ -51,6 +51,27 @@ import { hasIn } from './ImmutableUtils';
 
 function notWritableSelector<T>(): T {
   throw Error('Not a writable selector!');
+}
+
+export function areEqualShallow(a: any, b: any) {
+  if (isNull(a) && isNull(b)) {
+    return true;
+  }
+  if (isNull(a) || isNull(b)) {
+    return false;
+  }
+  if (typeof a === 'object' && typeof b === 'object') {
+    if (Object.keys(a).length !== Object.keys(b).length) {
+      return false;
+    }
+    for (var key in a) {
+      if (a[key] !== b[key]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return a === b;
 }
 
 export default class Selector<T, P> implements SelectorInterface<T, P> {
@@ -208,7 +229,7 @@ export default class Selector<T, P> implements SelectorInterface<T, P> {
     selectorNode: Node<NodeDataWithSelector<T, P>>,
     options?: Options<P>,
   ): T | Resolvable<T, P> => {
-    if (this.oldProps !== options?.props) {
+    if (!areEqualShallow(this.oldProps, options?.props)) {
       selectorNode.data.initialized = false;
     }
     if (!selectorNode.data.initialized) {

@@ -39,7 +39,6 @@ function defaultErrorHandler(error: any) {
 
 interface StateXPreSchedulerProps {
   registerPreUpdateScheduler: (fn: SchedulerFn) => void;
-  registerPreRenderScheduler: (fn: SchedulerFn) => void;
 }
 
 interface StateXPostSchedulerProps {
@@ -53,16 +52,12 @@ const initialArray: [] = [];
 
 function StateXPreScheduler({
   registerPreUpdateScheduler,
-  registerPreRenderScheduler,
 }: StateXPreSchedulerProps) {
   const store = useStateXStore();
   store.renderingStarted();
 
   const [update, setUpdate] = useState(initialArray);
   registerPreUpdateScheduler(setUpdate);
-
-  const [, setRender] = useState(initialArray);
-  registerPreRenderScheduler(setRender);
 
   useEffect(() => {
     if (initialArray !== update) {
@@ -73,9 +68,8 @@ function StateXPreScheduler({
   useEffect(() => {
     return () => {
       registerPreUpdateScheduler(notInAContext);
-      registerPreRenderScheduler(notInAContext);
     };
-  }, [registerPreRenderScheduler, registerPreUpdateScheduler]);
+  }, [registerPreUpdateScheduler]);
 
   return null;
 }
@@ -166,7 +160,6 @@ function StateXProvider({
     <StateXContext.Provider value={ref}>
       <StateXPreScheduler
         registerPreUpdateScheduler={ref.current.registerPreUpdateScheduler}
-        registerPreRenderScheduler={ref.current.registerPreRenderScheduler}
       />
       {children}
       <StateXPostScheduler

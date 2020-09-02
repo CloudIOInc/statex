@@ -18,7 +18,7 @@ export const testSelector = (value: string | Promise<string> = '') =>
 
 export const keySelector = (value: string | Path) =>
   selector({
-    path: ['testSelector2'],
+    path: ['testSelector2', ...(Array.isArray(value) ? value : [value])],
     defaultValue: '',
     get: ({ get }) => {
       return get(Array.isArray(value) ? value : [value]);

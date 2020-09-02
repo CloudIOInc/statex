@@ -33,7 +33,7 @@ import {
 } from './StateXTypes';
 
 import Atom from './Atom';
-import Selector from './Selector';
+import Selector, { areEqualShallow } from './Selector';
 import {
   Resolvable,
   StateXGetter,
@@ -263,20 +263,15 @@ function useStateXValueResolveableInternal<T, P>(
     node,
   });
 
-  const [selectorValue, setSelectorValue] = useState<T | Resolvable<T, P>>(
-    Resolvable.withValue<T, P>(node, dv, true),
-  );
   let currentValue: T | Resolvable<T, P>;
-  if (pathOrAtom instanceof Selector) {
-    if (node !== holderRef.current.node) {
-      // must be due to dynamic path change... discard existing selectorValue
-      currentValue = dv;
-    } else {
-      currentValue = selectorValue;
-    }
+  if (isSelectorNode(node)) {
+    currentValue = node.data.selector.getValue(store, node, options);
   } else {
     currentValue = getStateValue<T, P>(store, node, options);
   }
+  const [selectorValue, setSelectorValue] = useState<T | Resolvable<T, P>>(
+    currentValue,
+  );
 
   const ref = useRef({ options, currentValue });
 
@@ -304,17 +299,22 @@ function useStateXValueResolveableInternal<T, P>(
   }, [currentValue, options, node, setValue]);
 
   const userProps = options?.props;
+  const userPropsRef = useRef(userProps);
+  const userPropsChanged = areEqualShallow(userProps, userPropsRef.current);
+
+  useEffect(() => {
+    userPropsRef.current = userProps;
+  }, [userProps]);
+
   useEffect(() => {
     // initial or node changed due to dynamic path
     const { options } = ref.current;
     if (isSelectorNode(node)) {
-      // selector may have side effects...
-      // hence make the initial call inside useEffect
       setSelectorValue(node.data.selector.getValue(store, node, options));
     } else {
       setValue(getStateValue<T, P>(store, node, options));
     }
-  }, [node, setValue, store, userProps]);
+  }, [node, setValue, store, userPropsChanged]);
 
   useEffect(() => {
     // watch the path

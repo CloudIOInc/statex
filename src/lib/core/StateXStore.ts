@@ -46,9 +46,10 @@ export class StateX {
   state: Collection;
   _lastKnownState?: Collection;
   updateSchedule: SchedulerFn = notInAContext;
-  renderSchedule: SchedulerFn = notInAContext;
   postUpdateRenderSchedule: SchedulerFn = notInAContext;
   postRenderSchedule: SchedulerFn = notInAContext;
+  postRenderScheduled: boolean = false;
+  postRenderScheduledTimout: NodeJS.Timeout | null = null;
   postUpdateSchedule: SchedulerFn = notInAContext;
   postListenerSchedule: SchedulerFn = notInAContext;
   id = 0;
@@ -148,6 +149,7 @@ export class StateX {
   removingState(node: Node<NodeData<any, any>>) {}
 
   afterSelectorReads() {
+    this.postRenderScheduled = false;
     /* istanbul ignore next */
     if (process.env.NODE_ENV !== 'production') {
       this.debug('afterSelectorReads', 'render');
@@ -264,29 +266,49 @@ export class StateX {
   }
 
   _scheduleRead() {
-    this.renderSchedule([]);
-    this.postRenderSchedule([]);
+    // selector reads can happen before postRenderSchedule is initialized
+    if (this.postRenderSchedule !== notInAContext) {
+      if (!this.postRenderScheduled) {
+        this.postRenderScheduled = true;
+        if (this.postRenderScheduledTimout) {
+          clearTimeout(this.postRenderScheduledTimout);
+        }
+        this.postRenderScheduledTimout = setTimeout(() => {
+          this.postRenderSchedule([]);
+          this.postRenderScheduledTimout = null;
+        }, 1);
+      }
+    }
   }
 
   _scheduleUpdate() {
     this.updateSchedule([]);
-    this.postUpdateSchedule([]);
+    // selector updates can happen before postUpdateSchedule is initialized
+    if (this.postUpdateSchedule !== notInAContext) {
+      this.postUpdateSchedule([]);
+    }
   }
 
   destroy() {
     this.updateSchedule = notInAContext;
-    this.renderSchedule = notInAContext;
     this.postRenderSchedule = notInAContext;
     this.postUpdateRenderSchedule = notInAContext;
     this._trie.reset();
     this.state = {};
     this.activeNodes.clear();
+    if (this.postRenderScheduledTimout) {
+      clearTimeout(this.postRenderScheduledTimout);
+    }
     this.destroyed = true;
   }
 
   addToPending(path: Path, action: string) {
     this.addToPendingWithoutSchedule(path, action);
-    this._scheduleUpdate();
+    if (action === 'init') {
+      this._scheduleRead();
+    } else {
+      this._scheduleUpdate();
+    }
   }
 
   trie() {
@@ -311,9 +333,6 @@ export class StateX {
   }
   registerPreUpdateScheduler = (fn: SchedulerFn) => {
     this.updateSchedule = fn;
-  };
-  registerPreRenderScheduler = (fn: SchedulerFn) => {
-    this.renderSchedule = fn;
   };
   registerPostRenderScheduler = (fn: SchedulerFn) => {
     this.postRenderSchedule = fn;

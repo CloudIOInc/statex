@@ -913,7 +913,9 @@ describe('StateX', () => {
     const div = getByTestId('p') as HTMLDivElement;
     expect(div.innerHTML).toBe('["root"],["root","key"],["root","a"]');
     expect(!!getByText('a')).toBe(true);
-    fireEvent.click(btn, {});
+    ract(() => {
+      fireEvent.click(btn, {});
+    });
     expect(!!getByText('b')).toBe(true);
     expect(div.innerHTML).toBe('["root"],["root","key"],["root","b"]');
   });

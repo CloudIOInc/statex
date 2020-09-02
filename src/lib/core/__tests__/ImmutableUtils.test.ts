@@ -1,4 +1,3 @@
-import { toCollection } from '../ImmutableTypes';
 // @ts-nocheck
 /**
  * Copyright (c) CloudIO, Inc. and its affiliates.
@@ -7,6 +6,8 @@ import { toCollection } from '../ImmutableTypes';
  * LICENSE file in the root directory of this source tree.
  *
  */
+
+import { toCollection } from '../ImmutableTypes';
 
 import {
   get,
