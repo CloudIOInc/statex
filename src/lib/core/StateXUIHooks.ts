@@ -53,8 +53,9 @@ function useStateXOnChangeForTextInput<T extends HTMLElement>(
 
 function useStateXOnChangeForNumberInput(
   path: PathOrStateXOrSelector<number>,
+  options?: UIStateXOptions<number>,
 ): [(event: React.ChangeEvent<HTMLInputElement>) => void, Dispatch<number>] {
-  const setValue = useStateXValueSetter<number>(path);
+  const setValue = useStateXValueSetter<number>(path, options);
   const onChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = Number(event.target.value);
@@ -213,7 +214,7 @@ function useStateXForNumberInput(
     throw Error('Invalid state type value! Must be either an atom or path.');
   }
   const value = useStateXValueInternal(pathOrAtom, defaultValue, options);
-  const [onChange] = useStateXOnChangeForNumberInput(pathOrAtom);
+  const [onChange] = useStateXOnChangeForNumberInput(pathOrAtom, options);
   return { value, onChange, type: 'number' };
 }
 

@@ -917,7 +917,9 @@ describe('StateX', () => {
       fireEvent.click(btn, {});
     });
     expect(!!getByText('b')).toBe(true);
-    expect(div.innerHTML).toBe('["root"],["root","key"],["root","b"]');
+    expect(div.innerHTML).toBe(
+      '["root"],["root","key"],["root","a"],["root","b"]',
+    );
   });
 
   test('useDebug', () => {
