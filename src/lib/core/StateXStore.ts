@@ -202,10 +202,6 @@ export class StateX {
     }
     if (this.getPendingPaths().length) {
       inform(this);
-      // changed components will re-render. mark rendering start
-      // to write to console.warn in scheduleForUpdate if any
-      // setter is invoked during render
-      this.renderingStarted();
     }
     this.postUpdateRenderSchedule([]);
   }
